@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.12)
 
 project(
-        cpp_tests # Rename the project here and in ci_tests.yml
+        ovum-vm
         VERSION 0.1
-        DESCRIPTION "C++ Project with Google tests"
+        DESCRIPTION "Ovum Virtual Machine that interprets Ovum bytecode"
         LANGUAGES CXX
 )
 
