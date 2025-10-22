@@ -11,7 +11,6 @@ add_executable(
 target_link_libraries(
         ${PROJECT_NAME}_tests
         vm_ui
-        mylib
         GTest::gtest_main
 )
 

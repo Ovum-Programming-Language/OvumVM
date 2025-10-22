@@ -1,13 +1,10 @@
-#include "lib/mylib/MyClass.hpp"
 #include "vm_ui_functions.hpp"
 
-int32_t StartConsoleUI(const std::vector<std::string>& args, std::ostream& out) {
+int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out, std::istream& in, std::ostream& err) {
   if (args.size() < 2) {
-    out << "Insufficient arguments\n";
+    err << "Insufficient arguments\n";
     return 1;
   }
 
-  MyClass printer(out);
-  printer.Print("Hello, " + args[1] + "!\n");
   return 0;
 }

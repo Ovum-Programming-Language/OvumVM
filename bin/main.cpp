@@ -6,5 +6,5 @@
 
 int main(int32_t argc, char** argv) {
   std::vector<std::string> args = std::vector<std::string>(argv, argv + argc);
-  return StartConsoleUI(args, std::cout);
+  return StartVmConsoleUI(args, std::cout, std::cin, std::cerr);
 }
