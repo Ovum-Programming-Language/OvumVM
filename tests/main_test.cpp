@@ -2,7 +2,7 @@
 #include <sstream>
 
 #include <gtest/gtest.h>
-#include "lib/ui/ui_functions.hpp" // include your library here
+#include "lib/vm_ui/vm_ui_functions.hpp" // include your library here
 #include "test_functions.hpp"
 #include "test_suites/ProjectIntegrationTestSuite.hpp"
 

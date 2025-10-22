@@ -1,5 +1,5 @@
 #include "lib/mylib/MyClass.hpp"
-#include "ui_functions.hpp"
+#include "vm_ui_functions.hpp"
 
 int32_t StartConsoleUI(const std::vector<std::string>& args, std::ostream& out) {
   if (args.size() < 2) {

@@ -1,5 +1,5 @@
-#ifndef UI_FUNCTIONS_HPP_
-#define UI_FUNCTIONS_HPP_
+#ifndef VM_UI_FUNCTIONS_HPP_
+#define VM_UI_FUNCTIONS_HPP_
 
 #include <cstdint>
 #include <string>
@@ -7,4 +7,4 @@
 
 int32_t StartConsoleUI(const std::vector<std::string>& args, std::ostream& out);
 
-#endif // UI_FUNCTIONS_HPP_
+#endif // VM_UI_FUNCTIONS_HPP_

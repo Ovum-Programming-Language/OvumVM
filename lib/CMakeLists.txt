@@ -1,2 +1,2 @@
 add_subdirectory(mylib)
-add_subdirectory(ui)
+add_subdirectory(vm_ui)
