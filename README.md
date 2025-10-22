@@ -28,8 +28,8 @@ The VM consists of several core components:
 
 ### Prerequisites
 
-- CMake 3.12 or later
-- C++20 compatible compiler (GCC, Clang, or MSVC)
+- CMake 3.25 or later
+- C++23 compatible compiler (GCC, Clang, or MSVC) and build toolchain
 - Git
 
 ### Building
@@ -136,7 +136,7 @@ The VM implements the core runtime features of the Ovum language:
 
 - **Operating Systems**: Windows, Linux, macOS
 - **Architectures**: x86_64 (amd64), ARM64
-- **Compilers**: GCC 7+, Clang 6+, MSVC 2019+
+- **Compilers**: GCC 13+, Clang 19+, MSVC 2022+
 
 > **Note**:  Some of these platforms or architectures may not have a JIT compiler implementation.
 
