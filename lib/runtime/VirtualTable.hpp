@@ -17,14 +17,16 @@ class VirtualTable {
 public:
   VirtualTable(std::string name, size_t size);
 
-  [[nodiscard]] std::string name() const;
-  [[nodiscard]] size_t size() const;
+  [[nodiscard]] std::string GetName() const;
+  [[nodiscard]] size_t GetSize() const;
 
-  [[nodiscard]] std::expected<Variable, std::runtime_error> GetVariableByName(void* object_ptr, const std::string& name) const;
+  [[nodiscard]] std::expected<Variable, std::runtime_error> GetVariableByName(void* object_ptr,
+                                                                              const std::string& name) const;
   std::expected<void, std::runtime_error> SetVariableByName(void* object_ptr,
                                                             const std::string& name,
                                                             const Variable& variable) const;
-  [[nodiscard]] std::expected<FunctionId, std::runtime_error> GetRealFunctionId(const FunctionId& virtual_function_id) const;
+  [[nodiscard]] std::expected<FunctionId, std::runtime_error> GetRealFunctionId(
+      const FunctionId& virtual_function_id) const;
 
   void AddFunction(const FunctionId& virtual_function_id, const FunctionId& real_function_id);
   void AddField(const std::string& name, const std::string& type_name, int64_t offset);
