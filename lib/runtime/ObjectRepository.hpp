@@ -16,7 +16,9 @@ public:
 
   void Reserve(size_t count);
 
-  [[nodiscard]] std::expected<size_t, std::runtime_error> Add(const ObjectDescriptor& descriptor);
+  [[nodiscard]] std::expected<size_t, std::runtime_error> Add(ObjectDescriptor* descriptor);
+  std::expected<void, std::runtime_error> Remove(size_t index);
+  void Clear();
 
   [[nodiscard]] std::expected<ObjectDescriptor*, std::runtime_error> GetByIndex(size_t index);
 
@@ -25,7 +27,7 @@ public:
   [[nodiscard]] size_t GetCount() const;
 
 private:
-  std::vector<ObjectDescriptor> objects_;
+  std::vector<ObjectDescriptor*> objects_;
 };
 
 } // namespace ovum::vm::runtime

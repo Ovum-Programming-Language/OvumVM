@@ -8,9 +8,23 @@ void ObjectRepository::Reserve(size_t count) {
   objects_.reserve(count);
 }
 
-std::expected<size_t, std::runtime_error> ObjectRepository::Add(const ObjectDescriptor& descriptor) {
-  objects_.push_back(descriptor);
+std::expected<size_t, std::runtime_error> ObjectRepository::Add(ObjectDescriptor* descriptor) {
+  objects_.emplace_back(descriptor);
   return objects_.size() - 1U;
+}
+
+std::expected<void, std::runtime_error> ObjectRepository::Remove(size_t index) {
+  if (index >= objects_.size()) {
+    return std::unexpected(std::runtime_error("ObjectDescriptor index out of range"));
+  }
+
+  objects_.erase(objects_.begin() + static_cast<ptrdiff_t>(index));
+
+  return {};
+}
+
+void ObjectRepository::Clear() {
+  objects_.clear();
 }
 
 std::expected<ObjectDescriptor*, std::runtime_error> ObjectRepository::GetByIndex(size_t index) {
@@ -18,7 +32,7 @@ std::expected<ObjectDescriptor*, std::runtime_error> ObjectRepository::GetByInde
     return std::unexpected(std::runtime_error("ObjectDescriptor index out of range"));
   }
 
-  return &objects_[index];
+  return objects_[index];
 }
 
 std::expected<const ObjectDescriptor*, std::runtime_error> ObjectRepository::GetByIndex(size_t index) const {
@@ -26,7 +40,7 @@ std::expected<const ObjectDescriptor*, std::runtime_error> ObjectRepository::Get
     return std::unexpected(std::runtime_error("ObjectDescriptor index out of range"));
   }
 
-  return &objects_[index];
+  return objects_[index];
 }
 
 size_t ObjectRepository::GetCount() const {
