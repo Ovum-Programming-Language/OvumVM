@@ -2,7 +2,9 @@
 #define RUNTIME_VARIABLE_HPP
 
 #include <cstdint>
+#include <stack>
 #include <variant>
+#include <vector>
 
 namespace ovum::vm::runtime {
 
@@ -12,6 +14,8 @@ namespace ovum::vm::runtime {
  */
 
 using Variable = std::variant<int64_t, double, bool, char, uint8_t, void*>;
+using VariableStack = std::stack<Variable>;
+using VariableCollection = std::vector<Variable>;
 
 template<typename T>
 concept VariableMemberType = std::is_same_v<T, int64_t> || std::is_same_v<T, double> || std::is_same_v<T, bool> ||
