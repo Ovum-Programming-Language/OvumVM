@@ -2,6 +2,8 @@
 
 - Contributing to The Ovum Language is fairly easy. This document shows you how to get started
 
+> Note that this repository contains only virtual machine, without any JIT modules due to their architecture-dependent nature.
+
 ## General
 - The [Codebase Structure](./CODEBASE_STRUCTURE.md) has detailed information about how the various files in this project are structured
 - Please ensure that any changes you make are in accordance with the [Coding Guidelines](./CODING_GUIDELINES.md) of this repo

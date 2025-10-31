@@ -1,4 +1,6 @@
-cmake_minimum_required(VERSION 3.12)
-
-add_subdirectory(mylib)
-add_subdirectory(ui)
+add_subdirectory(bytecode_lexer)
+add_subdirectory(bytecode_parser)
+add_subdirectory(execution_tree)
+add_subdirectory(executor)
+add_subdirectory(runtime)
+add_subdirectory(vm_ui)
