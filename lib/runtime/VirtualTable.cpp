@@ -27,29 +27,26 @@ size_t VirtualTable::GetSize() const {
   return size_;
 }
 
-std::expected<Variable, std::runtime_error> VirtualTable::GetVariableByName(void* object_ptr,
-                                                                            const std::string& name) const {
-  auto field_info_it = fields_.find(name);
-
-  if (field_info_it == fields_.end()) {
-    return std::unexpected{std::runtime_error("VTable of class " + name_ + " does not contain field: " + name)};
+std::expected<Variable, std::runtime_error> VirtualTable::GetVariableByIndex(void* object_ptr, size_t index) const {
+  if (index >= fields_.size()) {
+    return std::unexpected{
+        std::runtime_error("VTable of class " + name_ + " does not contain field number " + std::to_string(index))};
   }
 
-  const FieldInfo& field_info = field_info_it->second;
+  const FieldInfo& field_info = fields_[index];
 
   return field_info.variable_accessor->GetVariable(reinterpret_cast<char*>(object_ptr) + field_info.offset);
 }
 
-std::expected<void, std::runtime_error> VirtualTable::SetVariableByName(void* object_ptr,
-                                                                        const std::string& name,
-                                                                        const Variable& variable) const {
-  auto field_info_it = fields_.find(name);
-
-  if (field_info_it == fields_.end()) {
-    return std::unexpected{std::runtime_error("VTable of class " + name_ + " does not contain field: " + name)};
+std::expected<void, std::runtime_error> VirtualTable::SetVariableByIndex(void* object_ptr,
+                                                                         size_t index,
+                                                                         const Variable& variable) const {
+  if (index >= fields_.size()) {
+    return std::unexpected{
+        std::runtime_error("VTable of class " + name_ + " does not contain field number " + std::to_string(index))};
   }
 
-  const FieldInfo& field_info = field_info_it->second;
+  const FieldInfo& field_info = fields_[index];
 
   return field_info.variable_accessor->WriteVariable(reinterpret_cast<char*>(object_ptr) + field_info.offset, variable);
 }
@@ -70,8 +67,10 @@ void VirtualTable::AddFunction(const FunctionId& virtual_function_id, const Func
   functions_[virtual_function_id] = real_function_id;
 }
 
-void VirtualTable::AddField(const std::string& name, const std::string& type_name, int64_t offset) {
-  fields_[name] = FieldInfo{offset, variable_accessors_by_type_name_.at(type_name)};
+size_t VirtualTable::AddField(const std::string& type_name, int64_t offset) {
+  fields_.emplace_back(FieldInfo{offset, variable_accessors_by_type_name_.at(type_name)});
+
+  return fields_.size() - 1U;
 }
 
 } // namespace ovum::vm::runtime
