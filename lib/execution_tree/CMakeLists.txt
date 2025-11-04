@@ -2,6 +2,7 @@ add_library(execution_tree STATIC
         Block.cpp
         ConditionalExecution.cpp
         Function.cpp
+        FunctionRepository.cpp
         IfMultibranch.cpp
         WhileExecution.cpp
 )

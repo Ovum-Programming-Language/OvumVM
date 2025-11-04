@@ -6,9 +6,12 @@
 
 namespace ovum::vm::execution_tree {
 
+class FunctionRepository;
+
 struct PassedExecutionData {
   runtime::RuntimeMemory& memory;
   const runtime::VirtualTableRepository& virtual_table_repository;
+  const FunctionRepository& function_repository;
 };
 
 } // namespace ovum::vm::execution_tree
