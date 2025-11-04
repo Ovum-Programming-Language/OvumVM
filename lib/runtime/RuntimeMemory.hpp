@@ -6,7 +6,6 @@
 #include "ObjectRepository.hpp"
 #include "StackFrame.hpp"
 #include "Variable.hpp"
-#include "VirtualTableRepository.hpp"
 
 namespace ovum::vm::runtime {
 
@@ -15,7 +14,6 @@ struct RuntimeMemory {
   std::stack<StackFrame> stack_frames;
   VariableStack machine_stack;
   ObjectRepository object_repository;
-  VirtualTableRepository virtual_table_repository;
 };
 
 } // namespace ovum::vm::runtime

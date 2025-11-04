@@ -8,9 +8,9 @@ void IfMultibranch::AddBranch(std::unique_ptr<ConditionalExecution> branch) {
   branches_.emplace_back(std::move(branch));
 }
 
-std::expected<ExecutionResult, std::runtime_error> IfMultibranch::Execute(runtime::RuntimeMemory& runtime_memory) {
+std::expected<ExecutionResult, std::runtime_error> IfMultibranch::Execute(PassedExecutionData& execution_data) {
   for (const auto& branch : branches_) {
-    const std::expected<ExecutionResult, std::runtime_error> result = branch->Execute(runtime_memory);
+    const std::expected<ExecutionResult, std::runtime_error> result = branch->Execute(execution_data);
 
     if (!result.has_value()) {
       return result;

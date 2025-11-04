@@ -31,7 +31,7 @@ public:
   size_t AddField(const std::string& type_name, int64_t offset);
 
 private:
-  static const std::unordered_map<std::string, std::shared_ptr<IVariableAccessor>> variable_accessors_by_type_name_;
+  static const std::unordered_map<std::string, std::shared_ptr<IVariableAccessor>> kVariableAccessorsByTypeName;
 
   std::string name_;
   size_t size_;

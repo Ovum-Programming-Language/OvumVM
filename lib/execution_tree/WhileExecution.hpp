@@ -14,7 +14,7 @@ class WhileExecution : public IExecutable {
 public:
   WhileExecution(std::unique_ptr<IExecutable> condition_block, std::unique_ptr<IExecutable> execution_block);
 
-  std::expected<ExecutionResult, std::runtime_error> Execute(runtime::RuntimeMemory& runtime_memory) override;
+  std::expected<ExecutionResult, std::runtime_error> Execute(PassedExecutionData& execution_data) override;
 
 private:
   std::unique_ptr<IExecutable> condition_block_;

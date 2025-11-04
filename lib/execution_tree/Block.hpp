@@ -14,7 +14,7 @@ public:
 
   void AddStatement(std::unique_ptr<IExecutable> statement);
 
-  std::expected<ExecutionResult, std::runtime_error> Execute(runtime::RuntimeMemory& runtime_memory) override;
+  std::expected<ExecutionResult, std::runtime_error> Execute(PassedExecutionData& execution_data) override;
 
 private:
   std::vector<std::unique_ptr<IExecutable>> statements_;

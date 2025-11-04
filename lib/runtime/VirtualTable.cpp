@@ -6,14 +6,13 @@
 
 namespace ovum::vm::runtime {
 
-const std::unordered_map<std::string, std::shared_ptr<IVariableAccessor>>
-    VirtualTable::variable_accessors_by_type_name_ = {
-        {"int", std::make_shared<VariableAccessor<int64_t>>()},
-        {"float", std::make_shared<VariableAccessor<double>>()},
-        {"bool", std::make_shared<VariableAccessor<bool>>()},
-        {"char", std::make_shared<VariableAccessor<char>>()},
-        {"byte", std::make_shared<VariableAccessor<uint8_t>>()},
-        {"Object", std::make_shared<VariableAccessor<void*>>()},
+const std::unordered_map<std::string, std::shared_ptr<IVariableAccessor>> VirtualTable::kVariableAccessorsByTypeName = {
+    {"int", std::make_shared<VariableAccessor<int64_t>>()},
+    {"float", std::make_shared<VariableAccessor<double>>()},
+    {"bool", std::make_shared<VariableAccessor<bool>>()},
+    {"char", std::make_shared<VariableAccessor<char>>()},
+    {"byte", std::make_shared<VariableAccessor<uint8_t>>()},
+    {"Object", std::make_shared<VariableAccessor<void*>>()},
 };
 
 VirtualTable::VirtualTable(std::string name, size_t size) : name_(std::move(name)), size_(size) {
@@ -68,7 +67,7 @@ void VirtualTable::AddFunction(const FunctionId& virtual_function_id, const Func
 }
 
 size_t VirtualTable::AddField(const std::string& type_name, int64_t offset) {
-  fields_.emplace_back(FieldInfo{offset, variable_accessors_by_type_name_.at(type_name)});
+  fields_.emplace_back(FieldInfo{offset, kVariableAccessorsByTypeName.at(type_name)});
 
   return fields_.size() - 1U;
 }

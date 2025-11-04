@@ -6,13 +6,13 @@
 
 #include "ExecutionResult.hpp"
 #include "IExecutable.hpp"
-#include "lib/runtime/RuntimeMemory.hpp"
+#include "PassedExecutionData.hpp"
 
 namespace ovum::vm::execution_tree {
 
 template<typename T>
-concept Executable = requires(T t, runtime::RuntimeMemory& runtime_memory) {
-  { t.Execute(runtime_memory) } -> std::same_as<std::expected<ExecutionResult, std::runtime_error>>;
+concept Executable = requires(T t, PassedExecutionData& execution_data) {
+  { t.Execute(execution_data) } -> std::same_as<std::expected<ExecutionResult, std::runtime_error>>;
 };
 
 template<typename T>

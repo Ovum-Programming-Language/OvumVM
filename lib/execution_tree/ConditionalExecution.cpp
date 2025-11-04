@@ -10,8 +10,8 @@ ConditionalExecution::ConditionalExecution(std::unique_ptr<IExecutable> conditio
 }
 
 std::expected<ExecutionResult, std::runtime_error> ConditionalExecution::Execute(
-    runtime::RuntimeMemory& runtime_memory) {
-  const std::expected<ExecutionResult, std::runtime_error> condition_result = condition_block_->Execute(runtime_memory);
+    PassedExecutionData& execution_data) {
+  const std::expected<ExecutionResult, std::runtime_error> condition_result = condition_block_->Execute(execution_data);
 
   if (!condition_result.has_value()) {
     return condition_result;
@@ -21,13 +21,13 @@ std::expected<ExecutionResult, std::runtime_error> ConditionalExecution::Execute
     return condition_result;
   }
 
-  if (runtime_memory.machine_stack.empty()) {
+  if (execution_data.memory.machine_stack.empty()) {
     return std::unexpected(
         std::runtime_error("ConditionalExecution: machine stack is empty after condition execution"));
   }
 
-  const runtime::Variable top_value = runtime_memory.machine_stack.top();
-  runtime_memory.machine_stack.pop();
+  const runtime::Variable top_value = execution_data.memory.machine_stack.top();
+  execution_data.memory.machine_stack.pop();
 
   if (!std::holds_alternative<bool>(top_value)) {
     return std::unexpected(std::runtime_error("ConditionalExecution: condition result is not a boolean"));
@@ -39,7 +39,7 @@ std::expected<ExecutionResult, std::runtime_error> ConditionalExecution::Execute
     return ExecutionResult::kNormal;
   }
 
-  return execution_block_->Execute(runtime_memory);
+  return execution_block_->Execute(execution_data);
 }
 
 } // namespace ovum::vm::execution_tree

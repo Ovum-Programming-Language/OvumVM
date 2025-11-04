@@ -9,10 +9,10 @@ WhileExecution::WhileExecution(std::unique_ptr<IExecutable> condition_block,
     condition_block_(std::move(condition_block)), execution_block_(std::move(execution_block)) {
 }
 
-std::expected<ExecutionResult, std::runtime_error> WhileExecution::Execute(runtime::RuntimeMemory& runtime_memory) {
+std::expected<ExecutionResult, std::runtime_error> WhileExecution::Execute(PassedExecutionData& execution_data) {
   while (true) {
     const std::expected<ExecutionResult, std::runtime_error> condition_result =
-        condition_block_->Execute(runtime_memory);
+        condition_block_->Execute(execution_data);
 
     if (!condition_result.has_value()) {
       return condition_result;
@@ -22,12 +22,12 @@ std::expected<ExecutionResult, std::runtime_error> WhileExecution::Execute(runti
       return condition_result;
     }
 
-    if (runtime_memory.machine_stack.empty()) {
+    if (execution_data.memory.machine_stack.empty()) {
       return std::unexpected(std::runtime_error("WhileExecution: machine stack is empty after condition execution"));
     }
 
-    const runtime::Variable top_value = runtime_memory.machine_stack.top();
-    runtime_memory.machine_stack.pop();
+    const runtime::Variable top_value = execution_data.memory.machine_stack.top();
+    execution_data.memory.machine_stack.pop();
 
     if (!std::holds_alternative<bool>(top_value)) {
       return std::unexpected(std::runtime_error("WhileExecution: condition result is not a boolean"));
@@ -40,7 +40,7 @@ std::expected<ExecutionResult, std::runtime_error> WhileExecution::Execute(runti
     }
 
     const std::expected<ExecutionResult, std::runtime_error> execution_result =
-        execution_block_->Execute(runtime_memory);
+        execution_block_->Execute(execution_data);
 
     if (!execution_result.has_value()) {
       return execution_result;
