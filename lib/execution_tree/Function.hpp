@@ -19,9 +19,16 @@ public:
 
   std::expected<ExecutionResult, std::runtime_error> Execute(runtime::RuntimeMemory& runtime_memory) override;
 
+  [[nodiscard]] runtime::FunctionId GetId() const;
+  [[nodiscard]] size_t GetArity() const;
+  [[nodiscard]] size_t GetTotalActionCount() const;
+  [[nodiscard]] size_t GetExecutionCount() const;
+
 private:
   runtime::FunctionId id_;
-  size_t arity_;
+  size_t arity_{};
+  size_t total_action_count_{};
+  size_t execution_count_{};
   std::unique_ptr<Block> block_;
 };
 
