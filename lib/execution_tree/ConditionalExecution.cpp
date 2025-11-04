@@ -2,8 +2,6 @@
 
 #include <variant>
 
-#include "PassedExecutionData.hpp"
-
 namespace ovum::vm::execution_tree {
 
 ConditionalExecution::ConditionalExecution(std::unique_ptr<IExecutable> condition_block,
@@ -11,8 +9,7 @@ ConditionalExecution::ConditionalExecution(std::unique_ptr<IExecutable> conditio
     condition_block_(std::move(condition_block)), execution_block_(std::move(execution_block)) {
 }
 
-std::expected<ExecutionResult, std::runtime_error> ConditionalExecution::Execute(
-    PassedExecutionData& execution_data) {
+std::expected<ExecutionResult, std::runtime_error> ConditionalExecution::Execute(PassedExecutionData& execution_data) {
   const std::expected<ExecutionResult, std::runtime_error> condition_result = condition_block_->Execute(execution_data);
 
   if (!condition_result.has_value()) {

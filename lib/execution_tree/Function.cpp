@@ -2,8 +2,6 @@
 
 #include <algorithm>
 
-#include "PassedExecutionData.hpp"
-
 namespace ovum::vm::execution_tree {
 
 Function::Function(runtime::FunctionId id, size_t arity, std::unique_ptr<IExecutable> body) :

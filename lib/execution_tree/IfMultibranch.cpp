@@ -1,7 +1,5 @@
 #include "IfMultibranch.hpp"
 
-#include "PassedExecutionData.hpp"
-
 namespace ovum::vm::execution_tree {
 
 IfMultibranch::IfMultibranch() = default;

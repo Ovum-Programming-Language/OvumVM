@@ -28,6 +28,11 @@ concept ExecutableFunction = Executable<T> && requires(const T& t) {
   { t.GetExecutionCount() } -> std::same_as<size_t>;
 };
 
+template<typename Func>
+concept CommandFunction = requires(const Func func, PassedExecutionData& execution_data) {
+  { func(execution_data) } -> std::same_as<std::expected<ExecutionResult, std::runtime_error>>;
+};
+
 } // namespace ovum::vm::execution_tree
 
 #endif // EXECUTION_TREE_EXECUTIONCONCEPTS_HPP

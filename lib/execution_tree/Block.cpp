@@ -1,7 +1,5 @@
 #include "Block.hpp"
 
-#include "PassedExecutionData.hpp"
-
 namespace ovum::vm::execution_tree {
 
 Block::Block() = default;

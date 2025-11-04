@@ -2,8 +2,6 @@
 
 #include <variant>
 
-#include "PassedExecutionData.hpp"
-
 namespace ovum::vm::execution_tree {
 
 WhileExecution::WhileExecution(std::unique_ptr<IExecutable> condition_block,

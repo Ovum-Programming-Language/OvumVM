@@ -5,10 +5,9 @@
 #include <stdexcept>
 
 #include "ExecutionResult.hpp"
+#include "PassedExecutionData.hpp"
 
 namespace ovum::vm::execution_tree {
-
-struct PassedExecutionData;
 
 class IExecutable { // NOLINT(cppcoreguidelines-special-member-functions)
 public:
