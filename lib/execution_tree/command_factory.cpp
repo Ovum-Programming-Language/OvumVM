@@ -6,19 +6,23 @@ std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateSimpleComma
   return std::unexpected(std::out_of_range("Command not found: " + name));
 }
 
-std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateStringCommandByName(const std::string& name, const std::string& value) {
+std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateStringCommandByName(const std::string& name,
+                                                                                         const std::string& value) {
   return std::unexpected(std::out_of_range("Command not found: " + name));
 }
 
-std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateIntegerCommandByName(const std::string& name, const int64_t value) {
+std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateIntegerCommandByName(const std::string& name,
+                                                                                          const int64_t value) {
   return std::unexpected(std::out_of_range("Command not found: " + name));
 }
 
-std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateFloatCommandByName(const std::string& name, const double value) {
+std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateFloatCommandByName(const std::string& name,
+                                                                                        const double value) {
   return std::unexpected(std::out_of_range("Command not found: " + name));
 }
 
-std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateBooleanCommandByName(const std::string& name, const bool value) {
+std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateBooleanCommandByName(const std::string& name,
+                                                                                          const bool value) {
   return std::unexpected(std::out_of_range("Command not found: " + name));
 }
 

@@ -31,7 +31,8 @@ std::expected<IFunctionExecutable*, std::runtime_error> FunctionRepository::GetB
   return functions_[index].get();
 }
 
-std::expected<IFunctionExecutable*, std::runtime_error> FunctionRepository::GetById(const runtime::FunctionId& id) const {
+std::expected<IFunctionExecutable*, std::runtime_error> FunctionRepository::GetById(
+    const runtime::FunctionId& id) const {
   const auto it = index_by_id_.find(id);
 
   if (it == index_by_id_.end()) {
