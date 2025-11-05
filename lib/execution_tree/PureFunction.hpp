@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <expected>
 #include <functional>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -84,30 +85,34 @@ public:
     // Extract arguments from stack
     std::vector<runtime::Variable> arguments;
     arguments.reserve(arity);
+
     for (size_t i = 0; i < arity; ++i) {
       arguments.push_back(execution_data.memory.machine_stack.top());
       execution_data.memory.machine_stack.pop();
     }
+
     std::reverse(arguments.begin(), arguments.end());
 
     // Verify types and build cache key with hash values
     const auto cache_key_result = CreateCacheKey(arguments, execution_data);
+    
     if (!cache_key_result.has_value()) {
       return cache_key_result.error();
     }
+    
     const CacheKey& cache_key = cache_key_result.value();
 
     // Check cache
     auto cache_it = cache_.find(cache_key);
+    
     if (cache_it != cache_.end()) {
-      // Cache hit - put result on stack
       execution_data.memory.machine_stack.push(cache_it->second);
       return ExecutionResult::kNormal;
     }
 
     // Cache miss - put arguments back on stack and execute
-    for (auto it = arguments.rbegin(); it != arguments.rend(); ++it) {
-      execution_data.memory.machine_stack.push(*it);
+    for (auto & argument : std::ranges::reverse_view(arguments)) {
+      execution_data.memory.machine_stack.push(argument);
     }
 
     const std::expected<ExecutionResult, std::runtime_error> result = function_.Execute(execution_data);
@@ -154,7 +159,8 @@ private:
   std::vector<std::string> argument_type_names_;
   std::unordered_map<CacheKey, runtime::Variable> cache_;
 
-  [[nodiscard]] std::expected<size_t, std::runtime_error> GetHash(void* object_ptr, std::string& actual_type,
+  [[nodiscard]] std::expected<size_t, std::runtime_error> GetHash(void* object_ptr,
+                                                                  std::string& actual_type,
                                                                   PassedExecutionData& execution_data) const {
     const auto* descriptor = reinterpret_cast<const runtime::ObjectDescriptor*>(object_ptr);
     const auto vtable_result = execution_data.virtual_table_repository.GetByIndex(descriptor->vtable_index);
@@ -236,11 +242,11 @@ private:
       } else if (std::holds_alternative<void*>(arg)) {
         void* object_ptr = std::get<void*>(arg);
         std::expected<size_t, std::runtime_error> hash_result = GetHash(object_ptr, actual_type, execution_data);
-        
+
         if (!hash_result.has_value()) {
           return std::unexpected(std::runtime_error("PureFunction: failed to get hash for " + actual_type));
         }
-        
+
         value_hash = hash_result.value();
       } else {
         return std::unexpected(std::runtime_error("PureFunction: unknown variable type"));
