@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "CacheKey.hpp"
 #include "ExecutionConcepts.hpp"
 #include "ExecutionResult.hpp"
 #include "FunctionRepository.hpp"
@@ -19,46 +20,29 @@
 #include "lib/runtime/Variable.hpp"
 #include "lib/runtime/VirtualTableRepository.hpp"
 
-namespace ovum::vm::execution_tree {
-
-// Hashable cache key for function arguments
-struct CacheKey {
-  std::vector<runtime::Variable> values;
-  std::vector<size_t> hash_values; // Pre-computed hash values for each argument
-
-  bool operator==(const CacheKey& other) const {
-    if (values.size() != other.values.size() || hash_values.size() != other.hash_values.size()) {
-      return false;
-    }
-
-    for (size_t i = 0; i < values.size(); ++i) {
-      if (values[i] != other.values[i]) {
-        return false;
-      }
-    }
-    return true;
-  }
-};
-
-} // namespace ovum::vm::execution_tree
-
-// Hash function for CacheKey - uses pre-computed hash values
 namespace std {
+
 template<>
-struct hash<ovum::vm::execution_tree::CacheKey> {
+struct hash<std::vector<size_t>> {
   static constexpr size_t kHashMultiplier = 0x9e3779b9;
   static constexpr size_t kHashShift = 6;
 
-  size_t operator()(const ovum::vm::execution_tree::CacheKey& key) const {
-    size_t hash_value = 0;
-    // Hash only by content (hash_values), type checking is done separately
-    for (const auto& value_hash : key.hash_values) {
-      hash_value ^= value_hash + kHashMultiplier + (hash_value << kHashShift) + (hash_value >> kHashShift);
+  size_t operator()(const std::vector<size_t>& vec) const {
+    size_t seed = 0;
+    for (size_t value : vec) {
+      seed ^= std::hash<size_t>{}(value) + kHashMultiplier + (seed << kHashShift) + (seed >> kHashShift);
     }
-
-    return hash_value;
+    return seed;
   }
 };
+
+template<>
+struct hash<ovum::vm::execution_tree::CacheKey> {
+  size_t operator()(const ovum::vm::execution_tree::CacheKey& key) const {
+    return std::hash<std::vector<size_t>>{}(key.GetHashValues());
+  }
+};
+
 } // namespace std
 
 namespace ovum::vm::execution_tree {
@@ -214,8 +198,8 @@ private:
       const std::vector<runtime::Variable>& arguments, PassedExecutionData& execution_data) const {
     const size_t arity = arguments.size();
     CacheKey cache_key;
-    cache_key.values.reserve(arity);
-    cache_key.hash_values.reserve(arity);
+    cache_key.GetValues().reserve(arity);
+    cache_key.GetHashValues().reserve(arity);
 
     for (size_t i = 0; i < arity; ++i) {
       const std::string& expected_type = argument_type_names_[i];
@@ -279,8 +263,8 @@ private:
         return std::unexpected(std::runtime_error(error_msg));
       }
 
-      cache_key.values.push_back(arg);
-      cache_key.hash_values.push_back(value_hash);
+      cache_key.GetValues().push_back(arg);
+      cache_key.GetHashValues().push_back(value_hash);
     }
 
     return cache_key;
