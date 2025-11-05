@@ -1,10 +1,10 @@
 #ifndef EXECUTION_TREE_PUREFUNCTION_HPP
 #define EXECUTION_TREE_PUREFUNCTION_HPP
 
+#include <algorithm>
 #include <cstddef>
 #include <expected>
 #include <functional>
-#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -111,7 +111,7 @@ public:
     }
 
     // Cache miss - put arguments back on stack and execute
-    for (auto& argument : std::ranges::reverse_view(arguments)) {
+    for (auto& argument : arguments) {
       execution_data.memory.machine_stack.push(argument);
     }
 

@@ -1,7 +1,9 @@
 #ifndef EXECUTION_TREE_EXECUTIONCONCEPTS_HPP
 #define EXECUTION_TREE_EXECUTIONCONCEPTS_HPP
 
+#include <concepts>
 #include <expected>
+#include <memory>
 #include <stdexcept>
 
 #include "ExecutionResult.hpp"

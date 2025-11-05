@@ -30,6 +30,7 @@ std::expected<ExecutionResult, std::runtime_error> Function::Execute(PassedExecu
   const std::expected<ExecutionResult, std::runtime_error> result = body_->Execute(execution_data);
 
   if (!result.has_value()) {
+    execution_data.memory.stack_frames.pop();
     return result;
   }
 
