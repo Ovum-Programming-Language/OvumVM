@@ -23,7 +23,7 @@ std::expected<size_t, std::runtime_error> FunctionRepository::Add(std::unique_pt
   return functions_.size() - 1U;
 }
 
-std::expected<IFunctionExecutable*, std::runtime_error> FunctionRepository::GetByIndex(size_t index) {
+std::expected<IFunctionExecutable*, std::runtime_error> FunctionRepository::GetByIndex(size_t index) const {
   if (index >= functions_.size()) {
     return std::unexpected(std::runtime_error("Function index out of range"));
   }
@@ -31,15 +31,7 @@ std::expected<IFunctionExecutable*, std::runtime_error> FunctionRepository::GetB
   return functions_[index].get();
 }
 
-std::expected<const IFunctionExecutable*, std::runtime_error> FunctionRepository::GetByIndex(size_t index) const {
-  if (index >= functions_.size()) {
-    return std::unexpected(std::runtime_error("Function index out of range"));
-  }
-
-  return functions_[index].get();
-}
-
-std::expected<IFunctionExecutable*, std::runtime_error> FunctionRepository::GetById(const runtime::FunctionId& id) {
+std::expected<IFunctionExecutable*, std::runtime_error> FunctionRepository::GetById(const runtime::FunctionId& id) const {
   const auto it = index_by_id_.find(id);
 
   if (it == index_by_id_.end()) {
@@ -49,29 +41,7 @@ std::expected<IFunctionExecutable*, std::runtime_error> FunctionRepository::GetB
   return functions_[it->second].get();
 }
 
-std::expected<const IFunctionExecutable*, std::runtime_error> FunctionRepository::GetById(
-    const runtime::FunctionId& id) const {
-  const auto it = index_by_id_.find(id);
-
-  if (it == index_by_id_.end()) {
-    return std::unexpected(std::runtime_error("Function not found by id: " + id));
-  }
-
-  return functions_[it->second].get();
-}
-
-std::expected<IFunctionExecutable*, std::runtime_error> FunctionRepository::GetByName(const std::string& name) {
-  const auto it = index_by_id_.find(name);
-
-  if (it == index_by_id_.end()) {
-    return std::unexpected(std::runtime_error("Function not found by name: " + name));
-  }
-
-  return functions_[it->second].get();
-}
-
-std::expected<const IFunctionExecutable*, std::runtime_error> FunctionRepository::GetByName(
-    const std::string& name) const {
+std::expected<IFunctionExecutable*, std::runtime_error> FunctionRepository::GetByName(const std::string& name) const {
   const auto it = index_by_id_.find(name);
 
   if (it == index_by_id_.end()) {

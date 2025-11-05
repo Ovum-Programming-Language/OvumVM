@@ -23,18 +23,11 @@ public:
 
   [[nodiscard]] std::expected<size_t, std::runtime_error> Add(std::unique_ptr<IFunctionExecutable> function);
 
-  [[nodiscard]] std::expected<IFunctionExecutable*, std::runtime_error> GetByIndex(size_t index);
+  [[nodiscard]] std::expected<IFunctionExecutable*, std::runtime_error> GetByIndex(size_t index) const;
 
-  [[nodiscard]] std::expected<const IFunctionExecutable*, std::runtime_error> GetByIndex(size_t index) const;
+  [[nodiscard]] std::expected<IFunctionExecutable*, std::runtime_error> GetById(const runtime::FunctionId& id) const;
 
-  [[nodiscard]] std::expected<IFunctionExecutable*, std::runtime_error> GetById(const runtime::FunctionId& id);
-
-  [[nodiscard]] std::expected<const IFunctionExecutable*, std::runtime_error> GetById(
-      const runtime::FunctionId& id) const;
-
-  [[nodiscard]] std::expected<IFunctionExecutable*, std::runtime_error> GetByName(const std::string& name);
-
-  [[nodiscard]] std::expected<const IFunctionExecutable*, std::runtime_error> GetByName(const std::string& name) const;
+  [[nodiscard]] std::expected<IFunctionExecutable*, std::runtime_error> GetByName(const std::string& name) const;
 
   [[nodiscard]] size_t GetCount() const;
 
