@@ -18,4 +18,3 @@ public:
 } // namespace ovum::vm::executor
 
 #endif // EXECUTOR_PLACEHOLDERJITEXECUTOR_HPP
-

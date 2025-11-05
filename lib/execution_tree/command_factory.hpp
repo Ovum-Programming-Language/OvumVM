@@ -24,7 +24,8 @@ std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateSimpleComma
  * @param value The value of the command.
  * @return The command unique pointer or std::out_of_range if the command is not found.
  */
-std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateStringCommandByName(const std::string& name, const std::string& value);
+std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateStringCommandByName(const std::string& name,
+                                                                                         const std::string& value);
 
 /**
  * Creates an integer-argument command by name (Ovum types Int, Char, Byte or an index).
@@ -32,7 +33,8 @@ std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateStringComma
  * @param value The value of the command.
  * @return The command unique pointer or std::out_of_range if the command is not found.
  */
-std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateIntegerCommandByName(const std::string& name, const int64_t value);
+std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateIntegerCommandByName(const std::string& name,
+                                                                                          const int64_t value);
 
 /**
  * Creates a floating point-argument command by name (Ovum type Double).
@@ -40,7 +42,8 @@ std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateIntegerComm
  * @param value The value of the command.
  * @return The command unique pointer or std::out_of_range if the command is not found.
  */
-std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateFloatCommandByName(const std::string& name, const double value);
+std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateFloatCommandByName(const std::string& name,
+                                                                                        const double value);
 
 /**
  * Creates a boolean-argument command by name (Ovum type Bool).
@@ -48,7 +51,8 @@ std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateFloatComman
  * @param value The value of the command.
  * @return The command unique pointer or std::out_of_range if the command is not found.
  */
-std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateBooleanCommandByName(const std::string& name, const bool value);
+std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateBooleanCommandByName(const std::string& name,
+                                                                                          const bool value);
 
 } // namespace ovum::vm::execution_tree
 

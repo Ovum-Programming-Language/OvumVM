@@ -95,23 +95,23 @@ public:
 
     // Verify types and build cache key with hash values
     const auto cache_key_result = CreateCacheKey(arguments, execution_data);
-    
+
     if (!cache_key_result.has_value()) {
       return cache_key_result.error();
     }
-    
+
     const CacheKey& cache_key = cache_key_result.value();
 
     // Check cache
     auto cache_it = cache_.find(cache_key);
-    
+
     if (cache_it != cache_.end()) {
       execution_data.memory.machine_stack.push(cache_it->second);
       return ExecutionResult::kNormal;
     }
 
     // Cache miss - put arguments back on stack and execute
-    for (auto & argument : std::ranges::reverse_view(arguments)) {
+    for (auto& argument : std::ranges::reverse_view(arguments)) {
       execution_data.memory.machine_stack.push(argument);
     }
 
@@ -258,11 +258,11 @@ private:
       if (std::holds_alternative<void*>(arg)) {
         const auto* descriptor = reinterpret_cast<const runtime::ObjectDescriptor*>(std::get<void*>(arg));
         const auto vtable_result = execution_data.virtual_table_repository.GetByIndex(descriptor->vtable_index);
-        
+
         if (!vtable_result.has_value()) {
           return std::unexpected(std::runtime_error("PureFunction: failed to get VirtualTable for type checking"));
         }
-        
+
         type_matches = vtable_result.value()->IsType(expected_type);
       } else {
         type_matches = (actual_type == expected_type);
