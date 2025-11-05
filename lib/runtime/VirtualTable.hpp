@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "FieldInfo.hpp"
 #include "FunctionId.hpp"
@@ -26,9 +27,11 @@ public:
                                                              const Variable& variable) const;
   [[nodiscard]] std::expected<FunctionId, std::runtime_error> GetRealFunctionId(
       const FunctionId& virtual_function_id) const;
+  [[nodiscard]] bool IsType(const std::string& interface_name) const;
 
   void AddFunction(const FunctionId& virtual_function_id, const FunctionId& real_function_id);
   size_t AddField(const std::string& type_name, int64_t offset);
+  void AddInterface(const std::string& interface_name);
 
 private:
   static const std::unordered_map<std::string, std::shared_ptr<IVariableAccessor>> kVariableAccessorsByTypeName;
@@ -37,6 +40,7 @@ private:
   size_t size_;
   std::vector<FieldInfo> fields_;
   std::unordered_map<FunctionId, FunctionId> functions_;
+  std::unordered_set<std::string> interfaces_;
 };
 
 } // namespace ovum::vm::runtime

@@ -72,4 +72,12 @@ size_t VirtualTable::AddField(const std::string& type_name, int64_t offset) {
   return fields_.size() - 1U;
 }
 
+void VirtualTable::AddInterface(const std::string& interface_name) {
+  interfaces_.insert(interface_name);
+}
+
+bool VirtualTable::IsType(const std::string& interface_name) const {
+  return interfaces_.contains(interface_name) || interface_name == name_;
+}
+
 } // namespace ovum::vm::runtime

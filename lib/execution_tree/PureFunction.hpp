@@ -252,7 +252,23 @@ private:
         return std::unexpected(std::runtime_error("PureFunction: unknown variable type"));
       }
 
-      if (actual_type != expected_type) {
+      // For void* types, check if the type IS OF the expected type using IsType
+      // For primitive types, check exact match
+      bool type_matches = false;
+      if (std::holds_alternative<void*>(arg)) {
+        const auto* descriptor = reinterpret_cast<const runtime::ObjectDescriptor*>(std::get<void*>(arg));
+        const auto vtable_result = execution_data.virtual_table_repository.GetByIndex(descriptor->vtable_index);
+        
+        if (!vtable_result.has_value()) {
+          return std::unexpected(std::runtime_error("PureFunction: failed to get VirtualTable for type checking"));
+        }
+        
+        type_matches = vtable_result.value()->IsType(expected_type);
+      } else {
+        type_matches = (actual_type == expected_type);
+      }
+
+      if (!type_matches) {
         std::string error_msg = "PureFunction: type mismatch for argument ";
         error_msg += std::to_string(i);
         error_msg += " (expected ";
