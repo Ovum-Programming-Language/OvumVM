@@ -7,6 +7,7 @@ add_library(execution_tree STATIC
         IfMultibranch.cpp
         WhileExecution.cpp
         command_factory.cpp
+        BytecodeCommands.cpp
 )
 
 target_include_directories(execution_tree PUBLIC ${PROJECT_SOURCE_DIR})
