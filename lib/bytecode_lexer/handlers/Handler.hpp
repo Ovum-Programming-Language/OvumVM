@@ -2,12 +2,12 @@
 #define BYTECODE_LEXER_HANDLERS_HANDLER_HPP_
 
 #include <expected>
-#include <memory>
-#include <string>
+#include <optional>
+
+#include <tokens/Token.hpp>
 
 #include "lib/bytecode_lexer/BytecodeLexerError.hpp"
 #include "lib/bytecode_lexer/BytecodeSourceWrapper.hpp"
-#include "tokens/Token.hpp"
 
 namespace ovum::bytecode::lexer {
 
