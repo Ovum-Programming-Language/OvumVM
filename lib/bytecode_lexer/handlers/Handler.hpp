@@ -17,7 +17,8 @@ class Handler {
 public:
   virtual ~Handler() = default;
 
-  [[nodiscard]] virtual std::expected<std::optional<TokenPtr>, BytecodeLexerError> Scan(BytecodeSourceWrapper& wrapper) = 0;
+  [[nodiscard]] virtual std::expected<std::optional<TokenPtr>, BytecodeLexerError> Scan(
+      BytecodeSourceWrapper& wrapper) = 0;
 };
 
 } // namespace ovum::bytecode::lexer
