@@ -44,7 +44,6 @@ private:
   int32_t token_col_{1};
 
   static const std::unordered_set<std::string_view> kBytecodeKeywords;
-  static const std::unordered_set<std::string_view> kBytecodeMultiOps;
 };
 
 } // namespace ovum::bytecode::lexer

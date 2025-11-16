@@ -13,7 +13,7 @@ namespace ovum::bytecode::lexer {
 
 using TokenPtr = ovum::TokenPtr;
 
-class Handler {
+class Handler { // NOLINT(cppcoreguidelines-special-member-functions)
 public:
   virtual ~Handler() = default;
 

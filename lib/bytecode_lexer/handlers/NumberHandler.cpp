@@ -29,7 +29,7 @@ std::expected<std::optional<TokenPtr>, BytecodeLexerError> NumberHandler::Scan(B
   }
 
   if (!has_dot) {
-    int64_t value;
+    int64_t value = 0;
     auto [ptr, ec] = std::from_chars(num_str.data(), num_str.data() + num_str.size(), value);
     if (ec != std::errc() || ptr != num_str.data() + num_str.size()) {
       return std::unexpected(BytecodeLexerError("Invalid integer literal: " + num_str));
