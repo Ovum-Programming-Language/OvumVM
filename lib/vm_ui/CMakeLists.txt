@@ -3,6 +3,8 @@ add_library(vm_ui STATIC
 )
 
 target_link_libraries(vm_ui PUBLIC
+        tokens
+        bytecode_lexer
 )
 
 target_include_directories(vm_ui PUBLIC ${PROJECT_SOURCE_DIR})
