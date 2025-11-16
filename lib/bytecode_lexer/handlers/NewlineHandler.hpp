@@ -7,7 +7,7 @@ namespace ovum::bytecode::lexer {
 
 class NewlineHandler final : public Handler {
 public:
-  OptToken Scan(BytecodeSourceWrapper& wrapper) override;
+  std::expected<std::optional<TokenPtr>, BytecodeLexerError> Scan(BytecodeSourceWrapper& wrapper) override;
 };
 
 } // namespace ovum::bytecode::lexer

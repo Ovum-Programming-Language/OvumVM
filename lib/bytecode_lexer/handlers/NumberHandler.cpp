@@ -7,7 +7,7 @@
 
 namespace ovum::bytecode::lexer {
 
-OptToken NumberHandler::Scan(BytecodeSourceWrapper& wrapper) {
+std::expected<std::optional<TokenPtr>, BytecodeLexerError> NumberHandler::Scan(BytecodeSourceWrapper& wrapper) {
   std::string num_str;
   num_str.push_back(wrapper.CurrentChar());
   bool has_dot = false;

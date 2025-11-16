@@ -5,7 +5,7 @@
 
 namespace ovum::bytecode::lexer {
 
-OptToken IdentifierHandler::Scan(BytecodeSourceWrapper& wrapper) {
+std::expected<std::optional<TokenPtr>, BytecodeLexerError> IdentifierHandler::Scan(BytecodeSourceWrapper& wrapper) {
   std::string ident;
   ident.push_back(wrapper.CurrentChar());
   wrapper.ConsumeWhile(ident, [](char c) {

@@ -5,7 +5,7 @@
 
 namespace ovum::bytecode::lexer {
 
-OptToken StringHandler::Scan(BytecodeSourceWrapper& wrapper) {
+std::expected<std::optional<TokenPtr>, BytecodeLexerError> StringHandler::Scan(BytecodeSourceWrapper& wrapper) {
   wrapper.Advance();
 
   std::string content;

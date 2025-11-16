@@ -3,7 +3,7 @@
 
 namespace ovum::bytecode::lexer {
 
-OptToken DefaultHandler::Scan(BytecodeSourceWrapper& wrapper) {
+std::expected<std::optional<TokenPtr>, BytecodeLexerError> DefaultHandler::Scan(BytecodeSourceWrapper& wrapper) {
   char invalid = wrapper.CurrentChar();
   return std::unexpected(BytecodeLexerError(std::string("Unexpected character: '") + invalid + "'"));
 }

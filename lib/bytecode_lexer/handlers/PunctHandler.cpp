@@ -4,7 +4,7 @@
 
 namespace ovum::bytecode::lexer {
 
-OptToken PunctHandler::Scan(BytecodeSourceWrapper& wrapper) {
+std::expected<std::optional<TokenPtr>, BytecodeLexerError> PunctHandler::Scan(BytecodeSourceWrapper& wrapper) {
   char punct = wrapper.CurrentChar();
 
   if (punct != '{' && punct != '}' && punct != ',' && punct != ';' && punct != '(' && punct != ')' && punct != '[' &&

@@ -4,7 +4,7 @@
 
 namespace ovum::bytecode::lexer {
 
-OptToken NewlineHandler::Scan(BytecodeSourceWrapper& wrapper) {
+std::expected<std::optional<TokenPtr>, BytecodeLexerError> NewlineHandler::Scan(BytecodeSourceWrapper& wrapper) {
   return std::make_optional(ovum::TokenFactory::MakeNewline(wrapper.GetLine() - 1, wrapper.GetTokenCol()));
 }
 

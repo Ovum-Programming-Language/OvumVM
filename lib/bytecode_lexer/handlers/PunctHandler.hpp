@@ -7,7 +7,7 @@ namespace ovum::bytecode::lexer {
 
 class PunctHandler final : public Handler {
 public:
-  [[nodiscard]] OptToken Scan(BytecodeSourceWrapper& wrapper) override;
+  [[nodiscard]] std::expected<std::optional<TokenPtr>, BytecodeLexerError> Scan(BytecodeSourceWrapper& wrapper) override;
 };
 
 } // namespace ovum::bytecode::lexer
