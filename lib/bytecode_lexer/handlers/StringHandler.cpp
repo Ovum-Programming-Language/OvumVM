@@ -21,7 +21,7 @@ std::expected<std::optional<TokenPtr>, BytecodeLexerError> StringHandler::Scan(B
 
     if (c == '\\') {
       if (wrapper.IsAtEnd()) {
-        return  std::unexpected(BytecodeLexerError("Unterminated string literal (backslash at EOF)"));
+        return std::unexpected(BytecodeLexerError("Unterminated string literal (backslash at EOF)"));
       }
 
       char e = wrapper.Advance();
