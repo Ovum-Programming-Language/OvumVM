@@ -17,24 +17,23 @@ namespace ovum::bytecode::parser {
 
 class ParserContext {
 public:
-  ParserContext(const std::vector<TokenPtr>& tokens,
+  explicit ParserContext(const std::vector<TokenPtr>& tokens,
                 vm::execution_tree::FunctionRepository& func_repo,
                 vm::runtime::VirtualTableRepository& vtable_repo,
                 vm::runtime::RuntimeMemory& memory);
 
-  const TokenPtr Current() const;
-  const TokenPtr Peek(size_t offset = 1) const;
-  bool IsEof() const;
+  [[nodiscard]] const TokenPtr Current() const;
+  [[nodiscard]] bool IsEof() const;
   void Advance();
 
-  bool IsIdentifier() const;
-  bool IsKeyword(const std::string& kw) const;
-  bool IsPunct(char ch) const;
-  bool IsPunct(const std::string& p) const;
-  bool IsStringLiteral() const;
-  bool IsIntLiteral() const;
-  bool IsFloatLiteral() const;
-  bool IsBoolLiteral() const;
+  [[nodiscard]] bool IsIdentifier() const;
+  [[nodiscard]] bool IsKeyword(const std::string& kw) const;
+  [[nodiscard]] bool IsPunct(char ch) const;
+  [[nodiscard]] bool IsPunct(const std::string& p) const;
+  [[nodiscard]] bool IsStringLiteral() const;
+  [[nodiscard]] bool IsIntLiteral() const;
+  [[nodiscard]] bool IsFloatLiteral() const;
+  [[nodiscard]] bool IsBoolLiteral() const;
 
   std::expected<void, BytecodeParserError> ExpectIdentifier(const std::string& msg);
   std::expected<void, BytecodeParserError> ExpectKeyword(const std::string& kw);

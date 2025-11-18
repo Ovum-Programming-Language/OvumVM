@@ -18,18 +18,10 @@ ParserContext::ParserContext(const std::vector<TokenPtr>& tokens,
 const TokenPtr ParserContext::Current() const {
   if (pos_ >= tokens_.size()) {
     static const EofToken kEof(TokenPosition(0, 0));
+
     return std::make_shared<EofToken>(kEof);
   }
   return tokens_[pos_];
-}
-
-const TokenPtr ParserContext::Peek(size_t offset) const {
-  size_t idx = pos_ + offset;
-  if (idx >= tokens_.size()) {
-    static const EofToken kEof(TokenPosition(0, 0));
-    return std::make_shared<EofToken>(kEof);
-  }
-  return tokens_[idx];
 }
 
 bool ParserContext::IsEof() const {
@@ -76,93 +68,123 @@ bool ParserContext::IsBoolLiteral() const {
 std::expected<void, BytecodeParserError> ParserContext::ExpectIdentifier(const std::string& msg) {
   if (!IsIdentifier()) {
     std::string out_msg = msg.empty() ? "Expected identifier" : msg;
+
     return std::unexpected(BytecodeParserError(out_msg + " at line " +
                                                std::to_string(Current()->GetPosition().GetLine()) + " column " +
                                                std::to_string(Current()->GetPosition().GetColumn())));
   }
+
   Advance();
+
   return {};
 }
 
 std::expected<void, BytecodeParserError> ParserContext::ExpectKeyword(const std::string& kw) {
   if (!IsKeyword(kw)) {
     auto pos = Current()->GetPosition();
+
     return std::unexpected(BytecodeParserError("Expected keyword '" + kw + "' at " + std::to_string(pos.GetLine()) +
                                                ":" + std::to_string(pos.GetColumn())));
   }
+
   Advance();
+
   return {};
 }
 
 std::expected<void, BytecodeParserError> ParserContext::ExpectPunct(char ch, const std::string& msg) {
   if (!IsPunct(ch)) {
     auto token = Current();
+
     std::string out_msg = msg.empty() ? std::string("Expected '") + ch + "'" : msg;
+
     return std::unexpected(BytecodeParserError(out_msg + " at line " + std::to_string(token->GetPosition().GetLine()) +
                                                " column " + std::to_string(token->GetPosition().GetColumn())));
   }
+
   Advance();
+
   return {};
 }
 
 std::expected<std::string, BytecodeParserError> ParserContext::ConsumeIdentifier() {
   if (!IsIdentifier()) {
     auto token = Current();
+
     return std::unexpected(BytecodeParserError("Expected identifier at line " +
                                                std::to_string(token->GetPosition().GetLine()) + " column " +
                                                std::to_string(token->GetPosition().GetColumn())));
   }
+
   std::string value = Current()->GetLexeme();
+
   Advance();
+
   return value;
 }
 
 std::expected<std::string, BytecodeParserError> ParserContext::ConsumeStringLiteral() {
   if (Current()->GetStringType() != "LITERAL:String") {
     auto token = Current();
+
     return std::unexpected(BytecodeParserError("Expected string literal at line " +
                                                std::to_string(token->GetPosition().GetLine()) + " column " +
                                                std::to_string(token->GetPosition().GetColumn())));
   }
+
   std::string value = Current()->GetLexeme().substr(1, Current()->GetLexeme().length() - 2);
+
   Advance();
+
   return value;
 }
 
 std::expected<int64_t, BytecodeParserError> ParserContext::ConsumeIntLiteral() {
   if (Current()->GetStringType() != "LITERAL:Int") {
     auto token = Current();
+
     return std::unexpected(BytecodeParserError("Expected integer literal at line " +
                                                std::to_string(token->GetPosition().GetLine()) + " column " +
                                                std::to_string(token->GetPosition().GetColumn())));
   }
+
   int64_t value = std::stoi(Current()->GetLexeme());
+
   Advance();
+
   return value;
 }
 
 std::expected<double, BytecodeParserError> ParserContext::ConsumeFloatLiteral() {
   if (Current()->GetStringType() != "LITERAL:Float") {
     auto token = Current();
+
     return std::unexpected(BytecodeParserError("Expected float literal at line " +
                                                std::to_string(token->GetPosition().GetLine()) + " column " +
                                                std::to_string(token->GetPosition().GetColumn())));
   }
+
   double value = std::stod(Current()->GetLexeme());
+
   Advance();
+
   return value;
 }
 
 std::expected<bool, BytecodeParserError> ParserContext::ConsumeBoolLiteral() {
   if (Current()->GetLexeme() == "true") {
     Advance();
+
     return true;
   }
   if (Current()->GetLexeme() == "false") {
     Advance();
+
     return false;
   }
+
   auto token = Current();
+
   return std::unexpected(BytecodeParserError("Expected 'true' or 'false' at line " +
                                              std::to_string(token->GetPosition().GetLine()) + " column " +
                                              std::to_string(token->GetPosition().GetColumn())));
