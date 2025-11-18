@@ -10,7 +10,7 @@ std::expected<std::optional<TokenPtr>, BytecodeLexerError> IdentifierHandler::Sc
   ident.push_back(wrapper.CurrentChar());
   wrapper.ConsumeWhile(ident, [](char c) {
     return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' || c == '<' ||
-           c == '>';
+           c == '>' || c == '-';
   });
 
   if (ident.empty()) {
