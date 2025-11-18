@@ -49,30 +49,17 @@ std::expected<void, BytecodeParserError> CommandParser::ParseSingleStatement(Par
   std::string cmd = token->GetLexeme();
   ctx.Advance();
 
-  static const std::unordered_set<std::string> kStringCommands = {
-      "PushString", "FormatDateTime", "GetEnvironmentVariable", "SetEnvironmentVariable"};
+  static const std::unordered_set<std::string> kStringCommands = {"PushString", "PushChar"};
 
-  static const std::unordered_set<std::string> kIntegerCommands = {"PushInt",
-                                                                   "PushByte",
-                                                                   "PushChar",
-                                                                   "Rotate",
-                                                                   "LoadLocal",
-                                                                   "SetLocal",
-                                                                   "LoadStatic",
-                                                                   "SetStatic",
-                                                                   "GetField",
-                                                                   "SetField",
-                                                                   "SleepMs",
-                                                                   "SleepNs",
-                                                                   "Exit",
-                                                                   "SeedRandom"};
+  static const std::unordered_set<std::string> kIntegerCommands = {
+      "PushInt", "PushByte", "Rotate", "LoadLocal", "SetLocal", "LoadStatic", "SetStatic", "GetField", "SetField"};
 
   static const std::unordered_set<std::string> kFloatCommands = {"PushFloat"};
 
   static const std::unordered_set<std::string> kBooleanCommands = {"PushBool"};
 
   static const std::unordered_set<std::string> kIdentCommands = {
-      "Call", "CallVirtual", "CallConstructor", "SafeCall", "NewArray", "IsType", "SizeOf", "GetVTable", "SetVTable"};
+      "NewArray", "Call", "CallVirtual", "CallConstructor", "GetVTable", "SetVTable", "SafeCall", "IsType", "SizeOf"};
 
   if (kStringCommands.contains(cmd)) {
     auto value = ctx.ConsumeStringLiteral();

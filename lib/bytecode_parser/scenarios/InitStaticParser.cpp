@@ -25,6 +25,7 @@ std::expected<void, BytecodeParserError> InitStaticParser::Handle(ParserContext&
 
   while (!ctx.IsPunct('}') && !ctx.IsEof()) {
     auto res = CommandParser::ParseSingleStatement(ctx, *block);
+
     if (!res)
       return res;
   }
@@ -36,12 +37,14 @@ std::expected<void, BytecodeParserError> InitStaticParser::Handle(ParserContext&
       .memory = ctx.memory, .virtual_table_repository = ctx.vtable_repo, .function_repository = ctx.func_repo};
 
   auto result = block->Execute(exec_data);
+
   if (!result) {
     return std::unexpected(BytecodeParserError("Runtime error in init-static: " + std::string(result.error().what())));
   }
 
   ctx.init_static_parsed = true;
   ctx.current_block = nullptr;
+
   return {};
 }
 

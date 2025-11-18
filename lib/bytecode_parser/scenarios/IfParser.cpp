@@ -20,10 +20,13 @@ std::expected<void, BytecodeParserError> IfParser::Handle(ParserContext& ctx) {
 
   if (auto e = ctx.ExpectPunct('{'); !e)
     return std::unexpected(e.error());
+
   auto cond1 = std::make_unique<vm::execution_tree::Block>();
   ctx.current_block = cond1.get();
+
   while (!ctx.IsPunct('}')) {
     auto res = CommandParser::ParseSingleStatement(ctx, *cond1);
+
     if (!res)
       return res;
   }
@@ -35,13 +38,16 @@ std::expected<void, BytecodeParserError> IfParser::Handle(ParserContext& ctx) {
 
   if (auto e = ctx.ExpectPunct('{'); !e)
     return std::unexpected(e.error());
+
   auto body1 = std::make_unique<vm::execution_tree::Block>();
   ctx.current_block = body1.get();
+
   while (!ctx.IsPunct('}')) {
     auto res = CommandParser::ParseSingleStatement(ctx, *body1);
     if (!res)
       return res;
   }
+
   if (auto e = ctx.ExpectPunct('}'); !e)
     return std::unexpected(e.error());
 
@@ -55,13 +61,17 @@ std::expected<void, BytecodeParserError> IfParser::Handle(ParserContext& ctx) {
 
       if (auto e = ctx.ExpectPunct('{'); !e)
         return std::unexpected(e.error());
+
       auto cond = std::make_unique<vm::execution_tree::Block>();
       ctx.current_block = cond.get();
+
       while (!ctx.IsPunct('}')) {
         auto res = CommandParser::ParseSingleStatement(ctx, *cond);
+
         if (!res)
           return res;
       }
+
       if (auto e = ctx.ExpectPunct('}'); !e)
         return std::unexpected(e.error());
 
@@ -70,10 +80,13 @@ std::expected<void, BytecodeParserError> IfParser::Handle(ParserContext& ctx) {
 
       if (auto e = ctx.ExpectPunct('{'); !e)
         return std::unexpected(e.error());
+
       auto body = std::make_unique<vm::execution_tree::Block>();
       ctx.current_block = body.get();
+
       while (!ctx.IsPunct('}')) {
         auto res = CommandParser::ParseSingleStatement(ctx, *body);
+
         if (!res)
           return res;
       }
@@ -84,13 +97,17 @@ std::expected<void, BytecodeParserError> IfParser::Handle(ParserContext& ctx) {
     } else {
       if (auto e = ctx.ExpectPunct('{'); !e)
         return std::unexpected(e.error());
+
       auto else_body = std::make_unique<vm::execution_tree::Block>();
       ctx.current_block = else_body.get();
+
       while (!ctx.IsPunct('}')) {
         auto res = CommandParser::ParseSingleStatement(ctx, *else_body);
+
         if (!res)
           return res;
       }
+
       if (auto e = ctx.ExpectPunct('}'); !e)
         return std::unexpected(e.error());
 

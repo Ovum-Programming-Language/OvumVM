@@ -15,13 +15,17 @@ std::expected<void, BytecodeParserError> WhileParser::Handle(ParserContext& ctx)
 
   if (auto e = ctx.ExpectPunct('{'); !e)
     return std::unexpected(e.error());
+
   auto condition = std::make_unique<vm::execution_tree::Block>();
   ctx.current_block = condition.get();
+
   while (!ctx.IsPunct('}')) {
     auto res = CommandParser::ParseSingleStatement(ctx, *condition);
+
     if (!res)
       return res;
   }
+
   if (auto e = ctx.ExpectPunct('}'); !e)
     return std::unexpected(e.error());
 
@@ -30,13 +34,17 @@ std::expected<void, BytecodeParserError> WhileParser::Handle(ParserContext& ctx)
 
   if (auto e = ctx.ExpectPunct('{'); !e)
     return std::unexpected(e.error());
+
   auto body = std::make_unique<vm::execution_tree::Block>();
   ctx.current_block = body.get();
+
   while (!ctx.IsPunct('}')) {
     auto res = CommandParser::ParseSingleStatement(ctx, *body);
+
     if (!res)
       return res;
   }
+
   if (auto e = ctx.ExpectPunct('}'); !e)
     return std::unexpected(e.error());
 
