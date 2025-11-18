@@ -81,7 +81,7 @@ public:
     const auto cache_key_result = CreateCacheKey(arguments, execution_data);
 
     if (!cache_key_result.has_value()) {
-      return cache_key_result.error();
+      return std::unexpected(cache_key_result.error());
     }
 
     const CacheKey& cache_key = cache_key_result.value();
