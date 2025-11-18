@@ -11,7 +11,7 @@
 
 namespace ovum::bytecode::parser {
 
-bool FunctionParser::Handle(ParserContext& ctx) {
+std::expected<void, BytecodeParserError> FunctionParser::Handle(ParserContext& ctx) {
   std::vector<std::string> pure_types;
   bool is_pure = false;
   bool no_jit = false;
@@ -19,17 +19,17 @@ bool FunctionParser::Handle(ParserContext& ctx) {
   if (ctx.IsKeyword("pure")) {
     ctx.Advance();
     if (auto e = ctx.ExpectPunct('('); !e)
-      throw e.error();
+      return std::unexpected(e.error());
     while (!ctx.IsPunct(')')) {
       auto type = ctx.ConsumeIdentifier();
       if (!type)
-        throw type.error();
+        return std::unexpected(type.error());
       pure_types.push_back(type.value());
       if (ctx.IsPunct(','))
         ctx.Advance();
     }
     if (auto e = ctx.ExpectPunct(')'); !e)
-      throw e.error();
+      return std::unexpected(e.error());
     is_pure = true;
   }
 
@@ -39,37 +39,37 @@ bool FunctionParser::Handle(ParserContext& ctx) {
   }
 
   if (!ctx.IsKeyword("function"))
-    return false;
+    return std::unexpected(BytecodeParserError("Expected 'function'"));
+
   ctx.Advance();
 
-  auto colon = ctx.ExpectPunct(':');
-  if (!colon)
-    throw colon.error();
+  if (auto e = ctx.ExpectPunct(':'); !e)
+    return std::unexpected(e.error());
 
   auto arity_res = ctx.ConsumeIntLiteral();
   if (!arity_res)
-    throw arity_res.error();
+    return std::unexpected(arity_res.error());
   size_t arity = static_cast<size_t>(arity_res.value());
 
   auto name_res = ctx.ConsumeIdentifier();
   if (!name_res)
-    throw name_res.error();
+    return std::unexpected(name_res.error());
   std::string name = name_res.value();
 
   if (auto e = ctx.ExpectPunct('{'); !e)
-    throw e.error();
+    return std::unexpected(e.error());
 
   auto body = std::make_unique<vm::execution_tree::Block>();
   ctx.current_block = body.get();
 
   while (!ctx.IsPunct('}') && !ctx.IsEof()) {
-    if (!CommandParser::ParseSingleStatement(ctx, *body)) {
-      throw BytecodeParserError("Invalid function body statement");
-    }
+    auto res = CommandParser::ParseSingleStatement(ctx, *body);
+    if (!res)
+      return res;
   }
 
   if (auto e = ctx.ExpectPunct('}'); !e)
-    throw e.error();
+    return std::unexpected(e.error());
   ctx.current_block = nullptr;
 
   auto func = std::make_unique<vm::execution_tree::Function>(name, arity, std::move(body));
@@ -82,7 +82,6 @@ bool FunctionParser::Handle(ParserContext& ctx) {
 
     if (!no_jit) {
       auto jit_executor = std::make_unique<vm::executor::PlaceholderJitExecutor>();
-
       final_func = std::make_unique<
           vm::execution_tree::JitCompilingFunction<vm::execution_tree::PureFunction<vm::execution_tree::Function>>>(
           std::move(jit_executor), std::move(*pure_func), 100);
@@ -101,10 +100,10 @@ bool FunctionParser::Handle(ParserContext& ctx) {
 
   auto add_res = ctx.func_repo.Add(std::move(final_func));
   if (!add_res) {
-    throw BytecodeParserError(std::string("Failed to add function: ") + add_res.error().what());
+    return std::unexpected(BytecodeParserError(std::string("Failed to add function: ") + add_res.error().what()));
   }
 
-  return true;
+  return {};
 }
 
 } // namespace ovum::bytecode::parser

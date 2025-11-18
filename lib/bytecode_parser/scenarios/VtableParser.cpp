@@ -5,18 +5,18 @@
 
 namespace ovum::bytecode::parser {
 
-bool VtableParser::Handle(ParserContext& ctx) {
+std::expected<void, BytecodeParserError> VtableParser::Handle(ParserContext& ctx) {
   if (!ctx.IsKeyword("vtable"))
-    return false;
+    return std::unexpected(BytecodeParserError("Expected 'vtable'"));
 
   ctx.Advance();
   auto name_res = ctx.ConsumeIdentifier();
   if (!name_res)
-    throw name_res.error();
+    return std::unexpected(name_res.error());
   std::string class_name = name_res.value();
 
   if (auto e = ctx.ExpectPunct('{'); !e)
-    throw e.error();
+    return std::unexpected(e.error());
 
   vm::runtime::VirtualTable vtable(class_name, 0);
 
@@ -25,78 +25,78 @@ bool VtableParser::Handle(ParserContext& ctx) {
       ctx.Advance();
       auto size_res = ctx.ConsumeIntLiteral();
       if (!size_res)
-        throw size_res.error();
+        return std::unexpected(size_res.error());
       vtable = vm::runtime::VirtualTable(class_name, static_cast<size_t>(size_res.value()));
     } else if (ctx.IsKeyword("interfaces")) {
       ctx.Advance();
       if (auto e = ctx.ExpectPunct('{'); !e)
-        throw e.error();
+        return std::unexpected(e.error());
       while (!ctx.IsPunct('}')) {
         auto iface = ctx.ConsumeIdentifier();
         if (!iface)
-          break;
+          return std::unexpected(iface.error());
         vtable.AddInterface(iface.value());
         if (ctx.IsPunct(','))
           ctx.Advance();
       }
       if (auto e = ctx.ExpectPunct('}'); !e)
-        throw e.error();
+        return std::unexpected(e.error());
     } else if (ctx.IsKeyword("methods")) {
       ctx.Advance();
       if (auto e = ctx.ExpectPunct('{'); !e)
-        throw e.error();
+        return std::unexpected(e.error());
       while (!ctx.IsPunct('}')) {
         auto virt = ctx.ConsumeIdentifier();
         if (!virt)
-          break;
+          return std::unexpected(virt.error());
         if (auto e = ctx.ExpectPunct(':'); !e)
-          throw e.error();
+          return std::unexpected(e.error());
         auto real = ctx.ConsumeIdentifier();
         if (!real)
-          throw real.error();
+          return std::unexpected(real.error());
         vtable.AddFunction(virt.value(), real.value());
         if (ctx.IsPunct(','))
           ctx.Advance();
       }
       if (auto e = ctx.ExpectPunct('}'); !e)
-        throw e.error();
+        return std::unexpected(e.error());
     } else if (ctx.IsKeyword("vartable")) {
       ctx.Advance();
       if (auto e = ctx.ExpectPunct('{'); !e)
-        throw e.error();
+        return std::unexpected(e.error());
       while (!ctx.IsPunct('}')) {
         auto field = ctx.ConsumeIdentifier();
         if (!field)
-          break;
+          return std::unexpected(field.error());
         if (auto e = ctx.ExpectPunct(':'); !e)
-          throw e.error();
+          return std::unexpected(e.error());
         auto type = ctx.ConsumeIdentifier();
         if (!type)
-          throw type.error();
+          return std::unexpected(type.error());
         if (auto e = ctx.ExpectPunct('@'); !e)
-          throw e.error();
+          return std::unexpected(e.error());
         auto offset = ctx.ConsumeIntLiteral();
         if (!offset)
-          throw offset.error();
+          return std::unexpected(offset.error());
         vtable.AddField(type.value(), static_cast<size_t>(offset.value()));
         if (ctx.IsPunct(','))
           ctx.Advance();
       }
       if (auto e = ctx.ExpectPunct('}'); !e)
-        throw e.error();
+        return std::unexpected(e.error());
     } else {
-      throw BytecodeParserError("Unknown vtable directive: " + ctx.Current()->GetLexeme());
+      return std::unexpected(BytecodeParserError("Unknown vtable directive: " + ctx.Current()->GetLexeme()));
     }
   }
 
   if (auto e = ctx.ExpectPunct('}'); !e)
-    throw e.error();
+    return std::unexpected(e.error());
 
   if (!ctx.vtable_repo.Add(std::move(vtable))) {
-    throw BytecodeParserError("Failed to add vtable");
+    return std::unexpected(BytecodeParserError("Failed to add vtable"));
   }
 
-  return true;
+  return {};
 }
 
 } // namespace ovum::bytecode::parser

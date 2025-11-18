@@ -7,42 +7,42 @@
 
 namespace ovum::bytecode::parser {
 
-bool InitStaticParser::Handle(ParserContext& ctx) {
+std::expected<void, BytecodeParserError> InitStaticParser::Handle(ParserContext& ctx) {
   if (!ctx.IsKeyword("init-static"))
-    return false;
+    return std::unexpected(BytecodeParserError("Expected 'init-static'"));
 
   if (ctx.init_static_parsed) {
-    throw BytecodeParserError("Multiple init-static blocks are not allowed");
+    return std::unexpected(BytecodeParserError("Multiple init-static blocks are not allowed"));
   }
 
   ctx.Advance();
 
   if (auto e = ctx.ExpectPunct('{'); !e)
-    throw e.error();
+    return std::unexpected(e.error());
 
   auto block = std::make_unique<vm::execution_tree::Block>();
   ctx.current_block = block.get();
 
   while (!ctx.IsPunct('}') && !ctx.IsEof()) {
-    if (!CommandParser::ParseSingleStatement(ctx, *block)) {
-      throw BytecodeParserError("Invalid statement in init-static");
-    }
+    auto res = CommandParser::ParseSingleStatement(ctx, *block);
+    if (!res)
+      return res;
   }
 
   if (auto e = ctx.ExpectPunct('}'); !e)
-    throw e.error();
+    return std::unexpected(e.error());
 
   vm::execution_tree::PassedExecutionData exec_data{
       .memory = ctx.memory, .virtual_table_repository = ctx.vtable_repo, .function_repository = ctx.func_repo};
 
   auto result = block->Execute(exec_data);
   if (!result) {
-    throw BytecodeParserError("Runtime error in init-static: " + std::string(result.error().what()));
+    return std::unexpected(BytecodeParserError("Runtime error in init-static: " + std::string(result.error().what())));
   }
 
   ctx.init_static_parsed = true;
   ctx.current_block = nullptr;
-  return true;
+  return {};
 }
 
 } // namespace ovum::bytecode::parser

@@ -2,14 +2,20 @@
 #define BYTECODE_PARSER_COMMANDPARSER_HPP_
 
 #include "IParserHandler.hpp"
+
+#include <expected>
+
+#include "lib/bytecode_parser/BytecodeParserError.hpp"
+#include "lib/bytecode_parser/ParserContext.hpp"
 #include "lib/execution_tree/Block.hpp"
 
 namespace ovum::bytecode::parser {
 
 class CommandParser : public IParserHandler {
 public:
-  bool Handle(ParserContext& ctx) override;
-  static bool ParseSingleStatement(ParserContext& ctx, vm::execution_tree::Block& block);
+  std::expected<void, BytecodeParserError> Handle(ParserContext& ctx) override;
+  static std::expected<void, BytecodeParserError> ParseSingleStatement(ParserContext& ctx,
+                                                                       vm::execution_tree::Block& block);
 };
 
 } // namespace ovum::bytecode::parser

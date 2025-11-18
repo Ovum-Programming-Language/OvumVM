@@ -3,11 +3,13 @@
 
 #include "IParserHandler.hpp"
 
+#include <expected>
+
 namespace ovum::bytecode::parser {
 
 class WhileParser : public IParserHandler {
 public:
-  bool Handle(ParserContext& ctx) override;
+  std::expected<void, BytecodeParserError> Handle(ParserContext& ctx) override;
 };
 
 } // namespace ovum::bytecode::parser

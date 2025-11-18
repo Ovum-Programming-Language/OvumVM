@@ -7,40 +7,43 @@
 
 namespace ovum::bytecode::parser {
 
-bool WhileParser::Handle(ParserContext& ctx) {
+std::expected<void, BytecodeParserError> WhileParser::Handle(ParserContext& ctx) {
   if (!ctx.IsKeyword("while"))
-    return false;
+    return std::unexpected(BytecodeParserError("Expected 'while'"));
+
   ctx.Advance();
 
   if (auto e = ctx.ExpectPunct('{'); !e)
-    throw e.error();
+    return std::unexpected(e.error());
   auto condition = std::make_unique<vm::execution_tree::Block>();
   ctx.current_block = condition.get();
   while (!ctx.IsPunct('}')) {
-    if (!CommandParser::ParseSingleStatement(ctx, *condition))
-      throw BytecodeParserError("Invalid statement in while condition");
+    auto res = CommandParser::ParseSingleStatement(ctx, *condition);
+    if (!res)
+      return res;
   }
   if (auto e = ctx.ExpectPunct('}'); !e)
-    throw e.error();
+    return std::unexpected(e.error());
 
   if (auto e = ctx.ExpectKeyword("then"); !e)
-    throw e.error();
+    return std::unexpected(e.error());
 
   if (auto e = ctx.ExpectPunct('{'); !e)
-    throw e.error();
+    return std::unexpected(e.error());
   auto body = std::make_unique<vm::execution_tree::Block>();
   ctx.current_block = body.get();
   while (!ctx.IsPunct('}')) {
-    if (!CommandParser::ParseSingleStatement(ctx, *body))
-      throw BytecodeParserError("Invalid statement in while body");
+    auto res = CommandParser::ParseSingleStatement(ctx, *body);
+    if (!res)
+      return res;
   }
   if (auto e = ctx.ExpectPunct('}'); !e)
-    throw e.error();
+    return std::unexpected(e.error());
 
   auto while_node = std::make_unique<vm::execution_tree::WhileExecution>(std::move(condition), std::move(body));
 
   ctx.current_block->AddStatement(std::move(while_node));
-  return true;
+  return {};
 }
 
 } // namespace ovum::bytecode::parser
