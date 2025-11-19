@@ -7,7 +7,7 @@
 #include "lib/execution_tree/Function.hpp"
 #include "lib/execution_tree/JitCompilingFunction.hpp"
 #include "lib/execution_tree/PureFunction.hpp"
-#include "lib/executor/PlaceholderJitExecutor.hpp"
+#include "lib/executor/IJitExecutorFactory.hpp"
 
 namespace ovum::bytecode::parser {
 
@@ -94,20 +94,20 @@ std::expected<void, BytecodeParserError> FunctionParser::Handle(ParserContext& c
         std::move(*func), std::move(pure_types));
 
     if (!no_jit) {
-      auto jit_executor = std::make_unique<vm::executor::PlaceholderJitExecutor>();
+      auto jit_executor = ctx.jit_factory->Create();
 
       final_func = std::make_unique<
           vm::execution_tree::JitCompilingFunction<vm::execution_tree::PureFunction<vm::execution_tree::Function>>>(
-          std::move(jit_executor), std::move(*pure_func), 100);
+          std::move(jit_executor), std::move(*pure_func), ctx.jit_boundary);
     } else {
       final_func = std::move(pure_func);
     }
   } else {
     if (!no_jit) {
-      auto jit_executor = std::make_unique<vm::executor::PlaceholderJitExecutor>();
+      auto jit_executor = ctx.jit_factory->Create();
 
       final_func = std::make_unique<vm::execution_tree::JitCompilingFunction<vm::execution_tree::Function>>(
-          std::move(jit_executor), std::move(*func), 100);
+          std::move(jit_executor), std::move(*func), ctx.jit_boundary);
     } else {
       final_func = std::move(func);
     }

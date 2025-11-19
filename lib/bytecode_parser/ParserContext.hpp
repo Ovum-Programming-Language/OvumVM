@@ -10,6 +10,7 @@
 #include "lib/bytecode_parser/BytecodeParserError.hpp"
 #include "lib/execution_tree/Block.hpp"
 #include "lib/execution_tree/FunctionRepository.hpp"
+#include "lib/executor/IJitExecutorFactory.hpp" // Новый include
 #include "lib/runtime/RuntimeMemory.hpp"
 #include "lib/runtime/VirtualTableRepository.hpp"
 
@@ -18,9 +19,11 @@ namespace ovum::bytecode::parser {
 class ParserContext {
 public:
   explicit ParserContext(const std::vector<TokenPtr>& tokens,
-                vm::execution_tree::FunctionRepository& func_repo,
-                vm::runtime::VirtualTableRepository& vtable_repo,
-                vm::runtime::RuntimeMemory& memory);
+                         vm::execution_tree::FunctionRepository& func_repo,
+                         vm::runtime::VirtualTableRepository& vtable_repo,
+                         vm::runtime::RuntimeMemory& memory,
+                         vm::executor::IJitExecutorFactory* jit_factory,
+                         size_t jit_boundary);
 
   [[nodiscard]] const TokenPtr Current() const;
   [[nodiscard]] bool IsEof() const;
@@ -52,6 +55,9 @@ public:
   bool init_static_parsed = false;
 
   ovum::vm::execution_tree::Block* current_block = nullptr;
+
+  vm::executor::IJitExecutorFactory* jit_factory = nullptr;
+  size_t jit_boundary = 0;
 
 private:
   const std::vector<TokenPtr>& tokens_;

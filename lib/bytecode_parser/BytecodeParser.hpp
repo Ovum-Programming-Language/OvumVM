@@ -8,12 +8,13 @@
 #include "BytecodeParserError.hpp"
 #include "ParserContext.hpp"
 #include "lib/bytecode_parser/scenarios/IParserHandler.hpp"
+#include "lib/executor/IJitExecutorFactory.hpp"
 
 namespace ovum::bytecode::parser {
 
 class BytecodeParser {
 public:
-  BytecodeParser();
+  BytecodeParser(std::unique_ptr<vm::executor::IJitExecutorFactory> jit_factory, size_t jit_boundary);
 
   std::expected<void, BytecodeParserError> Parse(const std::vector<TokenPtr>& tokens,
                                                  vm::execution_tree::FunctionRepository& func_repo,
@@ -22,6 +23,8 @@ public:
 
 private:
   std::vector<std::unique_ptr<IParserHandler>> handlers_;
+  std::unique_ptr<vm::executor::IJitExecutorFactory> jit_factory_;  // Новый член
+  size_t jit_boundary_;  // Новый член
 };
 
 } // namespace ovum::bytecode::parser
