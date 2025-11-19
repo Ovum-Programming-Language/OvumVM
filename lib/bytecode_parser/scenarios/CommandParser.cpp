@@ -110,12 +110,12 @@ std::expected<void, BytecodeParserError> CommandParser::ParseSingleStatement(Par
 
     block.AddStatement(std::move(exec.value()));
   } else if (kIdentCommands.contains(cmd)) {
-    auto funcName = ctx.ConsumeIdentifier();
+    auto func_name = ctx.ConsumeIdentifier();
 
-    if (!funcName)
-      return std::unexpected(funcName.error());
+    if (!func_name)
+      return std::unexpected(func_name.error());
 
-    auto exec = ovum::vm::execution_tree::CreateStringCommandByName(cmd, funcName.value());
+    auto exec = ovum::vm::execution_tree::CreateStringCommandByName(cmd, func_name.value());
 
     if (!exec)
       return std::unexpected(BytecodeParserError("Failed to create call command: " + cmd));
