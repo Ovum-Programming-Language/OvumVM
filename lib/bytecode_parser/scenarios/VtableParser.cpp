@@ -110,7 +110,7 @@ std::expected<void, BytecodeParserError> VtableParser::Handle(ParserContext& ctx
         if (!offset)
           return std::unexpected(offset.error());
 
-        vtable.AddField(type.value(), static_cast<size_t>(offset.value()));
+        vtable.AddField(type.value(), offset.value());
 
         if (ctx.IsPunct(','))
           ctx.Advance();
