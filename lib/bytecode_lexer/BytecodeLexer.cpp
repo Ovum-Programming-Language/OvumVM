@@ -68,7 +68,7 @@ std::array<std::unique_ptr<Handler>, kDefaultBytecodeTokenReserve> BytecodeLexer
   table.at(static_cast<unsigned char>('\t')) = std::make_unique<WhitespaceHandler>();
   table.at(static_cast<unsigned char>('\r')) = std::make_unique<WhitespaceHandler>();
 
-  table.at(static_cast<unsigned char>('\n')) = std::make_unique<NewlineHandler>();
+  table.at(static_cast<unsigned char>('\n')) = std::make_unique<WhitespaceHandler>();
 
   for (unsigned char ch = 'a'; ch <= 'z'; ++ch) {
     table.at(ch) = std::make_unique<IdentifierHandler>();
