@@ -16,8 +16,8 @@
 
 namespace ovum::bytecode::parser {
 
-BytecodeParser::BytecodeParser(std::unique_ptr<vm::executor::IJitExecutorFactory> jit_factory, size_t jit_boundary)
-    : jit_factory_(std::move(jit_factory)), jit_boundary_(jit_boundary) {
+BytecodeParser::BytecodeParser(std::unique_ptr<vm::executor::IJitExecutorFactory> jit_factory, size_t jit_boundary) :
+    jit_factory_(std::move(jit_factory)), jit_boundary_(jit_boundary) {
   handlers_.push_back(std::make_unique<InitStaticParser>());
   handlers_.push_back(std::make_unique<VtableParser>());
   handlers_.push_back(std::make_unique<FunctionParser>());

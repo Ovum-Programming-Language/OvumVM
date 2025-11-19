@@ -10,7 +10,7 @@
 #include "lib/bytecode_parser/BytecodeParserError.hpp"
 #include "lib/execution_tree/Block.hpp"
 #include "lib/execution_tree/FunctionRepository.hpp"
-#include "lib/executor/IJitExecutorFactory.hpp" // Новый include
+#include "lib/executor/IJitExecutorFactory.hpp"
 #include "lib/runtime/RuntimeMemory.hpp"
 #include "lib/runtime/VirtualTableRepository.hpp"
 

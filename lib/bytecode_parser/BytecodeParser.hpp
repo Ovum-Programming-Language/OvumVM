@@ -23,8 +23,8 @@ public:
 
 private:
   std::vector<std::unique_ptr<IParserHandler>> handlers_;
-  std::unique_ptr<vm::executor::IJitExecutorFactory> jit_factory_;  // Новый член
-  size_t jit_boundary_;  // Новый член
+  std::unique_ptr<vm::executor::IJitExecutorFactory> jit_factory_;
+  size_t jit_boundary_;
 };
 
 } // namespace ovum::bytecode::parser

@@ -8,7 +8,7 @@ namespace ovum::bytecode::parser {
 
 class ParserContext;
 
-class IParserHandler {
+class IParserHandler { // NOLINT(cppcoreguidelines-special-member-functions)
 public:
   virtual ~IParserHandler() = default;
   virtual std::expected<void, BytecodeParserError> Handle(ParserContext& ctx) = 0;
