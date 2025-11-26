@@ -25,7 +25,7 @@ std::expected<ExecutionResult, std::runtime_error> PushNull(PassedExecutionData&
 std::expected<ExecutionResult, std::runtime_error> Pop(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> Dup(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> Swap(PassedExecutionData& data);
-std::expected<ExecutionResult, std::runtime_error> Rotate(PassedExecutionData& data, int n);
+std::expected<ExecutionResult, std::runtime_error> Rotate(PassedExecutionData& data, uint64_t n);
 
 std::expected<ExecutionResult, std::runtime_error> LoadLocal(PassedExecutionData& data, size_t index);
 std::expected<ExecutionResult, std::runtime_error> SetLocal(PassedExecutionData& data, size_t index);

@@ -9,7 +9,7 @@
 #include <thread>
 #include "FunctionRepository.hpp"
 #include "IFunctionExecutable.hpp"
-#include "../runtime/ObjectDescriptor.hpp"
+#include "lib/runtime/ObjectDescriptor.hpp"
 
 namespace ovum::vm::execution_tree {
 
@@ -41,6 +41,114 @@ std::expected<std::pair<ArgumentOneType, ArgumentTwoType>, std::runtime_error> T
   }
 
   return std::pair<ArgumentOneType, ArgumentTwoType>(*argument_one, *argument_two);
+}
+
+std::expected<ExecutionResult, std::runtime_error> PushInt(PassedExecutionData& data, int64_t value) {
+  data.memory.machine_stack.push(value);
+
+  return ExecutionResult::kNormal;
+}
+
+std::expected<ExecutionResult, std::runtime_error> PushFloat(PassedExecutionData& data, double value) {
+  data.memory.machine_stack.push(value);
+
+  return ExecutionResult::kNormal;
+}
+
+std::expected<ExecutionResult, std::runtime_error> PushBool(PassedExecutionData& data, bool value) {
+  data.memory.machine_stack.push(value);
+
+  return ExecutionResult::kNormal;
+}
+
+std::expected<ExecutionResult, std::runtime_error> PushChar(PassedExecutionData& data, char value) {
+  data.memory.machine_stack.push(value);
+
+  return ExecutionResult::kNormal;
+}
+
+std::expected<ExecutionResult, std::runtime_error> PushByte(PassedExecutionData& data, uint8_t value) {
+  data.memory.machine_stack.push(value);
+
+  return ExecutionResult::kNormal;
+}
+
+std::expected<ExecutionResult, std::runtime_error> PushString(PassedExecutionData& data, const std::string& value);
+std::expected<ExecutionResult, std::runtime_error> PushNull(PassedExecutionData& data);
+
+std::expected<ExecutionResult, std::runtime_error> Pop(PassedExecutionData& data) {
+  data.memory.machine_stack.pop();
+
+  return ExecutionResult::kNormal;
+}
+
+std::expected<ExecutionResult, std::runtime_error> Dup(PassedExecutionData& data) {
+  data.memory.machine_stack.push(data.memory.machine_stack.top());
+
+  return ExecutionResult::kNormal;
+}
+
+std::expected<ExecutionResult, std::runtime_error> Swap(PassedExecutionData& data) {
+  auto arguments = TryExtractTwoArguments<runtime::Variable, runtime::Variable>(data, "Swap");
+
+  if (!arguments) {
+    return std::unexpected(arguments.error());
+  }
+
+  data.memory.machine_stack.push(arguments.value().first);
+  data.memory.machine_stack.push(arguments.value().second);
+
+  return ExecutionResult::kNormal;
+}
+
+std::expected<ExecutionResult, std::runtime_error> Rotate(PassedExecutionData& data, uint64_t n) {
+  try {
+    auto top = data.memory.machine_stack.top();
+    data.memory.machine_stack.pop();
+
+    std::vector<runtime::Variable> temp;
+    temp.reserve(n - 1);
+
+    for (int i = 0; i < n - 1; ++i) {
+      temp.push_back(data.memory.machine_stack.top());
+      data.memory.machine_stack.pop();
+    }
+
+    for (auto it = temp.rbegin(); it != temp.rend(); ++it) {
+      data.memory.machine_stack.push(*it);
+    }
+    
+    data.memory.machine_stack.push(top);
+
+  } catch (const std::exception& e) {
+    return std::unexpected(std::runtime_error("Rotate: not enough elements in stack"));
+  }
+
+  return ExecutionResult::kNormal;
+}
+
+std::expected<ExecutionResult, std::runtime_error> LoadLocal(PassedExecutionData& data, size_t index) {
+  data.memory.machine_stack.push(data.memory.stack_frames.top().local_variables[index]);
+
+  return ExecutionResult::kNormal;
+}
+
+std::expected<ExecutionResult, std::runtime_error> SetLocal(PassedExecutionData& data, size_t index) {
+  data.memory.stack_frames.top().local_variables[index] = data.memory.machine_stack.top();
+
+  return ExecutionResult::kNormal;
+}
+
+std::expected<ExecutionResult, std::runtime_error> LoadStatic(PassedExecutionData& data, size_t index) {
+  data.memory.machine_stack.push(data.memory.global_variables[index]);
+
+  return ExecutionResult::kNormal;
+}
+
+std::expected<ExecutionResult, std::runtime_error> SetStatic(PassedExecutionData& data, size_t index) {
+  data.memory.global_variables[index] = data.memory.machine_stack.top();
+
+  return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> IntAdd(PassedExecutionData& data) {
@@ -765,4 +873,88 @@ std::expected<ExecutionResult, std::runtime_error> CallVirtual(PassedExecutionDa
 std::expected<ExecutionResult, std::runtime_error> Return(PassedExecutionData& data) {
   return ExecutionResult::kReturn;
 }
+
+std::expected<ExecutionResult, std::runtime_error> GetField(PassedExecutionData& data, size_t number) {
+  auto argument = TryExtractArgument<void*>(data, "GetField");
+
+  if (!argument) {
+    return std::unexpected(argument.error());
+  }
+
+  auto vtable = data.virtual_table_repository.GetByIndex(reinterpret_cast<runtime::ObjectDescriptor*>(argument.value())->vtable_index);
+
+  if (!vtable) {
+    return std::unexpected(vtable.error());
+  }
+
+  auto field = vtable.value()->GetVariableByIndex(argument.value(), number);
+
+  if (!field) {
+    return std::unexpected(field.error());
+  }
+
+  data.memory.machine_stack.push(field.value());
+
+  return ExecutionResult::kNormal;
+}
+
+std::expected<ExecutionResult, std::runtime_error> SetField(PassedExecutionData& data, size_t number) {
+  auto arguments = TryExtractTwoArguments<void*, runtime::Variable>(data, "SetField");
+
+  if (!arguments) {
+    return std::unexpected(arguments.error());
+  }
+
+  auto vtable = data.virtual_table_repository.GetByIndex(reinterpret_cast<runtime::ObjectDescriptor*>(arguments.value().first)->vtable_index);
+
+  if (!vtable) {
+    return std::unexpected(vtable.error());
+  }
+
+  auto result = vtable.value()->SetVariableByIndex(arguments.value().first, number, arguments.value().second);
+
+  if (!result) {
+    return std::unexpected(result.error());
+  }
+
+  return ExecutionResult::kNormal;
+}
+
+std::expected<ExecutionResult, std::runtime_error> CallConstructor(PassedExecutionData& data, const std::string& constructor);
+std::expected<ExecutionResult, std::runtime_error> Unwrap(PassedExecutionData& data);
+
+std::expected<ExecutionResult, std::runtime_error> GetVTable(PassedExecutionData& data, const std::string& class_name) {
+  auto vtable_idx = data.virtual_table_repository.GetIndexByName(class_name);
+
+  if (!vtable_idx) {
+    return std::unexpected(vtable_idx.error());
+  }
+
+  data.memory.machine_stack.push(static_cast<int64_t>(vtable_idx.value()));
+
+  return ExecutionResult::kNormal;
+}
+
+std::expected<ExecutionResult, std::runtime_error> SetVTable(PassedExecutionData& data, const std::string& class_name) {
+  auto argument = TryExtractArgument<void*>(data, "GetField");
+
+  if (!argument) {
+    return std::unexpected(argument.error());
+  }
+
+  auto object_descriptor_ptr = reinterpret_cast<runtime::ObjectDescriptor*>(argument.value());
+
+  auto vtable_idx = data.virtual_table_repository.GetIndexByName(class_name);
+
+  if (!vtable_idx) {
+    return std::unexpected(vtable_idx.error());
+  }
+
+  object_descriptor_ptr->vtable_index = static_cast<uint32_t>(vtable_idx.value());
+
+  data.memory.machine_stack.push(reinterpret_cast<void*>(object_descriptor_ptr));
+
+  return ExecutionResult::kNormal;
+}
+
 } // namespace ovum::vm::execution_tree
