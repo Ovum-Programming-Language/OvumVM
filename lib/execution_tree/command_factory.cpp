@@ -1,5 +1,6 @@
-#include <iostream>
 #include "command_factory.hpp"
+
+#include <iostream>
 
 #include "lib/execution_tree/Command.hpp"
 
