@@ -7,6 +7,9 @@
 #include <filesystem>
 #include <sstream>
 #include <thread>
+#include "FunctionRepository.hpp"
+#include "IFunctionExecutable.hpp"
+#include "../runtime/ObjectDescriptor.hpp"
 
 namespace ovum::vm::execution_tree {
 
@@ -645,4 +648,121 @@ std::expected<ExecutionResult, std::runtime_error> ByteRightShift(PassedExecutio
   return ExecutionResult::kNormal;
 }
 
+std::expected<ExecutionResult, std::runtime_error> IntToFloat(PassedExecutionData& data) {
+  auto argument = TryExtractArgument<int64_t>(data, "IntToFloat");
+  if (!argument) {
+    return std::unexpected(argument.error());
+  }
+
+  data.memory.machine_stack.push(runtime::Variable(static_cast<double>(argument.value())));
+  return ExecutionResult::kNormal;
+}
+std::expected<ExecutionResult, std::runtime_error> FloatToInt(PassedExecutionData& data) {
+  auto argument = TryExtractArgument<double>(data, "FloatToInt");
+  if (!argument) {
+    return std::unexpected(argument.error());
+  }
+
+  data.memory.machine_stack.push(runtime::Variable(static_cast<int64_t>(argument.value())));
+  return ExecutionResult::kNormal;
+}
+
+std::expected<ExecutionResult, std::runtime_error> ByteToInt(PassedExecutionData& data) {
+  auto argument = TryExtractArgument<uint8_t>(data, "ByteToInt");
+  if (!argument) {
+    return std::unexpected(argument.error());
+  }
+
+  data.memory.machine_stack.push(runtime::Variable(static_cast<int64_t>(argument.value())));
+  return ExecutionResult::kNormal;
+}
+
+std::expected<ExecutionResult, std::runtime_error> CharToByte(PassedExecutionData& data) {
+  auto argument = TryExtractArgument<char>(data, "CharToByte");
+  if (!argument) {
+    return std::unexpected(argument.error());
+  }
+
+  data.memory.machine_stack.push(runtime::Variable(static_cast<uint8_t>(argument.value())));
+  return ExecutionResult::kNormal;
+}
+
+std::expected<ExecutionResult, std::runtime_error> ByteToChar(PassedExecutionData& data) {
+  auto argument = TryExtractArgument<uint8_t>(data, "ByteToChar");
+  if (!argument) {
+    return std::unexpected(argument.error());
+  }
+
+  data.memory.machine_stack.push(runtime::Variable(static_cast<char>(argument.value())));
+  return ExecutionResult::kNormal;
+}
+
+std::expected<ExecutionResult, std::runtime_error> BoolToByte(PassedExecutionData& data) {
+  auto argument = TryExtractArgument<bool>(data, "BoolToByte");
+  if (!argument) {
+    return std::unexpected(argument.error());
+  }
+
+  data.memory.machine_stack.push(runtime::Variable(static_cast<uint8_t>(argument.value())));
+  return ExecutionResult::kNormal;
+}
+
+std::expected<ExecutionResult, std::runtime_error> Call(PassedExecutionData& data, const std::string& function_name) {
+  auto function = data.function_repository.GetByName(function_name);
+
+  if (!function) {
+    return std::unexpected(function.error());
+  }
+
+  function.value()->Execute(data);
+
+  return ExecutionResult::kNormal;
+}
+
+std::expected<ExecutionResult, std::runtime_error> CallIndirect(PassedExecutionData& data) {
+  auto argument = TryExtractArgument<int64_t>(data, "CallIndirect");
+  if (!argument) {
+    return std::unexpected(argument.error());
+  }
+
+  auto function = data.function_repository.GetByIndex(static_cast<size_t>(argument.value()));
+
+  if (!function) {
+    return std::unexpected(function.error());
+  }
+  
+  return function.value()->Execute(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> CallVirtual(PassedExecutionData& data, const std::string& method) {
+  auto argument = TryExtractArgument<void*>(data, "CallVirtual");
+  if (!argument) {
+    return std::unexpected(argument.error());
+  }
+
+  auto vtable = data.virtual_table_repository.GetByIndex(static_cast<ovum::vm::runtime::ObjectDescriptor*>(argument.value())->vtable_index);
+
+  if (!vtable) {
+    return std::unexpected(vtable.error());
+  }
+
+  auto function_id = vtable.value()->GetRealFunctionId(method);
+
+  if (!function_id) {
+    return std::unexpected(function_id.error());
+  }
+
+  const runtime::FunctionId const_function_id = std::move(function_id.value());
+  auto function = data.function_repository.GetById(const_function_id);
+
+  if (!function) {
+    return std::unexpected(function.error());
+  }
+
+  return function.value()->Execute(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> Return(PassedExecutionData& data) {
+  return ExecutionResult::kReturn;
+}
 } // namespace ovum::vm::execution_tree
