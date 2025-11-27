@@ -9,7 +9,7 @@ namespace ovum::bytecode::parser {
 
 std::expected<void, BytecodeParserError> InitStaticParser::Handle(ParserContext& ctx) {
   if (!ctx.IsKeyword("init-static"))
-    return std::unexpected(BytecodeParserError("Expected 'init-static'"));
+    return std::unexpected(BytecodeParserError("Expected 'init-static'", BytecodeParserErrorCode::kNotMatched));
 
   if (ctx.init_static_parsed) {
     return std::unexpected(BytecodeParserError("Multiple init-static blocks are not allowed"));

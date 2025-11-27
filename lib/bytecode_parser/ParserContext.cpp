@@ -151,7 +151,7 @@ std::expected<int64_t, BytecodeParserError> ParserContext::ConsumeIntLiteral() {
                                                std::to_string(token->GetPosition().GetColumn())));
   }
 
-  int64_t value = std::stoi(Current()->GetLexeme());
+  int64_t value = std::stoll(Current()->GetLexeme());
 
   Advance();
 

@@ -42,8 +42,9 @@ std::expected<void, BytecodeParserError> CommandParser::ParseSingleStatement(Par
 
   if (token->GetStringType() != "IDENT" && token->GetStringType() != "KEYWORD") {
     return std::unexpected(BytecodeParserError("Expected command name at line " +
-                                               std::to_string(token->GetPosition().GetLine()) + " column " +
-                                               std::to_string(token->GetPosition().GetColumn())));
+                                                   std::to_string(token->GetPosition().GetLine()) + " column " +
+                                                   std::to_string(token->GetPosition().GetColumn()),
+                                               BytecodeParserErrorCode::kNotMatched));
   }
 
   std::string cmd_name = token->GetLexeme();

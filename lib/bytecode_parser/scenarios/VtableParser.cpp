@@ -7,7 +7,7 @@ namespace ovum::bytecode::parser {
 
 std::expected<void, BytecodeParserError> VtableParser::Handle(ParserContext& ctx) {
   if (!ctx.IsKeyword("vtable"))
-    return std::unexpected(BytecodeParserError("Expected 'vtable'"));
+    return std::unexpected(BytecodeParserError("Expected 'vtable'", BytecodeParserErrorCode::kNotMatched));
 
   ctx.Advance();
 
@@ -24,8 +24,11 @@ std::expected<void, BytecodeParserError> VtableParser::Handle(ParserContext& ctx
   vm::runtime::VirtualTable vtable(class_name, 0);
 
   while (!ctx.IsPunct('}') && !ctx.IsEof()) {
-    if (ctx.IsKeyword("size:")) {
+    if (ctx.IsKeyword("size")) {
       ctx.Advance();
+
+      if (auto e = ctx.ExpectPunct(':'); !e)
+        return std::unexpected(e.error());
 
       auto size_res = ctx.ConsumeIntLiteral();
 

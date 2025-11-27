@@ -9,7 +9,7 @@ namespace ovum::bytecode::parser {
 
 std::expected<void, BytecodeParserError> WhileParser::Handle(ParserContext& ctx) {
   if (!ctx.IsKeyword("while"))
-    return std::unexpected(BytecodeParserError("Expected 'while'"));
+    return std::unexpected(BytecodeParserError("Expected 'while'", BytecodeParserErrorCode::kNotMatched));
 
   ctx.Advance();
 

@@ -16,6 +16,8 @@ std::expected<void, BytecodeParserError> IfParser::Handle(ParserContext& ctx) {
 
   ctx.Advance();
 
+  auto parent_block = ctx.current_block;
+
   auto if_node = std::make_unique<vm::execution_tree::IfMultibranch>();
 
   if (auto e = ctx.ExpectPunct('{'); !e)
@@ -124,7 +126,10 @@ std::expected<void, BytecodeParserError> IfParser::Handle(ParserContext& ctx) {
     }
   }
 
-  ctx.current_block->AddStatement(std::move(if_node));
+  parent_block->AddStatement(std::move(if_node));
+
+  ctx.current_block = parent_block;
+
   return {};
 }
 

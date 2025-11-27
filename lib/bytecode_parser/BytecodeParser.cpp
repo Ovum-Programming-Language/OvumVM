@@ -35,9 +35,15 @@ std::expected<void, BytecodeParserError> BytecodeParser::Parse(const std::vector
   while (!ctx.IsEof()) {
     bool handled = false;
     for (auto& handler : handlers_) {
-      if (handler->Handle(ctx)) {
+      auto result = handler->Handle(ctx);
+
+      if (result) {
         handled = true;
         break;
+      }
+
+      if (result.error().Code() != BytecodeParserErrorCode::kNotMatched) {
+        return std::unexpected(result.error());
       }
     }
     if (!handled) {
