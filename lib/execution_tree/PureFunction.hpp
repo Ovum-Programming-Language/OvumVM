@@ -50,7 +50,7 @@ namespace ovum::vm::execution_tree {
 template<ExecutableFunction ExecutableFunctionType>
 class PureFunction : public IFunctionExecutable {
 public:
-  PureFunction(ExecutableFunctionType&& function, std::vector<std::string> argument_type_names) :
+  PureFunction(ExecutableFunctionType&& function, std::vector<std::string>&& argument_type_names) :
       function_(std::move(function)), argument_type_names_(std::move(argument_type_names)) {
     if (argument_type_names_.size() != function_.GetArity()) {
       throw std::runtime_error("PureFunction: argument type names count does not match function arity");
