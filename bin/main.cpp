@@ -11,6 +11,7 @@ int main(int32_t argc, char** argv) {
 function:1 _Global_Main_StringArray {
     PushInt 1
     SetLocal 1
+    PushString "A"
 
     while {
         LoadLocal 1

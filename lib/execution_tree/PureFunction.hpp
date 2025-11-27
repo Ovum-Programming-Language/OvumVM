@@ -50,8 +50,8 @@ namespace ovum::vm::execution_tree {
 template<ExecutableFunction ExecutableFunctionType>
 class PureFunction : public IFunctionExecutable {
 public:
-  PureFunction(const ExecutableFunctionType& function, std::vector<std::string> argument_type_names) :
-      function_(function), argument_type_names_(std::move(argument_type_names)) {
+  PureFunction(ExecutableFunctionType&& function, std::vector<std::string>&& argument_type_names) :
+      function_(std::move(function)), argument_type_names_(std::move(argument_type_names)) {
     if (argument_type_names_.size() != function_.GetArity()) {
       throw std::runtime_error("PureFunction: argument type names count does not match function arity");
     }
@@ -81,7 +81,7 @@ public:
     const auto cache_key_result = CreateCacheKey(arguments, execution_data);
 
     if (!cache_key_result.has_value()) {
-      return cache_key_result.error();
+      return std::unexpected(cache_key_result.error());
     }
 
     const CacheKey& cache_key = cache_key_result.value();

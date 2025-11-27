@@ -18,9 +18,9 @@ template<ExecutableFunction ExecutableFunctionType>
 class JitCompilingFunction : public IFunctionExecutable {
 public:
   JitCompilingFunction(std::unique_ptr<executor::IJitExecutor> executor,
-                       const ExecutableFunctionType& function,
+                       ExecutableFunctionType&& function,
                        size_t jit_action_boundary) :
-      executor_(std::move(executor)), function_(function), jit_action_boundary_(jit_action_boundary) {
+      executor_(std::move(executor)), function_(std::move(function)), jit_action_boundary_(jit_action_boundary) {
   }
 
   std::expected<ExecutionResult, std::runtime_error> Execute(PassedExecutionData& execution_data) override {
