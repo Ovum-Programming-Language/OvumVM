@@ -6,8 +6,6 @@
 #include "lib/bytecode_parser/ParserContext.hpp"
 #include "lib/execution_tree/Block.hpp"
 #include "lib/execution_tree/Function.hpp"
-#include "lib/execution_tree/JitCompilingFunction.hpp"
-#include "lib/execution_tree/PureFunction.hpp"
 #include "lib/executor/IJitExecutorFactory.hpp"
 
 namespace ovum::bytecode::parser {
@@ -47,7 +45,7 @@ std::expected<void, BytecodeParserError> FunctionParser::Handle(ParserContext& c
   }
 
   if (!ctx.IsKeyword("function"))
-    return std::unexpected(BytecodeParserError("Expected 'function'"));
+    return std::unexpected(BytecodeParserError("Expected 'function'", BytecodeParserErrorCode::kNotMatched));
 
   ctx.Advance();
 
@@ -94,17 +92,18 @@ std::expected<void, BytecodeParserError> FunctionParser::Handle(ParserContext& c
 
   if (is_pure && !pure_types.empty()) {
     auto pure_func = factory.MakePure(std::move(regular_func), std::move(pure_types));
-
     if (!no_jit) {
-      final_func = factory.TryMakeJit(std::move(pure_func));
+      auto jit_func = factory.MakeJit(std::move(pure_func));
+      final_func = std::make_unique<vm::execution_tree::JitCompilingFunction<vm::execution_tree::PureFunction<vm::execution_tree::Function>>>(std::move(jit_func));
     } else {
-      final_func = std::move(pure_func);
+      final_func = std::make_unique<vm::execution_tree::PureFunction<vm::execution_tree::Function>>(std::move(pure_func));
     }
   } else {
     if (!no_jit) {
-      final_func = factory.TryMakeJit(std::move(regular_func));
+      auto jit_func = factory.MakeJit(std::move(regular_func));
+      final_func = std::make_unique<vm::execution_tree::JitCompilingFunction<vm::execution_tree::Function>>(std::move(jit_func));
     } else {
-      final_func = std::move(regular_func);
+      final_func = std::make_unique<vm::execution_tree::Function>(std::move(regular_func));
     }
   }
 

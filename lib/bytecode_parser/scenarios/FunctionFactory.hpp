@@ -21,19 +21,19 @@ class FunctionFactory {
 public:
   FunctionFactory(vm::executor::IJitExecutorFactory* jit_factory, size_t jit_boundary);
 
-  std::unique_ptr<vm::execution_tree::Function> CreateRegular(
+  vm::execution_tree::Function CreateRegular(
       const vm::runtime::FunctionId& id,
       size_t arity,
       std::unique_ptr<vm::execution_tree::Block> body);
 
   template <vm::execution_tree::ExecutableFunction BaseFunction>
-  std::unique_ptr<vm::execution_tree::PureFunction<BaseFunction>> MakePure(
-      std::unique_ptr<BaseFunction> base_function,
-      const std::vector<std::string>& argument_type_names);
+  vm::execution_tree::PureFunction<BaseFunction> MakePure(
+      BaseFunction&& base_function,
+      std::vector<std::string> argument_type_names);
 
   template <vm::execution_tree::ExecutableFunction BaseFunction>
-  std::unique_ptr<vm::execution_tree::JitCompilingFunction<BaseFunction>> TryMakeJit(
-      std::unique_ptr<BaseFunction> base_function);
+  vm::execution_tree::JitCompilingFunction<BaseFunction> MakeJit(
+      BaseFunction&& base_function);
 
 private:
   vm::executor::IJitExecutorFactory* jit_factory_;
