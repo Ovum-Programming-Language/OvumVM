@@ -1,24 +1,27 @@
 #include "CommandParser.hpp"
 
+#include "lib/bytecode_parser/BytecodeParserError.hpp"
+#include "lib/bytecode_parser/ParserContext.hpp"
+
 #include "CommandFactory.hpp"
 #include "IfParser.hpp"
 #include "WhileParser.hpp"
-#include "lib/bytecode_parser/BytecodeParserError.hpp"
-#include "lib/bytecode_parser/ParserContext.hpp"
 
 namespace ovum::bytecode::parser {
 
 std::expected<void, BytecodeParserError> CommandParser::ParseSingleStatement(ParserContext& ctx,
                                                                              vm::execution_tree::Block& block) {
-  if (ctx.IsEof())
+  if (ctx.IsEof()) {
     return std::unexpected(BytecodeParserError("Unexpected end of input"));
+  }
 
   if (ctx.IsKeyword("if")) {
     IfParser parser;
     auto res = parser.Handle(ctx);
 
-    if (!res)
+    if (!res) {
       return res;
+    }
 
     ctx.current_block = &block;
 
@@ -30,8 +33,9 @@ std::expected<void, BytecodeParserError> CommandParser::ParseSingleStatement(Par
 
     auto res = parser.Handle(ctx);
 
-    if (!res)
+    if (!res) {
       return res;
+    }
 
     ctx.current_block = &block;
 
@@ -48,6 +52,7 @@ std::expected<void, BytecodeParserError> CommandParser::ParseSingleStatement(Par
   }
 
   std::string cmd_name = token->GetLexeme();
+
   ctx.Advance();
 
   CommandFactory factory;

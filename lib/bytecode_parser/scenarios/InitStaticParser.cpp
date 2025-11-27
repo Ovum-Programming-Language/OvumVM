@@ -1,15 +1,18 @@
 #include "InitStaticParser.hpp"
 
-#include "CommandParser.hpp"
+#include "lib/bytecode_parser/BytecodeParserError.hpp"
 #include "lib/bytecode_parser/ParserContext.hpp"
 #include "lib/execution_tree/Block.hpp"
 #include "lib/execution_tree/PassedExecutionData.hpp"
 
+#include "CommandParser.hpp"
+
 namespace ovum::bytecode::parser {
 
 std::expected<void, BytecodeParserError> InitStaticParser::Handle(ParserContext& ctx) {
-  if (!ctx.IsKeyword("init-static"))
+  if (!ctx.IsKeyword("init-static")) {
     return std::unexpected(BytecodeParserError("Expected 'init-static'", BytecodeParserErrorCode::kNotMatched));
+  }
 
   if (ctx.init_static_parsed) {
     return std::unexpected(BytecodeParserError("Multiple init-static blocks are not allowed"));
@@ -17,8 +20,9 @@ std::expected<void, BytecodeParserError> InitStaticParser::Handle(ParserContext&
 
   ctx.Advance();
 
-  if (auto e = ctx.ExpectPunct('{'); !e)
+  if (auto e = ctx.ExpectPunct('{'); !e) {
     return std::unexpected(e.error());
+  }
 
   auto block = std::make_unique<vm::execution_tree::Block>();
   ctx.current_block = block.get();
@@ -26,12 +30,14 @@ std::expected<void, BytecodeParserError> InitStaticParser::Handle(ParserContext&
   while (!ctx.IsPunct('}') && !ctx.IsEof()) {
     auto res = CommandParser::ParseSingleStatement(ctx, *block);
 
-    if (!res)
+    if (!res) {
       return res;
+    }
   }
 
-  if (auto e = ctx.ExpectPunct('}'); !e)
+  if (auto e = ctx.ExpectPunct('}'); !e) {
     return std::unexpected(e.error());
+  }
 
   vm::execution_tree::PassedExecutionData exec_data{
       .memory = ctx.memory, .virtual_table_repository = ctx.vtable_repo, .function_repository = ctx.func_repo};

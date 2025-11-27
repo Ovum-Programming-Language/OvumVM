@@ -5,10 +5,11 @@
 #include <memory>
 #include <vector>
 
+#include "lib/executor/IJitExecutorFactory.hpp"
+
 #include "BytecodeParserError.hpp"
 #include "ParserContext.hpp"
-#include "lib/bytecode_parser/scenarios/IParserHandler.hpp"
-#include "lib/executor/IJitExecutorFactory.hpp"
+#include "scenarios/IParserHandler.hpp"
 
 namespace ovum::bytecode::parser {
 

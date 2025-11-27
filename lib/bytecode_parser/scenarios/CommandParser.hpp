@@ -1,13 +1,13 @@
 #ifndef BYTECODE_PARSER_COMMANDPARSER_HPP_
 #define BYTECODE_PARSER_COMMANDPARSER_HPP_
 
-#include "IParserHandler.hpp"
-
 #include <expected>
 
 #include "lib/bytecode_parser/BytecodeParserError.hpp"
 #include "lib/bytecode_parser/ParserContext.hpp"
 #include "lib/execution_tree/Block.hpp"
+
+#include "IParserHandler.hpp"
 
 namespace ovum::bytecode::parser {
 

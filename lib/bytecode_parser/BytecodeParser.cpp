@@ -1,18 +1,16 @@
 #include "BytecodeParser.hpp"
 
-#include <tokens/Token.hpp>
-
 #include "lib/execution_tree/FunctionRepository.hpp"
+#include "lib/executor/IJitExecutorFactory.hpp"
 #include "lib/runtime/RuntimeMemory.hpp"
 #include "lib/runtime/VirtualTableRepository.hpp"
 
+#include "lib/bytecode_parser/scenarios/CommandParser.hpp"
 #include "lib/bytecode_parser/scenarios/FunctionParser.hpp"
-#include "lib/executor/IJitExecutorFactory.hpp"
-#include "scenarios/CommandParser.hpp"
-#include "scenarios/IfParser.hpp"
-#include "scenarios/InitStaticParser.hpp"
-#include "scenarios/VtableParser.hpp"
-#include "scenarios/WhileParser.hpp"
+#include "lib/bytecode_parser/scenarios/IfParser.hpp"
+#include "lib/bytecode_parser/scenarios/InitStaticParser.hpp"
+#include "lib/bytecode_parser/scenarios/VtableParser.hpp"
+#include "lib/bytecode_parser/scenarios/WhileParser.hpp"
 
 namespace ovum::bytecode::parser {
 
@@ -34,6 +32,7 @@ std::expected<void, BytecodeParserError> BytecodeParser::Parse(const std::vector
 
   while (!ctx.IsEof()) {
     bool handled = false;
+
     for (auto& handler : handlers_) {
       auto result = handler->Handle(ctx);
 
@@ -46,10 +45,14 @@ std::expected<void, BytecodeParserError> BytecodeParser::Parse(const std::vector
         return std::unexpected(result.error());
       }
     }
+
     if (!handled) {
-      throw BytecodeParserError("Unknown top-level declaration: " + ctx.Current()->GetLexeme() + " at line " +
-                                std::to_string(ctx.Current()->GetPosition().GetLine()) + " column " +
-                                std::to_string(ctx.Current()->GetPosition().GetColumn()));
+      const auto* token = ctx.Current().get();
+      std::string message = "Unknown top-level declaration: " + token->GetLexeme() + " at line " +
+                            std::to_string(token->GetPosition().GetLine()) + " column " +
+                            std::to_string(token->GetPosition().GetColumn());
+
+      throw BytecodeParserError(message);
     }
   }
 

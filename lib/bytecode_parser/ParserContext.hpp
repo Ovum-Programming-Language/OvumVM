@@ -2,17 +2,18 @@
 #define BYTECODE_PARSER_PARSERCONTEXT_HPP_
 
 #include <expected>
-#include <memory>
 #include <string>
 #include <vector>
 
 #include <tokens/Token.hpp>
-#include "lib/bytecode_parser/BytecodeParserError.hpp"
+
 #include "lib/execution_tree/Block.hpp"
 #include "lib/execution_tree/FunctionRepository.hpp"
 #include "lib/executor/IJitExecutorFactory.hpp"
 #include "lib/runtime/RuntimeMemory.hpp"
 #include "lib/runtime/VirtualTableRepository.hpp"
+
+#include "BytecodeParserError.hpp"
 
 namespace ovum::bytecode::parser {
 
@@ -33,12 +34,7 @@ public:
   [[nodiscard]] bool IsKeyword(const std::string& kw) const;
   [[nodiscard]] bool IsPunct(char ch) const;
   [[nodiscard]] bool IsPunct(const std::string& p) const;
-  [[nodiscard]] bool IsStringLiteral() const;
-  [[nodiscard]] bool IsIntLiteral() const;
-  [[nodiscard]] bool IsFloatLiteral() const;
-  [[nodiscard]] bool IsBoolLiteral() const;
 
-  std::expected<void, BytecodeParserError> ExpectIdentifier(const std::string& msg);
   std::expected<void, BytecodeParserError> ExpectKeyword(const std::string& kw);
   std::expected<void, BytecodeParserError> ExpectPunct(char ch, const std::string& msg = "");
 
@@ -53,8 +49,7 @@ public:
   vm::runtime::RuntimeMemory& memory;
 
   bool init_static_parsed = false;
-
-  ovum::vm::execution_tree::Block* current_block = nullptr;
+  vm::execution_tree::Block* current_block = nullptr;
 
   vm::executor::IJitExecutorFactory* jit_factory = nullptr;
   size_t jit_boundary = 0;

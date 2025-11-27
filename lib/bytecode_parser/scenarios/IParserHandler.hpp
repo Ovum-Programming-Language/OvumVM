@@ -2,6 +2,7 @@
 #define BYTECODE_PARSER_IPARSERHANDLER_HPP_
 
 #include <expected>
+
 #include "lib/bytecode_parser/BytecodeParserError.hpp"
 
 namespace ovum::bytecode::parser {

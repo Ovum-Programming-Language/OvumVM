@@ -7,10 +7,9 @@
 #include <string>
 #include <unordered_set>
 
-#include "lib/bytecode_parser/ParserContext.hpp"
 #include "lib/bytecode_parser/BytecodeParserError.hpp"
+#include "lib/bytecode_parser/ParserContext.hpp"
 #include "lib/execution_tree/IExecutable.hpp"
-
 
 namespace ovum::bytecode::parser {
 

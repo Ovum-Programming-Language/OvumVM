@@ -24,16 +24,18 @@ const TokenPtr ParserContext::Current() const {
 
     return std::make_shared<EofToken>(kEof);
   }
+
   return tokens_[pos_];
 }
 
 bool ParserContext::IsEof() const {
-  return pos_ >= tokens_.size() || tokens_[pos_].get()->GetStringType() == "EOF";
+  return pos_ >= tokens_.size() || tokens_[pos_]->GetStringType() == "EOF";
 }
 
 void ParserContext::Advance() {
-  if (!IsEof())
+  if (!IsEof()) {
     ++pos_;
+  }
 }
 
 bool ParserContext::IsIdentifier() const {
@@ -50,36 +52,6 @@ bool ParserContext::IsPunct(char ch) const {
 
 bool ParserContext::IsPunct(const std::string& p) const {
   return Current()->GetStringType() == "PUNCT" && Current()->GetLexeme() == p;
-}
-
-bool ParserContext::IsStringLiteral() const {
-  return Current()->GetStringType() == "LITERAL:String";
-}
-
-bool ParserContext::IsIntLiteral() const {
-  return Current()->GetStringType() == "LITERAL:Int";
-}
-
-bool ParserContext::IsFloatLiteral() const {
-  return Current()->GetStringType() == "LITERAL:Float";
-}
-
-bool ParserContext::IsBoolLiteral() const {
-  return Current()->GetLexeme() == "true" || Current()->GetLexeme() == "false";
-}
-
-std::expected<void, BytecodeParserError> ParserContext::ExpectIdentifier(const std::string& msg) {
-  if (!IsIdentifier()) {
-    std::string out_msg = msg.empty() ? "Expected identifier" : msg;
-
-    return std::unexpected(BytecodeParserError(out_msg + " at line " +
-                                               std::to_string(Current()->GetPosition().GetLine()) + " column " +
-                                               std::to_string(Current()->GetPosition().GetColumn())));
-  }
-
-  Advance();
-
-  return {};
 }
 
 std::expected<void, BytecodeParserError> ParserContext::ExpectKeyword(const std::string& kw) {
@@ -135,7 +107,8 @@ std::expected<std::string, BytecodeParserError> ParserContext::ConsumeStringLite
                                                std::to_string(token->GetPosition().GetColumn())));
   }
 
-  std::string value = Current()->GetLexeme().substr(1, Current()->GetLexeme().length() - 2);
+  std::string value = Current()->GetLexeme();
+  value = value.substr(1, value.length() - 2);
 
   Advance();
 
@@ -175,12 +148,15 @@ std::expected<double, BytecodeParserError> ParserContext::ConsumeFloatLiteral() 
 }
 
 std::expected<bool, BytecodeParserError> ParserContext::ConsumeBoolLiteral() {
-  if (Current()->GetLexeme() == "true") {
+  const std::string& lexeme = Current()->GetLexeme();
+
+  if (lexeme == "true") {
     Advance();
 
     return true;
   }
-  if (Current()->GetLexeme() == "false") {
+
+  if (lexeme == "false") {
     Advance();
 
     return false;
