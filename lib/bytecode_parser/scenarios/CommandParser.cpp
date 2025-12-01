@@ -10,7 +10,7 @@ CommandParser::CommandParser(std::unique_ptr<ICommandFactory> factory) :
 }
 
 std::expected<void, BytecodeParserError> CommandParser::Handle(std::shared_ptr<ParsingSession> ctx) {
-  return ParseSingleStatement(ctx, *ctx->current_block, *factory_);
+  return ParseSingleStatement(ctx, *ctx->CurrentBlock(), *factory_);
 }
 
 std::expected<void, BytecodeParserError> CommandParser::ParseSingleStatement(const std::shared_ptr<ParsingSession>& ctx,
@@ -24,7 +24,7 @@ std::expected<void, BytecodeParserError> CommandParser::ParseSingleStatement(con
     auto res = parser.Handle(ctx);
     if (!res)
       return res;
-    ctx->current_block = &block;
+    ctx->SetCurrentBlock(&block);
     return {};
   }
 
@@ -33,7 +33,7 @@ std::expected<void, BytecodeParserError> CommandParser::ParseSingleStatement(con
     auto res = parser.Handle(ctx);
     if (!res)
       return res;
-    ctx->current_block = &block;
+    ctx->SetCurrentBlock(&block);
     return {};
   }
 

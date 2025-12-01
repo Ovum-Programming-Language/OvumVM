@@ -1,39 +1,31 @@
-#ifndef BYTECODE_PARSER_PARSERCONTEXT_HPP_
-#define BYTECODE_PARSER_PARSERCONTEXT_HPP_
+#ifndef BYTECODE_PARSER_PARSINGSESSION_HPP_
+#define BYTECODE_PARSER_PARSINGSESSION_HPP_
 
 #include <expected>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include <tokens/Token.hpp>
 
-#include "lib/execution_tree/Block.hpp"
-#include "lib/execution_tree/FunctionRepository.hpp"
-#include "lib/executor/IJitExecutorFactory.hpp"
-#include "lib/runtime/RuntimeMemory.hpp"
-#include "lib/runtime/VirtualTableRepository.hpp"
-
 #include "BytecodeParserError.hpp"
+#include "ParsingSessionData.hpp"
 
 namespace ovum::bytecode::parser {
 
 class ParsingSession {
 public:
-  explicit ParsingSession(const std::vector<TokenPtr>& tokens,
-                         vm::execution_tree::FunctionRepository& func_repo,
-                         vm::runtime::VirtualTableRepository& vtable_repo,
-                         vm::runtime::RuntimeMemory& memory,
-                         std::optional<std::reference_wrapper<vm::executor::IJitExecutorFactory>> jit_factory,
-                         size_t jit_boundary);
+  ParsingSession(const std::vector<TokenPtr>& tokens,
+                 ParsingSessionData& data);
 
-  [[nodiscard]] const TokenPtr Current() const;
-  [[nodiscard]] bool IsEof() const;
+  const TokenPtr Current() const;
+  bool IsEof() const;
   void Advance();
 
-  [[nodiscard]] bool IsIdentifier() const;
-  [[nodiscard]] bool IsKeyword(const std::string& kw) const;
-  [[nodiscard]] bool IsPunct(char ch) const;
-  [[nodiscard]] bool IsPunct(const std::string& p) const;
+  bool IsIdentifier() const;
+  bool IsKeyword(const std::string& kw) const;
+  bool IsPunct(char ch) const;
+  bool IsPunct(const std::string& p) const;
 
   std::expected<void, BytecodeParserError> ExpectKeyword(const std::string& kw);
   std::expected<void, BytecodeParserError> ExpectPunct(char ch, const std::string& msg = "");
@@ -44,23 +36,27 @@ public:
   std::expected<double, BytecodeParserError> ConsumeFloatLiteral();
   std::expected<bool, BytecodeParserError> ConsumeBoolLiteral();
 
-  vm::execution_tree::FunctionRepository& func_repo;
-  vm::runtime::VirtualTableRepository& vtable_repo;
-  vm::runtime::RuntimeMemory& memory;
+  vm::execution_tree::FunctionRepository& FuncRepo() const { return data_.func_repo; }
+  vm::runtime::VirtualTableRepository& VTableRepo() const { return data_.vtable_repo; }
+  vm::runtime::RuntimeMemory& Memory() const { return data_.memory; }
 
-  bool init_static_parsed = false;
-  vm::execution_tree::Block* current_block = nullptr;
+  vm::execution_tree::Block* CurrentBlock() const { return data_.current_block; }
+  void SetCurrentBlock(vm::execution_tree::Block* block) { data_.current_block = block; }
 
-  std::optional<std::reference_wrapper<vm::executor::IJitExecutorFactory>> jit_factory;
-  size_t jit_boundary = 0;
+  const std::optional<std::reference_wrapper<vm::executor::IJitExecutorFactory>>& JitFactory() const { return data_.jit_factory; }
+  size_t JitBoundary() const { return data_.jit_boundary; }
 
-  std::unique_ptr<vm::execution_tree::Block> init_static_block;
+  std::unique_ptr<vm::execution_tree::Block> ReleaseInitStaticBlock() { return std::move(data_.init_static_block); }
+  void SetInitStaticBlock(std::unique_ptr<vm::execution_tree::Block> block) { data_.init_static_block = std::move(block); }
 
 private:
   const std::vector<TokenPtr>& tokens_;
   size_t pos_ = 0;
+  ParsingSessionData& data_;
 };
+
+using ParsingSessionPtr = std::shared_ptr<ParsingSession>;
 
 } // namespace ovum::bytecode::parser
 
-#endif // BYTECODE_PARSER_PARSERCONTEXT_HPP_
+#endif // BYTECODE_PARSER_PARSINGSESSION_HPP_

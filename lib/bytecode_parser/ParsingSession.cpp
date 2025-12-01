@@ -1,21 +1,10 @@
-#include "ParsingSession.hpp"
-
 #include <tokens/EofToken.hpp>
-#include <tokens/IdentToken.hpp>
-#include <tokens/KeywordToken.hpp>
-#include <tokens/LiteralToken.hpp>
-#include <tokens/PunctToken.hpp>
+#include "ParsingSession.hpp"
 
 namespace ovum::bytecode::parser {
 
-ParsingSession::ParsingSession(const std::vector<TokenPtr>& tokens,
-                             vm::execution_tree::FunctionRepository& func_repo,
-                             vm::runtime::VirtualTableRepository& vtable_repo,
-                             vm::runtime::RuntimeMemory& memory,
-                             std::optional<std::reference_wrapper<vm::executor::IJitExecutorFactory>> jit_factory,
-                             size_t jit_boundary) :
-    tokens_(tokens), func_repo(func_repo), vtable_repo(vtable_repo), memory(memory), jit_factory(jit_factory),
-    jit_boundary(jit_boundary), init_static_block(nullptr) {
+ParsingSession::ParsingSession(const std::vector<TokenPtr>& tokens, ParsingSessionData& data) :
+    tokens_(tokens), data_(data) {
 }
 
 const TokenPtr ParsingSession::Current() const {
@@ -31,9 +20,8 @@ bool ParsingSession::IsEof() const {
 }
 
 void ParsingSession::Advance() {
-  if (!IsEof()) {
+  if (!IsEof())
     ++pos_;
-  }
 }
 
 bool ParsingSession::IsIdentifier() const {
