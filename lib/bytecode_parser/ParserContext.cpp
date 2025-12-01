@@ -12,10 +12,10 @@ ParserContext::ParserContext(const std::vector<TokenPtr>& tokens,
                              vm::execution_tree::FunctionRepository& func_repo,
                              vm::runtime::VirtualTableRepository& vtable_repo,
                              vm::runtime::RuntimeMemory& memory,
-                             vm::executor::IJitExecutorFactory* jit_factory,
+                             std::optional<std::reference_wrapper<vm::executor::IJitExecutorFactory>> jit_factory,
                              size_t jit_boundary) :
-    tokens_(tokens), func_repo(func_repo), vtable_repo(vtable_repo), memory(memory), jit_factory(jit_factory),
-    jit_boundary(jit_boundary) {
+    tokens_(tokens), func_repo(func_repo), vtable_repo(vtable_repo), memory(memory),
+    jit_factory(jit_factory), jit_boundary(jit_boundary), init_static_block(nullptr) {
 }
 
 const TokenPtr ParserContext::Current() const {

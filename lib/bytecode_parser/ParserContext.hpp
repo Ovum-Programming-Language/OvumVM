@@ -23,7 +23,7 @@ public:
                          vm::execution_tree::FunctionRepository& func_repo,
                          vm::runtime::VirtualTableRepository& vtable_repo,
                          vm::runtime::RuntimeMemory& memory,
-                         vm::executor::IJitExecutorFactory* jit_factory,
+                         std::optional<std::reference_wrapper<vm::executor::IJitExecutorFactory>> jit_factory,
                          size_t jit_boundary);
 
   [[nodiscard]] const TokenPtr Current() const;
@@ -51,8 +51,10 @@ public:
   bool init_static_parsed = false;
   vm::execution_tree::Block* current_block = nullptr;
 
-  vm::executor::IJitExecutorFactory* jit_factory = nullptr;
+  std::optional<std::reference_wrapper<vm::executor::IJitExecutorFactory>> jit_factory;
   size_t jit_boundary = 0;
+
+  std::unique_ptr<vm::execution_tree::Block> init_static_block;
 
 private:
   const std::vector<TokenPtr>& tokens_;

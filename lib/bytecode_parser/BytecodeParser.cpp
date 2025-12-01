@@ -24,11 +24,16 @@ BytecodeParser::BytecodeParser(std::unique_ptr<vm::executor::IJitExecutorFactory
   handlers_.push_back(std::make_unique<CommandParser>());
 }
 
-std::expected<void, BytecodeParserError> BytecodeParser::Parse(const std::vector<TokenPtr>& tokens,
-                                                               vm::execution_tree::FunctionRepository& func_repo,
-                                                               vm::runtime::VirtualTableRepository& vtable_repo,
-                                                               vm::runtime::RuntimeMemory& memory) {
-  auto ctx = std::make_shared<ParserContext>(tokens, func_repo, vtable_repo, memory, jit_factory_.get(), jit_boundary_);
+std::expected<std::unique_ptr<vm::execution_tree::Block>, BytecodeParserError> BytecodeParser::Parse(
+    const std::vector<TokenPtr>& tokens,
+    vm::execution_tree::FunctionRepository& func_repo,
+    vm::runtime::VirtualTableRepository& vtable_repo,
+    vm::runtime::RuntimeMemory& memory) {
+  std::optional<std::reference_wrapper<vm::executor::IJitExecutorFactory>> jit_opt;
+  if (jit_factory_) {
+    jit_opt = std::ref(*jit_factory_);
+  }
+  auto ctx = std::make_shared<ParserContext>(tokens, func_repo, vtable_repo, memory, jit_opt, jit_boundary_);
 
   while (!ctx->IsEof()) {
     bool handled = false;
@@ -52,11 +57,11 @@ std::expected<void, BytecodeParserError> BytecodeParser::Parse(const std::vector
                             std::to_string(token->GetPosition().GetLine()) + " column " +
                             std::to_string(token->GetPosition().GetColumn());
 
-      throw BytecodeParserError(message);
+      return std::unexpected(BytecodeParserError(message));
     }
   }
 
-  return {};
+  return std::move(ctx->init_static_block);
 }
 
 } // namespace ovum::bytecode::parser

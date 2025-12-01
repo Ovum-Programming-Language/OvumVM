@@ -17,10 +17,11 @@ class BytecodeParser {
 public:
   BytecodeParser(std::unique_ptr<vm::executor::IJitExecutorFactory> jit_factory, size_t jit_boundary);
 
-  std::expected<void, BytecodeParserError> Parse(const std::vector<TokenPtr>& tokens,
-                                                 vm::execution_tree::FunctionRepository& func_repo,
-                                                 vm::runtime::VirtualTableRepository& vtable_repo,
-                                                 vm::runtime::RuntimeMemory& memory);
+  std::expected<std::unique_ptr<vm::execution_tree::Block>, BytecodeParserError> Parse(
+      const std::vector<TokenPtr>& tokens,
+      vm::execution_tree::FunctionRepository& func_repo,
+      vm::runtime::VirtualTableRepository& vtable_repo,
+      vm::runtime::RuntimeMemory& memory);
 
 private:
   std::vector<std::unique_ptr<IParserHandler>> handlers_;

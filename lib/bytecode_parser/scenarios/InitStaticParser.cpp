@@ -35,17 +35,7 @@ std::expected<void, BytecodeParserError> InitStaticParser::Handle(std::shared_pt
     return std::unexpected(e.error());
   }
 
-  vm::execution_tree::PassedExecutionData exec_data{
-      .memory = ctx->memory,
-      .virtual_table_repository = ctx->vtable_repo,
-      .function_repository = ctx->func_repo
-  };
-
-  auto result = block->Execute(exec_data);
-  if (!result) {
-    return std::unexpected(BytecodeParserError("Runtime error in init-static: " + std::string(result.error().what())));
-  }
-
+  ctx->init_static_block = std::move(block);
   ctx->init_static_parsed = true;
   ctx->current_block = nullptr;
 
