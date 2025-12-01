@@ -127,6 +127,10 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     VirtualTable nullable_vtable("Nullable", sizeof(ObjectDescriptor) + sizeof(void*));
     nullable_vtable.AddField("Object", sizeof(ObjectDescriptor));
     nullable_vtable.AddFunction("_destructor", "_Nullable_destructor_<M>");
+    auto result = repository.Add(std::move(nullable_vtable));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
   }
 
   // String: wrapper around std::string
@@ -134,8 +138,8 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     VirtualTable string_vtable("String", sizeof(ObjectDescriptor) + sizeof(std::string));
     string_vtable.AddField("Object", sizeof(ObjectDescriptor));
     string_vtable.AddFunction("_destructor", "_String_destructor_<M>");
-    string_vtable.AddFunction("_Equals_<C>", "_String_Equals_<C>_String");
-    string_vtable.AddFunction("_IsLess_<C>", "_String_IsLess_<C>_String");
+    string_vtable.AddFunction("_Equals_<C>_String", "_String_Equals_<C>_String");
+    string_vtable.AddFunction("_IsLess_<C>_String", "_String_IsLess_<C>_String");
     string_vtable.AddFunction("_ToString_<C>", "_String_ToString_<C>");
     string_vtable.AddFunction("_GetHash_<C>", "_String_GetHash_<C>");
     string_vtable.AddFunction("_Length_<C>", "_String_Length_<C>");
@@ -623,14 +627,6 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
 
   // String methods
   {
-    auto function = CreateMethodFunction("_String_String", 2, StringConstructor);
-    auto result = repository.Add(std::move(function));
-    if (!result.has_value()) {
-      return std::unexpected(result.error());
-    }
-  }
-
-  {
     auto function = CreateMethodFunction("_String_String", 2, StringCopyConstructor);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
@@ -1022,7 +1018,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_ObjectArray", 2, ObjectArrayCopyConstructor);
+    auto function = CreateMethodFunction("_ObjectArray_ObjectArray", 2, ObjectArrayCopyConstructor);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -1169,7 +1165,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
 
   // Pointer methods
   {
-    auto function = CreateMethodFunction("_Pointer_Pointer", 2, PointerConstructor);
+    auto function = CreateMethodFunction("_Pointer_pointer", 2, PointerConstructor);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());

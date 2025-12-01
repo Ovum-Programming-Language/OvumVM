@@ -518,7 +518,7 @@ std::expected<ExecutionResult, std::runtime_error> StringToUtf8Bytes(PassedExecu
     return std::unexpected(vtable_index_result.error());
   }
 
-  auto byte_array_obj_result = AllocateObject(
+  auto byte_array_obj_result = runtime::AllocateObject(
       *byte_array_vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository);
   if (!byte_array_obj_result.has_value()) {
     return std::unexpected(byte_array_obj_result.error());
@@ -531,21 +531,6 @@ std::expected<ExecutionResult, std::runtime_error> StringToUtf8Bytes(PassedExecu
 }
 
 // String methods
-std::expected<ExecutionResult, std::runtime_error> StringConstructor(PassedExecutionData& data) {
-  if (data.memory.machine_stack.size() < 2) {
-    return std::unexpected(std::runtime_error("String::Constructor: insufficient arguments"));
-  }
-  void* source_string_obj = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
-
-  const auto* source_string = runtime::GetDataPointer<const std::string>(source_string_obj);
-  auto* string_data = runtime::GetDataPointer<std::string>(obj_ptr);
-  new (string_data) std::string(*source_string);
-  data.memory.machine_stack.emplace(obj_ptr);
-  return ExecutionResult::kNormal;
-}
 
 std::expected<ExecutionResult, std::runtime_error> StringCopyConstructor(PassedExecutionData& data) {
   if (data.memory.machine_stack.size() < 2) {
@@ -1049,7 +1034,7 @@ std::expected<ExecutionResult, std::runtime_error> FileRead(PassedExecutionData&
     return std::unexpected(vtable_index_result.error());
   }
 
-  auto byte_array_obj_result = AllocateObject(
+  auto byte_array_obj_result = runtime::AllocateObject(
       *byte_array_vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository);
   if (!byte_array_obj_result.has_value()) {
     return std::unexpected(byte_array_obj_result.error());
@@ -1119,8 +1104,8 @@ std::expected<ExecutionResult, std::runtime_error> FileReadLine(PassedExecutionD
     return std::unexpected(vtable_index_result.error());
   }
 
-  auto string_obj_result =
-      AllocateObject(*string_vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository);
+  auto string_obj_result = runtime::AllocateObject(
+      *string_vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository);
   if (!string_obj_result.has_value()) {
     return std::unexpected(string_obj_result.error());
   }

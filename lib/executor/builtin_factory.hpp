@@ -11,9 +11,9 @@ namespace ovum::vm::runtime {
 
 /**
  * Registers all builtin class virtual tables in the repository.
- * Builtin types: Int, Float, Char, Byte, Bool, String, File,
+ * Builtin types: Int, Float, Char, Byte, Bool, Nullable, String,
  * IntArray, FloatArray, CharArray, ByteArray, BoolArray, ObjectArray,
- * StringArray, Pointer, PointerArray.
+ * StringArray, PointerArray, Pointer, File.
  * @param repository The virtual table repository to populate.
  * @return Error if registration fails.
  */

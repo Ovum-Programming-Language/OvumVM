@@ -125,7 +125,6 @@ std::expected<ExecutionResult, std::runtime_error> BoolGetHash(PassedExecutionDa
 std::expected<ExecutionResult, std::runtime_error> NullableDestructor(PassedExecutionData& data);
 
 // String methods
-std::expected<ExecutionResult, std::runtime_error> StringConstructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> StringCopyConstructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> StringDestructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> StringEquals(PassedExecutionData& data);
