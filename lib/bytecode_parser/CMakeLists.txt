@@ -1,6 +1,6 @@
 add_library(bytecode_parser STATIC
         BytecodeParser.cpp
-        ParserContext.cpp
+        ParsingSession.cpp
         scenarios/InitStaticParser.cpp
         scenarios/FunctionParser.cpp
         scenarios/IfParser.cpp

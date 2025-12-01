@@ -8,7 +8,7 @@
 
 namespace ovum::bytecode::parser {
 
-std::expected<void, BytecodeParserError> InitStaticParser::Handle(std::shared_ptr<ParserContext> ctx) {
+std::expected<void, BytecodeParserError> InitStaticParser::Handle(std::shared_ptr<ParsingSession> ctx) {
   if (!ctx->IsKeyword("init-static")) {
     return std::unexpected(BytecodeParserError("Expected 'init-static'", BytecodeParserErrorCode::kNotMatched));
   }

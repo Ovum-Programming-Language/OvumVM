@@ -5,17 +5,19 @@
 #include <memory>
 #include <vector>
 
-#include "lib/executor/IJitExecutorFactory.hpp"
-
 #include "BytecodeParserError.hpp"
-#include "ParserContext.hpp"
+#include "ParsingSession.hpp"
+#include "lib/executor/IJitExecutorFactory.hpp"
+#include "scenarios/ICommandFactory.hpp"
 #include "scenarios/IParserHandler.hpp"
 
 namespace ovum::bytecode::parser {
 
 class BytecodeParser {
 public:
-  BytecodeParser(std::unique_ptr<vm::executor::IJitExecutorFactory> jit_factory, size_t jit_boundary);
+  BytecodeParser(std::unique_ptr<vm::executor::IJitExecutorFactory> jit_factory,
+                 size_t jit_boundary,
+                 std::unique_ptr<ICommandFactory> command_factory = nullptr);
 
   std::expected<std::unique_ptr<vm::execution_tree::Block>, BytecodeParserError> Parse(
       const std::vector<TokenPtr>& tokens,

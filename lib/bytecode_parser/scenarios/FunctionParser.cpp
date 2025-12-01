@@ -8,7 +8,7 @@
 
 namespace ovum::bytecode::parser {
 
-std::expected<void, BytecodeParserError> FunctionParser::Handle(std::shared_ptr<ParserContext> ctx) {
+std::expected<void, BytecodeParserError> FunctionParser::Handle(std::shared_ptr<ParsingSession> ctx) {
   std::vector<std::string> pure_types;
   bool is_pure = false;
   bool no_jit = false;

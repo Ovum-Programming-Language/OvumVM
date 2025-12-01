@@ -10,7 +10,7 @@
 
 namespace ovum::bytecode::parser {
 
-std::expected<void, BytecodeParserError> IfParser::Handle(std::shared_ptr<ParserContext> ctx) {
+std::expected<void, BytecodeParserError> IfParser::Handle(std::shared_ptr<ParsingSession> ctx) {
   if (!ctx->IsKeyword("if")) {
     return std::unexpected(BytecodeParserError("Expected 'if'"));
   }

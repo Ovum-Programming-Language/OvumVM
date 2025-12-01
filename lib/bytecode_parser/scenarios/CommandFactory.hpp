@@ -6,10 +6,10 @@
 #include <string>
 #include <unordered_set>
 
-#include "lib/bytecode_parser/BytecodeParserError.hpp"
-#include "lib/bytecode_parser/ParserContext.hpp"
-#include "lib/execution_tree/IExecutable.hpp"
 #include "ICommandFactory.hpp"
+#include "lib/bytecode_parser/BytecodeParserError.hpp"
+#include "lib/bytecode_parser/ParsingSession.hpp"
+#include "lib/execution_tree/IExecutable.hpp"
 
 namespace ovum::bytecode::parser {
 
@@ -18,7 +18,7 @@ public:
   CommandFactory() = default;
 
   std::expected<std::unique_ptr<vm::execution_tree::IExecutable>, BytecodeParserError>
-  CreateCommand(const std::string& cmd_name, std::shared_ptr<ParserContext> ctx) override;
+  CreateCommand(const std::string& cmd_name, std::shared_ptr<ParsingSession> ctx) override;
 
 private:
   static const std::unordered_set<std::string> kStringCommands;

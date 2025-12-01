@@ -18,7 +18,7 @@ const std::unordered_set<std::string> CommandFactory::kIdentCommands = {
     "NewArray", "Call", "CallVirtual", "CallConstructor", "GetVTable", "SetVTable", "SafeCall", "IsType", "SizeOf"};
 
 std::expected<std::unique_ptr<vm::execution_tree::IExecutable>, BytecodeParserError>
-CommandFactory::CreateCommand(const std::string& cmd_name, std::shared_ptr<ParserContext> ctx) {
+CommandFactory::CreateCommand(const std::string& cmd_name, std::shared_ptr<ParsingSession> ctx) {
   if (kStringCommands.contains(cmd_name)) {
     auto value = ctx->ConsumeStringLiteral();
     if (!value) {

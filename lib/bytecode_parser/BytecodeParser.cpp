@@ -1,27 +1,30 @@
 #include "BytecodeParser.hpp"
-
-#include "lib/execution_tree/FunctionRepository.hpp"
-#include "lib/executor/IJitExecutorFactory.hpp"
-#include "lib/runtime/RuntimeMemory.hpp"
-#include "lib/runtime/VirtualTableRepository.hpp"
-
 #include "lib/bytecode_parser/scenarios/CommandParser.hpp"
 #include "lib/bytecode_parser/scenarios/FunctionParser.hpp"
 #include "lib/bytecode_parser/scenarios/IfParser.hpp"
 #include "lib/bytecode_parser/scenarios/InitStaticParser.hpp"
 #include "lib/bytecode_parser/scenarios/VtableParser.hpp"
 #include "lib/bytecode_parser/scenarios/WhileParser.hpp"
+#include "lib/execution_tree/FunctionRepository.hpp"
+#include "lib/executor/IJitExecutorFactory.hpp"
+#include "lib/runtime/RuntimeMemory.hpp"
+#include "lib/runtime/VirtualTableRepository.hpp"
+#include "scenarios/CommandFactory.hpp"
 
 namespace ovum::bytecode::parser {
 
-BytecodeParser::BytecodeParser(std::unique_ptr<vm::executor::IJitExecutorFactory> jit_factory, size_t jit_boundary) :
+BytecodeParser::BytecodeParser(std::unique_ptr<vm::executor::IJitExecutorFactory> jit_factory,
+                               size_t jit_boundary,
+                               std::unique_ptr<ICommandFactory> command_factory) :
     jit_factory_(std::move(jit_factory)), jit_boundary_(jit_boundary) {
+  auto cmd_factory = command_factory ? std::move(command_factory) : std::make_unique<CommandFactory>();
+
   handlers_.push_back(std::make_unique<InitStaticParser>());
   handlers_.push_back(std::make_unique<VtableParser>());
   handlers_.push_back(std::make_unique<FunctionParser>());
   handlers_.push_back(std::make_unique<IfParser>());
   handlers_.push_back(std::make_unique<WhileParser>());
-  handlers_.push_back(std::make_unique<CommandParser>());
+  handlers_.push_back(std::make_unique<CommandParser>(std::move(cmd_factory)));
 }
 
 std::expected<std::unique_ptr<vm::execution_tree::Block>, BytecodeParserError> BytecodeParser::Parse(
@@ -33,19 +36,18 @@ std::expected<std::unique_ptr<vm::execution_tree::Block>, BytecodeParserError> B
   if (jit_factory_) {
     jit_opt = std::ref(*jit_factory_);
   }
-  auto ctx = std::make_shared<ParserContext>(tokens, func_repo, vtable_repo, memory, jit_opt, jit_boundary_);
+
+  auto ctx = std::make_shared<ParsingSession>(tokens, func_repo, vtable_repo, memory, jit_opt, jit_boundary_);
 
   while (!ctx->IsEof()) {
     bool handled = false;
 
     for (auto& handler : handlers_) {
       auto result = handler->Handle(ctx);
-
       if (result) {
         handled = true;
         break;
       }
-
       if (result.error().Code() != BytecodeParserErrorCode::kNotMatched) {
         return std::unexpected(result.error());
       }

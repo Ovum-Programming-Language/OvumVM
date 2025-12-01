@@ -4,15 +4,15 @@
 #include <expected>
 #include <memory>
 
-#include "lib/bytecode_parser/BytecodeParserError.hpp"
-#include "lib/bytecode_parser/ParserContext.hpp"
 #include "IParserHandler.hpp"
+#include "lib/bytecode_parser/BytecodeParserError.hpp"
+#include "lib/bytecode_parser/ParsingSession.hpp"
 
 namespace ovum::bytecode::parser {
 
 class WhileParser : public IParserHandler {
 public:
-  std::expected<void, BytecodeParserError> Handle(std::shared_ptr<ParserContext> ctx) override;
+  std::expected<void, BytecodeParserError> Handle(std::shared_ptr<ParsingSession> ctx) override;
 };
 
 } // namespace ovum::bytecode::parser

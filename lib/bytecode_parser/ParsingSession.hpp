@@ -17,9 +17,9 @@
 
 namespace ovum::bytecode::parser {
 
-class ParserContext {
+class ParsingSession {
 public:
-  explicit ParserContext(const std::vector<TokenPtr>& tokens,
+  explicit ParsingSession(const std::vector<TokenPtr>& tokens,
                          vm::execution_tree::FunctionRepository& func_repo,
                          vm::runtime::VirtualTableRepository& vtable_repo,
                          vm::runtime::RuntimeMemory& memory,

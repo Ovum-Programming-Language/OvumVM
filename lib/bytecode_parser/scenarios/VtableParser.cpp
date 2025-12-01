@@ -5,7 +5,7 @@
 
 namespace ovum::bytecode::parser {
 
-std::expected<void, BytecodeParserError> VtableParser::Handle(std::shared_ptr<ParserContext> ctx) {
+std::expected<void, BytecodeParserError> VtableParser::Handle(std::shared_ptr<ParsingSession> ctx) {
   if (!ctx->IsKeyword("vtable")) {
     return std::unexpected(BytecodeParserError("Expected 'vtable'", BytecodeParserErrorCode::kNotMatched));
   }
