@@ -3,22 +3,22 @@
 
 #include <expected>
 #include <memory>
-#include <stdexcept>
 #include <string>
 #include <unordered_set>
 
 #include "lib/bytecode_parser/BytecodeParserError.hpp"
 #include "lib/bytecode_parser/ParserContext.hpp"
 #include "lib/execution_tree/IExecutable.hpp"
+#include "ICommandFactory.hpp"
 
 namespace ovum::bytecode::parser {
 
-class CommandFactory {
+class CommandFactory : public ICommandFactory {
 public:
   CommandFactory() = default;
 
-  std::expected<std::unique_ptr<vm::execution_tree::IExecutable>, BytecodeParserError> CreateCommand(
-      const std::string& cmd_name, ParserContext& ctx);
+  std::expected<std::unique_ptr<vm::execution_tree::IExecutable>, BytecodeParserError>
+  CreateCommand(const std::string& cmd_name, std::shared_ptr<ParserContext> ctx) override;
 
 private:
   static const std::unordered_set<std::string> kStringCommands;
