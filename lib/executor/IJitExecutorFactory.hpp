@@ -2,6 +2,7 @@
 #define EXECUTOR_IJITEXECUTORFACTORY_HPP
 
 #include <memory>
+#include <string>
 
 #include "IJitExecutor.hpp"
 
@@ -11,7 +12,8 @@ class IJitExecutorFactory { // NOLINT(cppcoreguidelines-special-member-functions
 public:
   virtual ~IJitExecutorFactory() = default;
 
-  [[nodiscard]] virtual std::unique_ptr<IJitExecutor> Create() const = 0;
+  [[nodiscard]] virtual std::unique_ptr<IJitExecutor> Create(
+      const std::string& function_name) const = 0;
 };
 
 } // namespace ovum::vm::executor

@@ -28,7 +28,7 @@ std::unique_ptr<vm::execution_tree::JitCompilingFunction<Base>> FunctionFactory:
   if (!jit_factory_.has_value()) {
     return nullptr;
   }
-  auto executor = jit_factory_->get().Create();
+  auto executor = jit_factory_->get().Create(base.GetId());
   return std::make_unique<vm::execution_tree::JitCompilingFunction<Base>>(
       std::move(executor),
       std::forward<Base>(base),
