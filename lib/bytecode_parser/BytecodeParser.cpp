@@ -28,9 +28,9 @@ std::expected<void, BytecodeParserError> BytecodeParser::Parse(const std::vector
                                                                vm::execution_tree::FunctionRepository& func_repo,
                                                                vm::runtime::VirtualTableRepository& vtable_repo,
                                                                vm::runtime::RuntimeMemory& memory) {
-  ParserContext ctx(tokens, func_repo, vtable_repo, memory, jit_factory_.get(), jit_boundary_);
+  auto ctx = std::make_shared<ParserContext>(tokens, func_repo, vtable_repo, memory, jit_factory_.get(), jit_boundary_);
 
-  while (!ctx.IsEof()) {
+  while (!ctx->IsEof()) {
     bool handled = false;
 
     for (auto& handler : handlers_) {
@@ -47,7 +47,7 @@ std::expected<void, BytecodeParserError> BytecodeParser::Parse(const std::vector
     }
 
     if (!handled) {
-      const auto* token = ctx.Current().get();
+      const auto* token = ctx->Current().get();
       std::string message = "Unknown top-level declaration: " + token->GetLexeme() + " at line " +
                             std::to_string(token->GetPosition().GetLine()) + " column " +
                             std::to_string(token->GetPosition().GetColumn());
