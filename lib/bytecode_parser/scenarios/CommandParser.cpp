@@ -47,7 +47,7 @@ std::expected<void, BytecodeParserError> CommandParser::ParseSingleStatement(std
   ctx->Advance();
 
   CommandFactory factory;
-  auto cmd_result = factory.CreateCommand(cmd_name, *ctx);
+  auto cmd_result = factory.CreateCommand(cmd_name, ctx);
 
   if (!cmd_result) {
     return std::unexpected(cmd_result.error());

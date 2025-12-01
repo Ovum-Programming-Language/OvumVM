@@ -2,7 +2,6 @@
 
 #include "lib/bytecode_parser/BytecodeParserError.hpp"
 #include "lib/execution_tree/Block.hpp"
-#include "lib/execution_tree/Function.hpp"
 
 #include "CommandParser.hpp"
 #include "FunctionFactory.hpp"
@@ -68,28 +67,16 @@ std::expected<void, BytecodeParserError> FunctionParser::Handle(std::shared_ptr<
   ctx->current_block = nullptr;
 
   FunctionFactory factory(ctx->jit_factory, ctx->jit_boundary);
-  auto regular_func = factory.CreateRegular(name, arity, std::move(body));
 
-  std::unique_ptr<vm::execution_tree::IFunctionExecutable> final_func;
+  auto func = factory.Create(
+      name,
+      arity,
+      std::move(body),
+      is_pure,
+      std::move(pure_types),
+      no_jit);
 
-  if (is_pure && !pure_types.empty()) {
-    auto pure_func = factory.MakePure(std::move(regular_func), std::move(pure_types));
-    if (!no_jit) {
-      auto jit_func = factory.MakeJit(std::move(pure_func));
-      final_func = std::make_unique<vm::execution_tree::JitCompilingFunction<vm::execution_tree::PureFunction<vm::execution_tree::Function>>>(std::move(jit_func));
-    } else {
-      final_func = std::make_unique<vm::execution_tree::PureFunction<vm::execution_tree::Function>>(std::move(pure_func));
-    }
-  } else {
-    if (!no_jit) {
-      auto jit_func = factory.MakeJit(std::move(regular_func));
-      final_func = std::make_unique<vm::execution_tree::JitCompilingFunction<vm::execution_tree::Function>>(std::move(jit_func));
-    } else {
-      final_func = std::make_unique<vm::execution_tree::Function>(std::move(regular_func));
-    }
-  }
-
-  auto add_res = ctx->func_repo.Add(std::move(final_func));
+  auto add_res = ctx->func_repo.Add(std::move(func));
   if (!add_res) {
     return std::unexpected(BytecodeParserError(std::string("Failed to add function: ") + add_res.error().what()));
   }
