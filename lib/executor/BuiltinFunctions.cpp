@@ -30,7 +30,7 @@ std::expected<ExecutionResult, std::runtime_error> FundamentalTypeConstructor(Pa
 
   T* data_ptr = runtime::GetDataPointer<T>(obj_ptr);
   *data_ptr = value;
-  data.memory.machine_stack.push(obj_ptr);
+  data.memory.machine_stack.emplace(obj_ptr);
   return ExecutionResult::kNormal;
 }
 
@@ -48,7 +48,7 @@ std::expected<ExecutionResult, std::runtime_error> FundamentalTypeCopyConstructo
   const T* source_data = runtime::GetDataPointer<const T>(source_obj);
   T* data_ptr = runtime::GetDataPointer<T>(obj_ptr);
   *data_ptr = *source_data;
-  data.memory.machine_stack.push(obj_ptr);
+  data.memory.machine_stack.emplace(obj_ptr);
   return ExecutionResult::kNormal;
 }
 
@@ -76,7 +76,7 @@ std::expected<ExecutionResult, std::runtime_error> FundamentalTypeEquals(PassedE
   const T* value1 = runtime::GetDataPointer<const T>(obj1_ptr);
   const T* value2 = runtime::GetDataPointer<const T>(obj2_ptr);
   bool equals = (*value1 == *value2);
-  data.memory.machine_stack.push(equals);
+  data.memory.machine_stack.emplace(equals);
   return ExecutionResult::kNormal;
 }
 
@@ -94,7 +94,7 @@ std::expected<ExecutionResult, std::runtime_error> FundamentalTypeIsLess(PassedE
   const T* value1 = runtime::GetDataPointer<const T>(obj1_ptr);
   const T* value2 = runtime::GetDataPointer<const T>(obj2_ptr);
   bool is_less = (*value1 < *value2);
-  data.memory.machine_stack.push(is_less);
+  data.memory.machine_stack.emplace(is_less);
   return ExecutionResult::kNormal;
 }
 
@@ -130,9 +130,9 @@ std::expected<ExecutionResult, std::runtime_error> FundamentalTypeToString(Passe
     return std::unexpected(string_obj_result.error());
   }
   void* string_obj = string_obj_result.value();
-  std::string* string_data = runtime::GetDataPointer<std::string>(string_obj);
+  auto* string_data = runtime::GetDataPointer<std::string>(string_obj);
   new (string_data) std::string(std::move(str)); // Move to avoid copying
-  data.memory.machine_stack.push(string_obj);
+  data.memory.machine_stack.emplace(string_obj);
   return ExecutionResult::kNormal;
 }
 
@@ -150,7 +150,7 @@ std::expected<ExecutionResult, std::runtime_error> FundamentalTypeGetHash(Passed
 
   // Get hash using the functor (avoid copying the value)
   int64_t hash = get_hash_func(*value);
-  data.memory.machine_stack.push(hash);
+  data.memory.machine_stack.emplace(hash);
   return ExecutionResult::kNormal;
 }
 
@@ -170,9 +170,9 @@ std::expected<ExecutionResult, std::runtime_error> ArrayConstructor(PassedExecut
   void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
 
-  std::vector<T>* vec_data = runtime::GetDataPointer<std::vector<T>>(obj_ptr);
+  auto* vec_data = runtime::GetDataPointer<std::vector<T>>(obj_ptr);
   new (vec_data) std::vector<T>(static_cast<size_t>(size), default_value);
-  data.memory.machine_stack.push(obj_ptr);
+  data.memory.machine_stack.emplace(obj_ptr);
   return ExecutionResult::kNormal;
 }
 
@@ -189,9 +189,9 @@ inline std::expected<ExecutionResult, std::runtime_error> ArrayConstructor<void*
   void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
 
-  std::vector<void*>* vec_data = runtime::GetDataPointer<std::vector<void*>>(obj_ptr);
+  auto* vec_data = runtime::GetDataPointer<std::vector<void*>>(obj_ptr);
   new (vec_data) std::vector<void*>(static_cast<size_t>(size), default_value);
-  data.memory.machine_stack.push(obj_ptr);
+  data.memory.machine_stack.emplace(obj_ptr);
   return ExecutionResult::kNormal;
 }
 
@@ -206,10 +206,10 @@ std::expected<ExecutionResult, std::runtime_error> ArrayCopyConstructor(PassedEx
   void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
 
-  const std::vector<T>* source_vec = runtime::GetDataPointer<const std::vector<T>>(source_obj);
-  std::vector<T>* vec_data = runtime::GetDataPointer<std::vector<T>>(obj_ptr);
+  const auto* source_vec = runtime::GetDataPointer<const std::vector<T>>(source_obj);
+  auto* vec_data = runtime::GetDataPointer<std::vector<T>>(obj_ptr);
   new (vec_data) std::vector<T>(*source_vec);
-  data.memory.machine_stack.push(obj_ptr);
+  data.memory.machine_stack.emplace(obj_ptr);
   return ExecutionResult::kNormal;
 }
 
@@ -222,7 +222,7 @@ std::expected<ExecutionResult, std::runtime_error> ArrayDestructor(PassedExecuti
   using vector_type = std::vector<T>;
   void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
-  std::vector<T>* vec_data = runtime::GetDataPointer<std::vector<T>>(obj_ptr);
+  auto* vec_data = runtime::GetDataPointer<std::vector<T>>(obj_ptr);
   vec_data->~vector_type();
   return ExecutionResult::kNormal;
 }
@@ -238,10 +238,10 @@ std::expected<ExecutionResult, std::runtime_error> ArrayEquals(PassedExecutionDa
   void* obj1_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
 
-  const std::vector<T>* vec1 = runtime::GetDataPointer<const std::vector<T>>(obj1_ptr);
-  const std::vector<T>* vec2 = runtime::GetDataPointer<const std::vector<T>>(obj2_ptr);
+  const auto* vec1 = runtime::GetDataPointer<const std::vector<T>>(obj1_ptr);
+  const auto* vec2 = runtime::GetDataPointer<const std::vector<T>>(obj2_ptr);
   bool equals = (*vec1 == *vec2);
-  data.memory.machine_stack.push(equals);
+  data.memory.machine_stack.emplace(equals);
   return ExecutionResult::kNormal;
 }
 
@@ -256,10 +256,10 @@ std::expected<ExecutionResult, std::runtime_error> ArrayIsLess(PassedExecutionDa
   void* obj1_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
 
-  const std::vector<T>* vec1 = runtime::GetDataPointer<const std::vector<T>>(obj1_ptr);
-  const std::vector<T>* vec2 = runtime::GetDataPointer<const std::vector<T>>(obj2_ptr);
+  const auto* vec1 = runtime::GetDataPointer<const std::vector<T>>(obj1_ptr);
+  const auto* vec2 = runtime::GetDataPointer<const std::vector<T>>(obj2_ptr);
   bool is_less = (*vec1 < *vec2);
-  data.memory.machine_stack.push(is_less);
+  data.memory.machine_stack.emplace(is_less);
   return ExecutionResult::kNormal;
 }
 
@@ -271,9 +271,9 @@ std::expected<ExecutionResult, std::runtime_error> ArrayLength(PassedExecutionDa
   }
   void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
-  const std::vector<T>* vec = runtime::GetDataPointer<const std::vector<T>>(obj_ptr);
-  int64_t length = static_cast<int64_t>(vec->size());
-  data.memory.machine_stack.push(length);
+  const auto* vec = runtime::GetDataPointer<const std::vector<T>>(obj_ptr);
+  auto length = static_cast<int64_t>(vec->size());
+  data.memory.machine_stack.emplace(length);
   return ExecutionResult::kNormal;
 }
 
@@ -285,9 +285,9 @@ std::expected<ExecutionResult, std::runtime_error> ArrayGetHash(PassedExecutionD
   }
   void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
-  const std::vector<T>* vec = runtime::GetDataPointer<const std::vector<T>>(obj_ptr);
+  const auto* vec = runtime::GetDataPointer<const std::vector<T>>(obj_ptr);
   int64_t hash = runtime::HashVector(*vec);
-  data.memory.machine_stack.push(hash);
+  data.memory.machine_stack.emplace(hash);
   return ExecutionResult::kNormal;
 }
 
@@ -456,7 +456,7 @@ std::expected<ExecutionResult, std::runtime_error> BoolIsLess(PassedExecutionDat
   const bool* value1 = runtime::GetDataPointer<const bool>(obj1_ptr);
   const bool* value2 = runtime::GetDataPointer<const bool>(obj2_ptr);
   bool is_less = (!*value1 && *value2); // false < true
-  data.memory.machine_stack.push(is_less);
+  data.memory.machine_stack.emplace(is_less);
   return ExecutionResult::kNormal;
 }
 
@@ -471,7 +471,7 @@ std::expected<ExecutionResult, std::runtime_error> StringToString(PassedExecutio
   void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
   // Return self
-  data.memory.machine_stack.push(obj_ptr);
+  data.memory.machine_stack.emplace(obj_ptr);
   return ExecutionResult::kNormal;
 }
 
@@ -481,9 +481,9 @@ std::expected<ExecutionResult, std::runtime_error> StringGetHash(PassedExecution
   }
   void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
-  std::string* str = runtime::GetDataPointer<std::string>(obj_ptr);
+  auto* str = runtime::GetDataPointer<std::string>(obj_ptr);
   int64_t hash = static_cast<int64_t>(std::hash<std::string>{}(*str));
-  data.memory.machine_stack.push(hash);
+  data.memory.machine_stack.emplace(hash);
   return ExecutionResult::kNormal;
 }
 
@@ -493,9 +493,9 @@ std::expected<ExecutionResult, std::runtime_error> StringLength(PassedExecutionD
   }
   void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
-  std::string* str = runtime::GetDataPointer<std::string>(obj_ptr);
-  int64_t length = static_cast<int64_t>(str->length());
-  data.memory.machine_stack.push(length);
+  auto* str = runtime::GetDataPointer<std::string>(obj_ptr);
+  auto length = static_cast<int64_t>(str->length());
+  data.memory.machine_stack.emplace(length);
   return ExecutionResult::kNormal;
 }
 
@@ -505,7 +505,7 @@ std::expected<ExecutionResult, std::runtime_error> StringToUtf8Bytes(PassedExecu
   }
   void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
-  std::string* str = runtime::GetDataPointer<std::string>(obj_ptr);
+  auto* str = runtime::GetDataPointer<std::string>(obj_ptr);
 
   // Create ByteArray object
   auto vtable_result = data.virtual_table_repository.GetByName("ByteArray");
@@ -524,9 +524,9 @@ std::expected<ExecutionResult, std::runtime_error> StringToUtf8Bytes(PassedExecu
     return std::unexpected(byte_array_obj_result.error());
   }
   void* byte_array_obj = byte_array_obj_result.value();
-  std::vector<uint8_t>* vec_data = runtime::GetDataPointer<std::vector<uint8_t>>(byte_array_obj);
+  auto* vec_data = runtime::GetDataPointer<std::vector<uint8_t>>(byte_array_obj);
   new (vec_data) std::vector<uint8_t>(str->begin(), str->end());
-  data.memory.machine_stack.push(byte_array_obj);
+  data.memory.machine_stack.emplace(byte_array_obj);
   return ExecutionResult::kNormal;
 }
 
@@ -540,10 +540,10 @@ std::expected<ExecutionResult, std::runtime_error> StringConstructor(PassedExecu
   void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
 
-  const std::string* source_string = runtime::GetDataPointer<const std::string>(source_string_obj);
-  std::string* string_data = runtime::GetDataPointer<std::string>(obj_ptr);
+  const auto* source_string = runtime::GetDataPointer<const std::string>(source_string_obj);
+  auto* string_data = runtime::GetDataPointer<std::string>(obj_ptr);
   new (string_data) std::string(*source_string);
-  data.memory.machine_stack.push(obj_ptr);
+  data.memory.machine_stack.emplace(obj_ptr);
   return ExecutionResult::kNormal;
 }
 
@@ -556,10 +556,10 @@ std::expected<ExecutionResult, std::runtime_error> StringCopyConstructor(PassedE
   void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
 
-  const std::string* source_string = runtime::GetDataPointer<const std::string>(source_obj);
-  std::string* string_data = runtime::GetDataPointer<std::string>(obj_ptr);
+  const auto* source_string = runtime::GetDataPointer<const std::string>(source_obj);
+  auto* string_data = runtime::GetDataPointer<std::string>(obj_ptr);
   new (string_data) std::string(*source_string);
-  data.memory.machine_stack.push(obj_ptr);
+  data.memory.machine_stack.emplace(obj_ptr);
   return ExecutionResult::kNormal;
 }
 
@@ -570,7 +570,7 @@ std::expected<ExecutionResult, std::runtime_error> StringDestructor(PassedExecut
   using string_type = std::string;
   void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
-  std::string* string_data = runtime::GetDataPointer<std::string>(obj_ptr);
+  auto* string_data = runtime::GetDataPointer<std::string>(obj_ptr);
   string_data->~string_type();
   return ExecutionResult::kNormal;
 }
@@ -666,9 +666,9 @@ std::expected<ExecutionResult, std::runtime_error> FileOpen(PassedExecutionData&
   void* file_obj = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
 
-  std::string* path = runtime::GetDataPointer<std::string>(path_obj);
-  std::string* mode = runtime::GetDataPointer<std::string>(mode_obj);
-  std::fstream* file = runtime::GetDataPointer<std::fstream>(file_obj);
+  auto* path = runtime::GetDataPointer<std::string>(path_obj);
+  auto* mode = runtime::GetDataPointer<std::string>(mode_obj);
+  auto* file = runtime::GetDataPointer<std::fstream>(file_obj);
 
   // Parse mode string
   std::ios_base::openmode open_mode = std::ios_base::in | std::ios_base::out;
@@ -706,7 +706,7 @@ std::expected<ExecutionResult, std::runtime_error> FileClose(PassedExecutionData
   }
   void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
-  std::fstream* file = runtime::GetDataPointer<std::fstream>(obj_ptr);
+  auto* file = runtime::GetDataPointer<std::fstream>(obj_ptr);
 
   if (file->is_open()) {
     file->close();
@@ -721,10 +721,10 @@ std::expected<ExecutionResult, std::runtime_error> FileIsOpen(PassedExecutionDat
   }
   void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
-  std::fstream* file = runtime::GetDataPointer<std::fstream>(obj_ptr);
+  auto* file = runtime::GetDataPointer<std::fstream>(obj_ptr);
 
   bool is_open = file->is_open();
-  data.memory.machine_stack.push(is_open);
+  data.memory.machine_stack.emplace(is_open);
   return ExecutionResult::kNormal;
 }
 
@@ -824,15 +824,15 @@ std::expected<ExecutionResult, std::runtime_error> ByteArrayFromIntArray(PassedE
   void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
 
-  const std::vector<int64_t>* source_vec = runtime::GetDataPointer<const std::vector<int64_t>>(source_obj);
-  std::vector<uint8_t>* vec_data = runtime::GetDataPointer<std::vector<uint8_t>>(obj_ptr);
+  const auto* source_vec = runtime::GetDataPointer<const std::vector<int64_t>>(source_obj);
+  auto* vec_data = runtime::GetDataPointer<std::vector<uint8_t>>(obj_ptr);
 
   // Convert int64_t array to byte array by interpreting raw bytes
   size_t byte_count = source_vec->size() * sizeof(int64_t);
   new (vec_data) std::vector<uint8_t>(byte_count);
   std::memcpy(vec_data->data(), source_vec->data(), byte_count);
 
-  data.memory.machine_stack.push(obj_ptr);
+  data.memory.machine_stack.emplace(obj_ptr);
   return ExecutionResult::kNormal;
 }
 
@@ -845,15 +845,15 @@ std::expected<ExecutionResult, std::runtime_error> ByteArrayFromFloatArray(Passe
   void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
 
-  const std::vector<double>* source_vec = runtime::GetDataPointer<const std::vector<double>>(source_obj);
-  std::vector<uint8_t>* vec_data = runtime::GetDataPointer<std::vector<uint8_t>>(obj_ptr);
+  const auto* source_vec = runtime::GetDataPointer<const std::vector<double>>(source_obj);
+  auto* vec_data = runtime::GetDataPointer<std::vector<uint8_t>>(obj_ptr);
 
   // Convert double array to byte array by interpreting raw bytes
   size_t byte_count = source_vec->size() * sizeof(double);
   new (vec_data) std::vector<uint8_t>(byte_count);
   std::memcpy(vec_data->data(), source_vec->data(), byte_count);
 
-  data.memory.machine_stack.push(obj_ptr);
+  data.memory.machine_stack.emplace(obj_ptr);
   return ExecutionResult::kNormal;
 }
 
@@ -866,13 +866,13 @@ std::expected<ExecutionResult, std::runtime_error> ByteArrayFromCharArray(Passed
   void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
 
-  const std::vector<char>* source_vec = runtime::GetDataPointer<const std::vector<char>>(source_obj);
-  std::vector<uint8_t>* vec_data = runtime::GetDataPointer<std::vector<uint8_t>>(obj_ptr);
+  const auto* source_vec = runtime::GetDataPointer<const std::vector<char>>(source_obj);
+  auto* vec_data = runtime::GetDataPointer<std::vector<uint8_t>>(obj_ptr);
 
   // Convert char array to byte array (direct copy, char and uint8_t are compatible)
   new (vec_data) std::vector<uint8_t>(source_vec->begin(), source_vec->end());
 
-  data.memory.machine_stack.push(obj_ptr);
+  data.memory.machine_stack.emplace(obj_ptr);
   return ExecutionResult::kNormal;
 }
 
@@ -885,8 +885,8 @@ std::expected<ExecutionResult, std::runtime_error> ByteArrayFromBoolArray(Passed
   void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
 
-  const std::vector<bool>* source_vec = runtime::GetDataPointer<const std::vector<bool>>(source_obj);
-  std::vector<uint8_t>* vec_data = runtime::GetDataPointer<std::vector<uint8_t>>(obj_ptr);
+  const auto* source_vec = runtime::GetDataPointer<const std::vector<bool>>(source_obj);
+  auto* vec_data = runtime::GetDataPointer<std::vector<uint8_t>>(obj_ptr);
 
   // Convert bool array to byte array (bool is stored as bits in vector<bool>, so we convert each to uint8_t)
   new (vec_data) std::vector<uint8_t>();
@@ -895,7 +895,7 @@ std::expected<ExecutionResult, std::runtime_error> ByteArrayFromBoolArray(Passed
     vec_data->push_back(val ? static_cast<uint8_t>(1) : static_cast<uint8_t>(0));
   }
 
-  data.memory.machine_stack.push(obj_ptr);
+  data.memory.machine_stack.emplace(obj_ptr);
   return ExecutionResult::kNormal;
 }
 
@@ -932,9 +932,9 @@ std::expected<ExecutionResult, std::runtime_error> ObjectArrayConstructor(Passed
   void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
 
-  std::vector<void*>* vec_data = runtime::GetDataPointer<std::vector<void*>>(obj_ptr);
+  auto* vec_data = runtime::GetDataPointer<std::vector<void*>>(obj_ptr);
   new (vec_data) std::vector<void*>(static_cast<size_t>(size), default_value);
-  data.memory.machine_stack.push(obj_ptr);
+  data.memory.machine_stack.emplace(obj_ptr);
   return ExecutionResult::kNormal;
 }
 
@@ -1026,7 +1026,7 @@ std::expected<ExecutionResult, std::runtime_error> FileRead(PassedExecutionData&
   void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
 
-  std::fstream* file = runtime::GetDataPointer<std::fstream>(obj_ptr);
+  auto* file = runtime::GetDataPointer<std::fstream>(obj_ptr);
 
   if (!file->is_open()) {
     return std::unexpected(std::runtime_error("File::Read: file is not open"));
@@ -1035,7 +1035,7 @@ std::expected<ExecutionResult, std::runtime_error> FileRead(PassedExecutionData&
   // Read bytes
   std::vector<uint8_t> buffer(static_cast<size_t>(size));
   file->read(reinterpret_cast<char*>(buffer.data()), static_cast<std::streamsize>(size));
-  size_t bytes_read = static_cast<size_t>(file->gcount());
+  auto bytes_read = static_cast<size_t>(file->gcount());
   buffer.resize(bytes_read);
 
   // Create ByteArray object
@@ -1055,9 +1055,9 @@ std::expected<ExecutionResult, std::runtime_error> FileRead(PassedExecutionData&
     return std::unexpected(byte_array_obj_result.error());
   }
   void* byte_array_obj = byte_array_obj_result.value();
-  std::vector<uint8_t>* vec_data = runtime::GetDataPointer<std::vector<uint8_t>>(byte_array_obj);
+  auto* vec_data = runtime::GetDataPointer<std::vector<uint8_t>>(byte_array_obj);
   new (vec_data) std::vector<uint8_t>(std::move(buffer));
-  data.memory.machine_stack.push(byte_array_obj);
+  data.memory.machine_stack.emplace(byte_array_obj);
   return ExecutionResult::kNormal;
 }
 
@@ -1070,8 +1070,8 @@ std::expected<ExecutionResult, std::runtime_error> FileWrite(PassedExecutionData
   void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
 
-  std::fstream* file = runtime::GetDataPointer<std::fstream>(obj_ptr);
-  std::vector<uint8_t>* data_vec = runtime::GetDataPointer<std::vector<uint8_t>>(byte_array_obj);
+  auto* file = runtime::GetDataPointer<std::fstream>(obj_ptr);
+  auto* data_vec = runtime::GetDataPointer<std::vector<uint8_t>>(byte_array_obj);
 
   if (!file->is_open()) {
     return std::unexpected(std::runtime_error("File::Write: file is not open"));
@@ -1083,8 +1083,8 @@ std::expected<ExecutionResult, std::runtime_error> FileWrite(PassedExecutionData
     return std::unexpected(std::runtime_error("File::Write: write failed"));
   }
 
-  int64_t bytes_written = static_cast<int64_t>(data_vec->size());
-  data.memory.machine_stack.push(bytes_written);
+  auto bytes_written = static_cast<int64_t>(data_vec->size());
+  data.memory.machine_stack.emplace(bytes_written);
   return ExecutionResult::kNormal;
 }
 
@@ -1095,7 +1095,7 @@ std::expected<ExecutionResult, std::runtime_error> FileReadLine(PassedExecutionD
   void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
 
-  std::fstream* file = runtime::GetDataPointer<std::fstream>(obj_ptr);
+  auto* file = runtime::GetDataPointer<std::fstream>(obj_ptr);
 
   if (!file->is_open()) {
     return std::unexpected(std::runtime_error("File::ReadLine: file is not open"));
@@ -1125,9 +1125,9 @@ std::expected<ExecutionResult, std::runtime_error> FileReadLine(PassedExecutionD
     return std::unexpected(string_obj_result.error());
   }
   void* string_obj = string_obj_result.value();
-  std::string* string_data = runtime::GetDataPointer<std::string>(string_obj);
+  auto* string_data = runtime::GetDataPointer<std::string>(string_obj);
   new (string_data) std::string(line);
-  data.memory.machine_stack.push(string_obj);
+  data.memory.machine_stack.emplace(string_obj);
   return ExecutionResult::kNormal;
 }
 
@@ -1140,8 +1140,8 @@ std::expected<ExecutionResult, std::runtime_error> FileWriteLine(PassedExecution
   void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
 
-  std::fstream* file = runtime::GetDataPointer<std::fstream>(obj_ptr);
-  std::string* line = runtime::GetDataPointer<std::string>(line_obj);
+  auto* file = runtime::GetDataPointer<std::fstream>(obj_ptr);
+  auto* line = runtime::GetDataPointer<std::string>(line_obj);
 
   if (!file->is_open()) {
     return std::unexpected(std::runtime_error("File::WriteLine: file is not open"));
@@ -1165,7 +1165,7 @@ std::expected<ExecutionResult, std::runtime_error> FileSeek(PassedExecutionData&
   void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
 
-  std::fstream* file = runtime::GetDataPointer<std::fstream>(obj_ptr);
+  auto* file = runtime::GetDataPointer<std::fstream>(obj_ptr);
 
   if (!file->is_open()) {
     return std::unexpected(std::runtime_error("File::Seek: file is not open"));
@@ -1187,15 +1187,15 @@ std::expected<ExecutionResult, std::runtime_error> FileTell(PassedExecutionData&
   void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
 
-  std::fstream* file = runtime::GetDataPointer<std::fstream>(obj_ptr);
+  auto* file = runtime::GetDataPointer<std::fstream>(obj_ptr);
 
   if (!file->is_open()) {
     return std::unexpected(std::runtime_error("File::Tell: file is not open"));
   }
 
   std::streampos pos = file->tellg();
-  int64_t position = static_cast<int64_t>(pos);
-  data.memory.machine_stack.push(position);
+  auto position = static_cast<int64_t>(pos);
+  data.memory.machine_stack.emplace(position);
   return ExecutionResult::kNormal;
 }
 
@@ -1206,14 +1206,14 @@ std::expected<ExecutionResult, std::runtime_error> FileEof(PassedExecutionData& 
   void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
 
-  std::fstream* file = runtime::GetDataPointer<std::fstream>(obj_ptr);
+  auto* file = runtime::GetDataPointer<std::fstream>(obj_ptr);
 
   if (!file->is_open()) {
     return std::unexpected(std::runtime_error("File::Eof: file is not open"));
   }
 
   bool eof = file->eof();
-  data.memory.machine_stack.push(eof);
+  data.memory.machine_stack.emplace(eof);
   return ExecutionResult::kNormal;
 }
 
@@ -1225,9 +1225,9 @@ std::expected<ExecutionResult, std::runtime_error> FileConstructor(PassedExecuti
   void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
 
-  std::fstream* file_data = runtime::GetDataPointer<std::fstream>(obj_ptr);
+  auto* file_data = runtime::GetDataPointer<std::fstream>(obj_ptr);
   new (file_data) std::fstream();
-  data.memory.machine_stack.push(obj_ptr);
+  data.memory.machine_stack.emplace(obj_ptr);
   return ExecutionResult::kNormal;
 }
 
@@ -1238,7 +1238,7 @@ std::expected<ExecutionResult, std::runtime_error> FileDestructor(PassedExecutio
   using fstream_type = std::fstream;
   void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
   data.memory.machine_stack.pop();
-  std::fstream* file_data = runtime::GetDataPointer<std::fstream>(obj_ptr);
+  auto* file_data = runtime::GetDataPointer<std::fstream>(obj_ptr);
   if (file_data->is_open()) {
     file_data->close();
   }
