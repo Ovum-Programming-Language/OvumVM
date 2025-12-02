@@ -77,7 +77,7 @@ ICommandFactory& CommandParser::DefaultFactory() {
   return instance;
 }
 
-std::expected<void, BytecodeParserError> CommandParser::ParseSingleStatement(std::shared_ptr<ParsingSession> ctx,
+std::expected<void, BytecodeParserError> CommandParser::ParseSingleStatement(const std::shared_ptr<ParsingSession>& ctx,
                                                                              vm::execution_tree::Block& block) {
   return ParseSingleStatement(ctx, block, DefaultFactory());
 }

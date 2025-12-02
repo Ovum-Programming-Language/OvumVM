@@ -68,7 +68,7 @@ std::expected<void, BytecodeParserError> FunctionParser::Handle(ParsingSessionPt
     return std::unexpected(arity_res.error());
   }
 
-  size_t arity = static_cast<size_t>(arity_res.value());
+  auto arity = static_cast<size_t>(arity_res.value());
 
   std::expected<std::string, BytecodeParserError> name_res = ctx->ConsumeIdentifier();
 

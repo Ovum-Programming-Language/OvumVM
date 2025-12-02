@@ -23,7 +23,7 @@ public:
                                                                        vm::execution_tree::Block& block,
                                                                        ICommandFactory& factory);
 
-  static std::expected<void, BytecodeParserError> ParseSingleStatement(std::shared_ptr<ParsingSession> ctx,
+  static std::expected<void, BytecodeParserError> ParseSingleStatement(const std::shared_ptr<ParsingSession>& ctx,
                                                                        vm::execution_tree::Block& block);
 
   static ICommandFactory& DefaultFactory();

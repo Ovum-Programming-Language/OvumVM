@@ -43,34 +43,18 @@ std::unique_ptr<vm::execution_tree::IFunctionExecutable> FunctionFactory::Create
       return std::make_unique<vm::execution_tree::Function>(std::move(regular));
     }
 
-    std::unique_ptr<vm::execution_tree::JitCompilingFunction<vm::execution_tree::Function>> jit =
-        TryWrapJit(std::move(regular));
-
-    if (jit) {
-      return std::make_unique<vm::execution_tree::JitCompilingFunction<vm::execution_tree::Function>>(std::move(*jit));
-    }
-
-    return std::make_unique<vm::execution_tree::Function>(std::move(regular));
+    return TryWrapJit(std::move(regular));
   }
 
   vm::execution_tree::PureFunction<vm::execution_tree::Function> pure_func =
       WrapPure(std::move(regular), std::move(pure_argument_types));
 
   if (no_jit || !jit_factory_.has_value()) {
-    return std::make_unique<vm::execution_tree::PureFunction<vm::execution_tree::Function>>(std::move(pure_func));
+    return std::make_unique<vm::execution_tree::PureFunction<vm::execution_tree::Function>>(
+        WrapPure(std::move(regular), std::move(pure_argument_types)));
   }
 
-  std::unique_ptr<
-      vm::execution_tree::JitCompilingFunction<vm::execution_tree::PureFunction<vm::execution_tree::Function>>>
-      jit = TryWrapJit(std::move(pure_func));
-
-  if (jit) {
-    return std::make_unique<
-        vm::execution_tree::JitCompilingFunction<vm::execution_tree::PureFunction<vm::execution_tree::Function>>>(
-        std::move(*jit));
-  }
-
-  return std::make_unique<vm::execution_tree::PureFunction<vm::execution_tree::Function>>(std::move(pure_func));
+  return TryWrapJit(std::move(pure_func));
 }
 
 template vm::execution_tree::PureFunction<vm::execution_tree::Function>
