@@ -4,11 +4,12 @@
 #include <expected>
 #include <memory>
 
-#include "ICommandFactory.hpp"
-#include "IParserHandler.hpp"
 #include "lib/bytecode_parser/BytecodeParserError.hpp"
 #include "lib/bytecode_parser/ParsingSession.hpp"
 #include "lib/execution_tree/Block.hpp"
+
+#include "ICommandFactory.hpp"
+#include "IParserHandler.hpp"
 
 namespace ovum::bytecode::parser {
 

@@ -1,5 +1,5 @@
-#ifndef BYTECODE_PARSER_ICOMMANDFACTORY_HPP
-#define BYTECODE_PARSER_ICOMMANDFACTORY_HPP
+#ifndef BYTECODE_PARSER_ICOMMANDFACTORY_HPP_
+#define BYTECODE_PARSER_ICOMMANDFACTORY_HPP_
 
 #include <expected>
 #include <memory>
@@ -14,10 +14,10 @@ class ICommandFactory { // NOLINT(cppcoreguidelines-special-member-functions)
 public:
   virtual ~ICommandFactory() = default;
 
-  virtual std::expected<std::unique_ptr<vm::execution_tree::IExecutable>, BytecodeParserError>
-  CreateCommand(const std::string& cmd_name, std::shared_ptr<ParsingSession> ctx) = 0;
+  virtual std::expected<std::unique_ptr<vm::execution_tree::IExecutable>, BytecodeParserError> CreateCommand(
+      const std::string& cmd_name, std::shared_ptr<ParsingSession> ctx) = 0;
 };
 
 } // namespace ovum::bytecode::parser
 
-#endif // BYTECODE_PARSER_ICOMMANDFACTORY_HPP
+#endif // BYTECODE_PARSER_ICOMMANDFACTORY_HPP_

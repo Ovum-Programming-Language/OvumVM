@@ -1,8 +1,10 @@
+#include "FunctionParser.hpp"
+
+#include "lib/execution_tree/Block.hpp"
+
 #include "CommandParser.hpp"
 #include "FunctionFactory.hpp"
-#include "FunctionParser.hpp"
 #include "lib/bytecode_parser/BytecodeParserError.hpp"
-#include "lib/execution_tree/Block.hpp"
 
 namespace ovum::bytecode::parser {
 
@@ -13,19 +15,33 @@ std::expected<void, BytecodeParserError> FunctionParser::Handle(ParsingSessionPt
 
   if (ctx->IsKeyword("pure")) {
     ctx->Advance();
-    if (auto e = ctx->ExpectPunct('('); !e)
+
+    std::expected<void, BytecodeParserError> e = ctx->ExpectPunct('(');
+
+    if (!e) {
       return std::unexpected(e.error());
+    }
 
     while (!ctx->IsPunct(')')) {
-      auto type = ctx->ConsumeIdentifier();
-      if (!type)
+      std::expected<std::string, BytecodeParserError> type = ctx->ConsumeIdentifier();
+
+      if (!type) {
         return std::unexpected(type.error());
+      }
+
       pure_types.push_back(std::move(type.value()));
-      if (ctx->IsPunct(','))
+
+      if (ctx->IsPunct(',')) {
         ctx->Advance();
+      }
     }
-    if (auto e = ctx->ExpectPunct(')'); !e)
+
+    e = ctx->ExpectPunct(')');
+
+    if (!e) {
       return std::unexpected(e.error());
+    }
+
     is_pure = true;
   }
 
@@ -39,39 +55,60 @@ std::expected<void, BytecodeParserError> FunctionParser::Handle(ParsingSessionPt
   }
 
   ctx->Advance();
-  if (auto e = ctx->ExpectPunct(':'); !e)
-    return std::unexpected(e.error());
 
-  auto arity_res = ctx->ConsumeIntLiteral();
-  if (!arity_res)
+  std::expected<void, BytecodeParserError> e = ctx->ExpectPunct(':');
+
+  if (!e) {
+    return std::unexpected(e.error());
+  }
+
+  std::expected<int64_t, BytecodeParserError> arity_res = ctx->ConsumeIntLiteral();
+
+  if (!arity_res) {
     return std::unexpected(arity_res.error());
+  }
+
   size_t arity = static_cast<size_t>(arity_res.value());
 
-  auto name_res = ctx->ConsumeIdentifier();
-  if (!name_res)
+  std::expected<std::string, BytecodeParserError> name_res = ctx->ConsumeIdentifier();
+
+  if (!name_res) {
     return std::unexpected(name_res.error());
+  }
 
-  if (auto e = ctx->ExpectPunct('{'); !e)
+  e = ctx->ExpectPunct('{');
+
+  if (!e) {
     return std::unexpected(e.error());
+  }
 
-  auto body = std::make_unique<vm::execution_tree::Block>();
+  std::unique_ptr<vm::execution_tree::Block> body = std::make_unique<vm::execution_tree::Block>();
+
   ctx->SetCurrentBlock(body.get());
 
   while (!ctx->IsPunct('}') && !ctx->IsEof()) {
-    auto res = CommandParser::ParseSingleStatement(ctx, *body);
-    if (!res)
+    std::expected<void, BytecodeParserError> res = CommandParser::ParseSingleStatement(ctx, *body);
+
+    if (!res) {
       return res;
+    }
   }
 
-  if (auto e = ctx->ExpectPunct('}'); !e)
+  e = ctx->ExpectPunct('}');
+
+  if (!e) {
     return std::unexpected(e.error());
+  }
+
   ctx->SetCurrentBlock(nullptr);
 
   FunctionFactory factory(ctx->JitFactory(), ctx->JitBoundary());
 
-  auto func = factory.Create(name_res.value(), arity, std::move(body), is_pure, std::move(pure_types), no_jit);
+  std::unique_ptr<vm::execution_tree::IFunctionExecutable> func =
+      factory.Create(name_res.value(), arity, std::move(body), is_pure, std::move(pure_types), no_jit);
 
-  auto add_res = ctx->FuncRepo().Add(std::move(func));
+  std::expected<size_t, std::runtime_error> add_res = ctx->FuncRepo().Add(std::move(func));
+
   if (!add_res) {
     return std::unexpected(BytecodeParserError(std::string("Failed to add function: ") + add_res.error().what()));
   }

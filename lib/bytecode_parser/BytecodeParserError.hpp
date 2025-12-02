@@ -3,6 +3,7 @@
 
 #include <stdexcept>
 #include <string>
+
 #include "BytecodeParserErrorCode.hpp"
 
 namespace ovum::bytecode::parser {

@@ -1,10 +1,12 @@
 #include "IfParser.hpp"
-#include "lib/bytecode_parser/BytecodeParserError.hpp"
+
 #include "lib/execution_tree/Block.hpp"
 #include "lib/execution_tree/ConditionalExecution.hpp"
 #include "lib/execution_tree/IfMultibranch.hpp"
 #include "lib/execution_tree/command_factory.hpp"
+
 #include "CommandParser.hpp"
+#include "lib/bytecode_parser/BytecodeParserError.hpp"
 
 namespace ovum::bytecode::parser {
 
@@ -15,35 +17,63 @@ std::expected<void, BytecodeParserError> IfParser::Handle(std::shared_ptr<Parsin
 
   ctx->Advance();
 
-  auto parent_block = ctx->CurrentBlock();
+  vm::execution_tree::Block* parent_block = ctx->CurrentBlock();
 
-  auto if_node = std::make_unique<vm::execution_tree::IfMultibranch>();
+  std::unique_ptr<vm::execution_tree::IfMultibranch> if_node = std::make_unique<vm::execution_tree::IfMultibranch>();
 
-  if (auto e = ctx->ExpectPunct('{'); !e) return std::unexpected(e.error());
+  std::expected<void, BytecodeParserError> e = ctx->ExpectPunct('{');
 
-  auto cond1 = std::make_unique<vm::execution_tree::Block>();
+  if (!e) {
+    return std::unexpected(e.error());
+  }
+
+  std::unique_ptr<vm::execution_tree::Block> cond1 = std::make_unique<vm::execution_tree::Block>();
+
   ctx->SetCurrentBlock(cond1.get());
 
   while (!ctx->IsPunct('}')) {
-    auto res = CommandParser::ParseSingleStatement(ctx, *cond1);
-    if (!res) return res;
+    std::expected<void, BytecodeParserError> res = CommandParser::ParseSingleStatement(ctx, *cond1);
+
+    if (!res) {
+      return res;
+    }
   }
 
-  if (auto e = ctx->ExpectPunct('}'); !e) return std::unexpected(e.error());
+  e = ctx->ExpectPunct('}');
 
-  if (auto e = ctx->ExpectKeyword("then"); !e) return std::unexpected(e.error());
+  if (!e) {
+    return std::unexpected(e.error());
+  }
 
-  if (auto e = ctx->ExpectPunct('{'); !e) return std::unexpected(e.error());
+  e = ctx->ExpectKeyword("then");
 
-  auto body1 = std::make_unique<vm::execution_tree::Block>();
+  if (!e) {
+    return std::unexpected(e.error());
+  }
+
+  e = ctx->ExpectPunct('{');
+
+  if (!e) {
+    return std::unexpected(e.error());
+  }
+
+  std::unique_ptr<vm::execution_tree::Block> body1 = std::make_unique<vm::execution_tree::Block>();
+
   ctx->SetCurrentBlock(body1.get());
 
   while (!ctx->IsPunct('}')) {
-    auto res = CommandParser::ParseSingleStatement(ctx, *body1);
-    if (!res) return res;
+    std::expected<void, BytecodeParserError> res = CommandParser::ParseSingleStatement(ctx, *body1);
+
+    if (!res) {
+      return res;
+    }
   }
 
-  if (auto e = ctx->ExpectPunct('}'); !e) return std::unexpected(e.error());
+  e = ctx->ExpectPunct('}');
+
+  if (!e) {
+    return std::unexpected(e.error());
+  }
 
   if_node->AddBranch(std::make_unique<vm::execution_tree::ConditionalExecution>(std::move(cond1), std::move(body1)));
 
@@ -53,51 +83,100 @@ std::expected<void, BytecodeParserError> IfParser::Handle(std::shared_ptr<Parsin
     if (ctx->IsKeyword("if")) {
       ctx->Advance();
 
-      if (auto e = ctx->ExpectPunct('{'); !e) return std::unexpected(e.error());
+      e = ctx->ExpectPunct('{');
 
-      auto cond = std::make_unique<vm::execution_tree::Block>();
+      if (!e) {
+        return std::unexpected(e.error());
+      }
+
+      std::unique_ptr<vm::execution_tree::Block> cond = std::make_unique<vm::execution_tree::Block>();
+
       ctx->SetCurrentBlock(cond.get());
 
       while (!ctx->IsPunct('}')) {
-        auto res = CommandParser::ParseSingleStatement(ctx, *cond);
-        if (!res) return res;
+        std::expected<void, BytecodeParserError> res = CommandParser::ParseSingleStatement(ctx, *cond);
+
+        if (!res) {
+          return res;
+        }
       }
 
-      if (auto e = ctx->ExpectPunct('}'); !e) return std::unexpected(e.error());
+      e = ctx->ExpectPunct('}');
 
-      if (auto e = ctx->ExpectKeyword("then"); !e) return std::unexpected(e.error());
+      if (!e) {
+        return std::unexpected(e.error());
+      }
 
-      if (auto e = ctx->ExpectPunct('{'); !e) return std::unexpected(e.error());
+      e = ctx->ExpectKeyword("then");
 
-      auto body = std::make_unique<vm::execution_tree::Block>();
+      if (!e) {
+        return std::unexpected(e.error());
+      }
+
+      e = ctx->ExpectPunct('{');
+
+      if (!e) {
+        return std::unexpected(e.error());
+      }
+
+      std::unique_ptr<vm::execution_tree::Block> body = std::make_unique<vm::execution_tree::Block>();
+
       ctx->SetCurrentBlock(body.get());
 
       while (!ctx->IsPunct('}')) {
-        auto res = CommandParser::ParseSingleStatement(ctx, *body);
-        if (!res) return res;
+        std::expected<void, BytecodeParserError> res = CommandParser::ParseSingleStatement(ctx, *body);
+
+        if (!res) {
+          return res;
+        }
       }
 
-      if (auto e = ctx->ExpectPunct('}'); !e) return std::unexpected(e.error());
+      e = ctx->ExpectPunct('}');
+
+      if (!e) {
+        return std::unexpected(e.error());
+      }
 
       if_node->AddBranch(std::make_unique<vm::execution_tree::ConditionalExecution>(std::move(cond), std::move(body)));
     } else {
-      if (auto e = ctx->ExpectPunct('{'); !e) return std::unexpected(e.error());
+      e = ctx->ExpectPunct('{');
 
-      auto else_body = std::make_unique<vm::execution_tree::Block>();
+      if (!e) {
+        return std::unexpected(e.error());
+      }
+
+      std::unique_ptr<vm::execution_tree::Block> else_body = std::make_unique<vm::execution_tree::Block>();
+
       ctx->SetCurrentBlock(else_body.get());
 
       while (!ctx->IsPunct('}')) {
-        auto res = CommandParser::ParseSingleStatement(ctx, *else_body);
-        if (!res) return res;
+        std::expected<void, BytecodeParserError> res = CommandParser::ParseSingleStatement(ctx, *else_body);
+
+        if (!res) {
+          return res;
+        }
       }
 
-      if (auto e = ctx->ExpectPunct('}'); !e) return std::unexpected(e.error());
+      e = ctx->ExpectPunct('}');
 
-      auto true_cond = std::make_unique<vm::execution_tree::Block>();
-      auto bool_com_res = ovum::vm::execution_tree::CreateBooleanCommandByName("PushBool", true);
-      if (!bool_com_res) return std::unexpected(BytecodeParserError(bool_com_res.error().what()));
+      if (!e) {
+        return std::unexpected(e.error());
+      }
+
+      std::unique_ptr<vm::execution_tree::Block> true_cond = std::make_unique<vm::execution_tree::Block>();
+
+      std::expected<std::unique_ptr<vm::execution_tree::IExecutable>, std::out_of_range> bool_com_res =
+          ovum::vm::execution_tree::CreateBooleanCommandByName("PushBool", true);
+
+      if (!bool_com_res) {
+        return std::unexpected(BytecodeParserError(bool_com_res.error().what()));
+      }
+
       true_cond->AddStatement(std::move(bool_com_res.value()));
-      if_node->AddBranch(std::make_unique<vm::execution_tree::ConditionalExecution>(std::move(true_cond), std::move(else_body)));
+
+      if_node->AddBranch(
+          std::make_unique<vm::execution_tree::ConditionalExecution>(std::move(true_cond), std::move(else_body)));
+
       break;
     }
   }

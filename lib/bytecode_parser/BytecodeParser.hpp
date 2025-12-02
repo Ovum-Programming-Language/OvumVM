@@ -5,9 +5,10 @@
 #include <memory>
 #include <vector>
 
+#include "lib/executor/IJitExecutorFactory.hpp"
+
 #include "BytecodeParserError.hpp"
 #include "ParsingSession.hpp"
-#include "lib/executor/IJitExecutorFactory.hpp"
 #include "scenarios/ICommandFactory.hpp"
 #include "scenarios/IParserHandler.hpp"
 

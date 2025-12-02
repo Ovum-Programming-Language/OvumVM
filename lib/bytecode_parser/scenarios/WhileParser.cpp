@@ -1,8 +1,10 @@
-#include "CommandParser.hpp"
 #include "WhileParser.hpp"
-#include "lib/bytecode_parser/BytecodeParserError.hpp"
+
 #include "lib/execution_tree/Block.hpp"
 #include "lib/execution_tree/WhileExecution.hpp"
+
+#include "CommandParser.hpp"
+#include "lib/bytecode_parser/BytecodeParserError.hpp"
 
 namespace ovum::bytecode::parser {
 
@@ -13,40 +15,63 @@ std::expected<void, BytecodeParserError> WhileParser::Handle(std::shared_ptr<Par
 
   ctx->Advance();
 
-  if (auto e = ctx->ExpectPunct('{'); !e)
-    return std::unexpected(e.error());
+  std::expected<void, BytecodeParserError> e = ctx->ExpectPunct('{');
 
-  auto condition = std::make_unique<vm::execution_tree::Block>();
+  if (!e) {
+    return std::unexpected(e.error());
+  }
+
+  std::unique_ptr<vm::execution_tree::Block> condition = std::make_unique<vm::execution_tree::Block>();
+
   ctx->SetCurrentBlock(condition.get());
 
   while (!ctx->IsPunct('}')) {
-    auto res = CommandParser::ParseSingleStatement(ctx, *condition);
-    if (!res)
+    std::expected<void, BytecodeParserError> res = CommandParser::ParseSingleStatement(ctx, *condition);
+
+    if (!res) {
       return res;
+    }
   }
 
-  if (auto e = ctx->ExpectPunct('}'); !e)
-    return std::unexpected(e.error());
+  e = ctx->ExpectPunct('}');
 
-  if (auto e = ctx->ExpectKeyword("then"); !e)
+  if (!e) {
     return std::unexpected(e.error());
+  }
 
-  if (auto e = ctx->ExpectPunct('{'); !e)
+  e = ctx->ExpectKeyword("then");
+
+  if (!e) {
     return std::unexpected(e.error());
+  }
 
-  auto body = std::make_unique<vm::execution_tree::Block>();
+  e = ctx->ExpectPunct('{');
+
+  if (!e) {
+    return std::unexpected(e.error());
+  }
+
+  std::unique_ptr<vm::execution_tree::Block> body = std::make_unique<vm::execution_tree::Block>();
+
   ctx->SetCurrentBlock(body.get());
 
   while (!ctx->IsPunct('}')) {
-    auto res = CommandParser::ParseSingleStatement(ctx, *body);
-    if (!res)
+    std::expected<void, BytecodeParserError> res = CommandParser::ParseSingleStatement(ctx, *body);
+
+    if (!res) {
       return res;
+    }
   }
 
-  if (auto e = ctx->ExpectPunct('}'); !e)
-    return std::unexpected(e.error());
+  e = ctx->ExpectPunct('}');
 
-  auto while_node = std::make_unique<vm::execution_tree::WhileExecution>(std::move(condition), std::move(body));
+  if (!e) {
+    return std::unexpected(e.error());
+  }
+
+  std::unique_ptr<vm::execution_tree::WhileExecution> while_node =
+      std::make_unique<vm::execution_tree::WhileExecution>(std::move(condition), std::move(body));
+
   ctx->CurrentBlock()->AddStatement(std::move(while_node));
 
   return {};

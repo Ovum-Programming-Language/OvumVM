@@ -15,8 +15,7 @@ namespace ovum::bytecode::parser {
 
 class ParsingSession {
 public:
-  ParsingSession(const std::vector<TokenPtr>& tokens,
-                 ParsingSessionData& data);
+  ParsingSession(const std::vector<TokenPtr>& tokens, ParsingSessionData& data);
 
   const TokenPtr Current() const;
   bool IsEof() const;
@@ -36,18 +35,36 @@ public:
   std::expected<double, BytecodeParserError> ConsumeFloatLiteral();
   std::expected<bool, BytecodeParserError> ConsumeBoolLiteral();
 
-  vm::execution_tree::FunctionRepository& FuncRepo() const { return data_.func_repo; }
-  vm::runtime::VirtualTableRepository& VTableRepo() const { return data_.vtable_repo; }
-  vm::runtime::RuntimeMemory& Memory() const { return data_.memory; }
+  vm::execution_tree::FunctionRepository& FuncRepo() const {
+    return data_.func_repo;
+  }
+  vm::runtime::VirtualTableRepository& VTableRepo() const {
+    return data_.vtable_repo;
+  }
+  vm::runtime::RuntimeMemory& Memory() const {
+    return data_.memory;
+  }
 
-  vm::execution_tree::Block* CurrentBlock() const { return data_.current_block; }
-  void SetCurrentBlock(vm::execution_tree::Block* block) { data_.current_block = block; }
+  vm::execution_tree::Block* CurrentBlock() const {
+    return data_.current_block;
+  }
+  void SetCurrentBlock(vm::execution_tree::Block* block) {
+    data_.current_block = block;
+  }
 
-  const std::optional<std::reference_wrapper<vm::executor::IJitExecutorFactory>>& JitFactory() const { return data_.jit_factory; }
-  size_t JitBoundary() const { return data_.jit_boundary; }
+  const std::optional<std::reference_wrapper<vm::executor::IJitExecutorFactory>>& JitFactory() const {
+    return data_.jit_factory;
+  }
+  size_t JitBoundary() const {
+    return data_.jit_boundary;
+  }
 
-  std::unique_ptr<vm::execution_tree::Block> ReleaseInitStaticBlock() { return std::move(data_.init_static_block); }
-  void SetInitStaticBlock(std::unique_ptr<vm::execution_tree::Block> block) { data_.init_static_block = std::move(block); }
+  std::unique_ptr<vm::execution_tree::Block> ReleaseInitStaticBlock() {
+    return std::move(data_.init_static_block);
+  }
+  void SetInitStaticBlock(std::unique_ptr<vm::execution_tree::Block> block) {
+    data_.init_static_block = std::move(block);
+  }
 
 private:
   const std::vector<TokenPtr>& tokens_;

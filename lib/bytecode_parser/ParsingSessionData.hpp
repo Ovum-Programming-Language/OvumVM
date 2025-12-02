@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BYTECODE_PARSER_PARSINGSESSIONDATA_HPP_
+#define BYTECODE_PARSER_PARSINGSESSIONDATA_HPP_
 
 #include <memory>
 #include <optional>
@@ -24,3 +25,5 @@ struct ParsingSessionData {
 };
 
 } // namespace ovum::bytecode::parser
+
+#endif // BYTECODE_PARSER_PARSINGSESSIONDATA_HPP_

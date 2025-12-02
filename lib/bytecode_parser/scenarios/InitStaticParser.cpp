@@ -1,7 +1,9 @@
-#include "CommandParser.hpp"
 #include "InitStaticParser.hpp"
-#include "lib/bytecode_parser/BytecodeParserError.hpp"
+
 #include "lib/execution_tree/Block.hpp"
+
+#include "CommandParser.hpp"
+#include "lib/bytecode_parser/BytecodeParserError.hpp"
 
 namespace ovum::bytecode::parser {
 
@@ -16,20 +18,29 @@ std::expected<void, BytecodeParserError> InitStaticParser::Handle(ParsingSession
 
   ctx->Advance();
 
-  if (auto e = ctx->ExpectPunct('{'); !e)
-    return std::unexpected(e.error());
+  std::expected<void, BytecodeParserError> e = ctx->ExpectPunct('{');
 
-  auto block = std::make_unique<vm::execution_tree::Block>();
+  if (!e) {
+    return std::unexpected(e.error());
+  }
+
+  std::unique_ptr<vm::execution_tree::Block> block = std::make_unique<vm::execution_tree::Block>();
+
   ctx->SetCurrentBlock(block.get());
 
   while (!ctx->IsPunct('}') && !ctx->IsEof()) {
-    auto res = CommandParser::ParseSingleStatement(ctx, *block);
-    if (!res)
+    std::expected<void, BytecodeParserError> res = CommandParser::ParseSingleStatement(ctx, *block);
+
+    if (!res) {
       return res;
+    }
   }
 
-  if (auto e = ctx->ExpectPunct('}'); !e)
+  e = ctx->ExpectPunct('}');
+
+  if (!e) {
     return std::unexpected(e.error());
+  }
 
   ctx->SetInitStaticBlock(std::move(block));
   ctx->SetCurrentBlock(nullptr);

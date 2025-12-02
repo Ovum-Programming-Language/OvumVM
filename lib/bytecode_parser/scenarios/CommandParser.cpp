@@ -1,5 +1,6 @@
-#include "CommandFactory.hpp"
 #include "CommandParser.hpp"
+
+#include "CommandFactory.hpp"
 #include "IfParser.hpp"
 #include "WhileParser.hpp"
 
@@ -16,28 +17,38 @@ std::expected<void, BytecodeParserError> CommandParser::Handle(std::shared_ptr<P
 std::expected<void, BytecodeParserError> CommandParser::ParseSingleStatement(const std::shared_ptr<ParsingSession>& ctx,
                                                                              vm::execution_tree::Block& block,
                                                                              ICommandFactory& factory) {
-  if (ctx->IsEof())
+  if (ctx->IsEof()) {
     return std::unexpected(BytecodeParserError("Unexpected end of input"));
+  }
 
   if (ctx->IsKeyword("if")) {
     IfParser parser;
-    auto res = parser.Handle(ctx);
-    if (!res)
+    std::expected<void, BytecodeParserError> res = parser.Handle(ctx);
+
+    if (!res) {
       return res;
+    }
+
     ctx->SetCurrentBlock(&block);
+
     return {};
   }
 
   if (ctx->IsKeyword("while")) {
     WhileParser parser;
-    auto res = parser.Handle(ctx);
-    if (!res)
+    std::expected<void, BytecodeParserError> res = parser.Handle(ctx);
+
+    if (!res) {
       return res;
+    }
+
     ctx->SetCurrentBlock(&block);
+
     return {};
   }
 
-  auto token = ctx->Current();
+  TokenPtr token = ctx->Current();
+
   if (token->GetStringType() != "IDENT" && token->GetStringType() != "KEYWORD") {
     return std::unexpected(BytecodeParserError("Expected command name at line " +
                                                    std::to_string(token->GetPosition().GetLine()) + " column " +
@@ -46,13 +57,18 @@ std::expected<void, BytecodeParserError> CommandParser::ParseSingleStatement(con
   }
 
   std::string cmd_name = token->GetLexeme();
+
   ctx->Advance();
 
-  auto cmd_result = factory.CreateCommand(cmd_name, ctx);
-  if (!cmd_result)
+  std::expected<std::unique_ptr<vm::execution_tree::IExecutable>, BytecodeParserError> cmd_result =
+      factory.CreateCommand(cmd_name, ctx);
+
+  if (!cmd_result) {
     return std::unexpected(cmd_result.error());
+  }
 
   block.AddStatement(std::move(cmd_result.value()));
+
   return {};
 }
 
