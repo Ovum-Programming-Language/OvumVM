@@ -46,7 +46,7 @@ template<typename Allocator = std::allocator<char>>
 std::expected<void*, std::runtime_error> AllocateObject(const VirtualTable& vtable,
                                                         uint32_t vtable_index,
                                                         ObjectRepository& object_repository,
-                                                        Allocator allocator = Allocator{}) {
+                                                        Allocator&& allocator = Allocator{}) {
   const size_t size = vtable.GetSize();
   char* memory = allocator.allocate(size);
   if (memory == nullptr) {

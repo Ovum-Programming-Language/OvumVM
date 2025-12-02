@@ -17,277 +17,298 @@
 namespace ovum::vm::execution_tree {
 
 // Template helper for fundamental type constructors (object already allocated, just initialize)
-// Stack order: value is on top, object (this) is below
+// Arguments: object (this) is first, value is second
 template<typename T>
 std::expected<ExecutionResult, std::runtime_error> FundamentalTypeConstructor(PassedExecutionData& data) {
-  if (data.memory.machine_stack.size() < 2) {
-    return std::unexpected(std::runtime_error("Constructor: insufficient arguments (need object and value)"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<T>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("Constructor: invalid argument types"));
   }
-  T value = std::get<T>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
 
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  T value = std::get<T>(data.memory.stack_frames.top().local_variables[1]);
   T* data_ptr = runtime::GetDataPointer<T>(obj_ptr);
   *data_ptr = value;
   data.memory.machine_stack.emplace(obj_ptr);
+
   return ExecutionResult::kNormal;
 }
 
 // Template helper for fundamental type copy constructors
+// Arguments: object (this) is first, source is second
 template<typename T>
 std::expected<ExecutionResult, std::runtime_error> FundamentalTypeCopyConstructor(PassedExecutionData& data) {
-  if (data.memory.machine_stack.size() < 2) {
-    return std::unexpected(std::runtime_error("CopyConstructor: insufficient arguments (need object and source)"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("CopyConstructor: invalid argument types"));
   }
-  void* source_obj = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
 
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  void* source_obj = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
   const T* source_data = runtime::GetDataPointer<const T>(source_obj);
   T* data_ptr = runtime::GetDataPointer<T>(obj_ptr);
   *data_ptr = *source_data;
   data.memory.machine_stack.emplace(obj_ptr);
+
   return ExecutionResult::kNormal;
 }
 
 // Template helper for fundamental type destructors (trivial, no cleanup needed)
+// Arguments: object is first
 template<typename T>
 std::expected<ExecutionResult, std::runtime_error> FundamentalTypeDestructor(PassedExecutionData& data) {
-  if (data.memory.machine_stack.empty()) {
-    return std::unexpected(std::runtime_error("Destructor: stack empty"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0])) {
+    return std::unexpected(std::runtime_error("Destructor: invalid argument types"));
   }
-  data.memory.machine_stack.pop();
+
   return ExecutionResult::kNormal;
 }
 
 // Template helper for fundamental type Equals
+// Arguments: obj1 is first, obj2 is second
 template<typename T>
 std::expected<ExecutionResult, std::runtime_error> FundamentalTypeEquals(PassedExecutionData& data) {
-  if (data.memory.machine_stack.size() < 2) {
-    return std::unexpected(std::runtime_error("Equals: insufficient arguments"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("Equals: invalid argument types"));
   }
-  void* obj2_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
-  void* obj1_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
 
+  void* obj1_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  void* obj2_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
   const T* value1 = runtime::GetDataPointer<const T>(obj1_ptr);
   const T* value2 = runtime::GetDataPointer<const T>(obj2_ptr);
   bool equals = (*value1 == *value2);
   data.memory.machine_stack.emplace(equals);
+
   return ExecutionResult::kNormal;
 }
 
 // Template helper for fundamental type IsLess
+// Arguments: obj1 is first, obj2 is second
 template<typename T>
 std::expected<ExecutionResult, std::runtime_error> FundamentalTypeIsLess(PassedExecutionData& data) {
-  if (data.memory.machine_stack.size() < 2) {
-    return std::unexpected(std::runtime_error("IsLess: insufficient arguments"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("IsLess: invalid argument types"));
   }
-  void* obj2_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
-  void* obj1_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
+
+  void* obj1_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  void* obj2_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
 
   const T* value1 = runtime::GetDataPointer<const T>(obj1_ptr);
   const T* value2 = runtime::GetDataPointer<const T>(obj2_ptr);
   bool is_less = (*value1 < *value2);
   data.memory.machine_stack.emplace(is_less);
+
   return ExecutionResult::kNormal;
 }
 
 // Template helper for fundamental type ToString
 // ToStringFunc is a callable type that takes const T& and returns std::string
+// Arguments: object is first
 template<typename T, typename ToStringFunc>
 std::expected<ExecutionResult, std::runtime_error> FundamentalTypeToString(PassedExecutionData& data,
                                                                            ToStringFunc to_string_func) {
-  if (data.memory.machine_stack.empty()) {
-    return std::unexpected(std::runtime_error("ToString: stack empty"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0])) {
+    return std::unexpected(std::runtime_error("ToString: invalid argument types"));
   }
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
-  const T* value = runtime::GetDataPointer<const T>(obj_ptr);
 
-  // Convert to string using the functor (avoid copying the value)
-  std::string str = to_string_func(*value);
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  const T* value = runtime::GetDataPointer<const T>(obj_ptr);
 
   // Create String object
   auto vtable_result = data.virtual_table_repository.GetByName("String");
+
   if (!vtable_result.has_value()) {
     return std::unexpected(std::runtime_error("ToString: String vtable not found"));
   }
+
   const runtime::VirtualTable* string_vtable = vtable_result.value();
   auto vtable_index_result = data.virtual_table_repository.GetIndexByName("String");
+
   if (!vtable_index_result.has_value()) {
     return std::unexpected(vtable_index_result.error());
   }
 
   auto string_obj_result = runtime::AllocateObject(
       *string_vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository);
+
   if (!string_obj_result.has_value()) {
     return std::unexpected(string_obj_result.error());
   }
+
   void* string_obj = string_obj_result.value();
   auto* string_data = runtime::GetDataPointer<std::string>(string_obj);
-  new (string_data) std::string(std::move(str)); // Move to avoid copying
+  new (string_data) std::string(std::move(to_string_func(*value))); // Move to avoid copying
   data.memory.machine_stack.emplace(string_obj);
+
   return ExecutionResult::kNormal;
 }
 
 // Template helper for fundamental type GetHash
 // GetHashFunc is a callable type that takes const T& and returns int64_t
+// Arguments: object is first
 template<typename T, typename GetHashFunc>
 std::expected<ExecutionResult, std::runtime_error> FundamentalTypeGetHash(PassedExecutionData& data,
                                                                           GetHashFunc get_hash_func) {
-  if (data.memory.machine_stack.empty()) {
-    return std::unexpected(std::runtime_error("GetHash: stack empty"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0])) {
+    return std::unexpected(std::runtime_error("GetHash: invalid argument types"));
   }
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
   const T* value = runtime::GetDataPointer<const T>(obj_ptr);
 
   // Get hash using the functor (avoid copying the value)
   int64_t hash = get_hash_func(*value);
   data.memory.machine_stack.emplace(hash);
+
   return ExecutionResult::kNormal;
 }
 
 // Template helper for array constructors (object already allocated)
-// Stack order: default_value is on top, then size, then object (this) is at bottom
+// Arguments: object (this) is first, size is second, default_value is third
 // For fundamental types, default_value comes as the fundamental type
 // For ObjectArray/StringArray/PointerArray, default_value comes as void*
 template<typename T>
 std::expected<ExecutionResult, std::runtime_error> ArrayConstructor(PassedExecutionData& data) {
-  if (data.memory.machine_stack.size() < 3) {
-    return std::unexpected(std::runtime_error("ArrayConstructor: insufficient arguments (need object, size, default)"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<int64_t>(data.memory.stack_frames.top().local_variables[1]) ||
+      !std::holds_alternative<T>(data.memory.stack_frames.top().local_variables[2])) {
+    return std::unexpected(std::runtime_error("ArrayConstructor: invalid argument types"));
   }
-  T default_value = std::get<T>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
-  int64_t size = std::get<int64_t>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
 
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  int64_t size = std::get<int64_t>(data.memory.stack_frames.top().local_variables[1]);
+  T default_value = std::get<T>(data.memory.stack_frames.top().local_variables[2]);
   auto* vec_data = runtime::GetDataPointer<std::vector<T>>(obj_ptr);
   new (vec_data) std::vector<T>(static_cast<size_t>(size), default_value);
   data.memory.machine_stack.emplace(obj_ptr);
+
   return ExecutionResult::kNormal;
 }
 
 // Specialization for ObjectArray/StringArray/PointerArray (default_value is void*)
+// Arguments: object (this) is first, size is second, default_value is third
 template<>
-inline std::expected<ExecutionResult, std::runtime_error> ArrayConstructor<void*>(PassedExecutionData& data) {
-  if (data.memory.machine_stack.size() < 3) {
-    return std::unexpected(std::runtime_error("ArrayConstructor: insufficient arguments (need object, size, default)"));
+std::expected<ExecutionResult, std::runtime_error> ArrayConstructor<void*>(PassedExecutionData& data) {
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<int64_t>(data.memory.stack_frames.top().local_variables[1]) ||
+      !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[2])) {
+    return std::unexpected(std::runtime_error("ArrayConstructor: invalid argument types"));
   }
-  void* default_value = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
-  int64_t size = std::get<int64_t>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
 
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  int64_t size = std::get<int64_t>(data.memory.stack_frames.top().local_variables[1]);
+  void* default_value = std::get<void*>(data.memory.stack_frames.top().local_variables[2]);
   auto* vec_data = runtime::GetDataPointer<std::vector<void*>>(obj_ptr);
   new (vec_data) std::vector<void*>(static_cast<size_t>(size), default_value);
   data.memory.machine_stack.emplace(obj_ptr);
+
   return ExecutionResult::kNormal;
 }
 
 // Template helper for array copy constructors
+// Arguments: object (this) is first, source is second
 template<typename T>
 std::expected<ExecutionResult, std::runtime_error> ArrayCopyConstructor(PassedExecutionData& data) {
-  if (data.memory.machine_stack.size() < 2) {
-    return std::unexpected(std::runtime_error("ArrayCopyConstructor: insufficient arguments"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("ArrayCopyConstructor: invalid argument types"));
   }
-  void* source_obj = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
 
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  void* source_obj = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
   const auto* source_vec = runtime::GetDataPointer<const std::vector<T>>(source_obj);
   auto* vec_data = runtime::GetDataPointer<std::vector<T>>(obj_ptr);
   new (vec_data) std::vector<T>(*source_vec);
   data.memory.machine_stack.emplace(obj_ptr);
+
   return ExecutionResult::kNormal;
 }
 
 // Template helper for array destructors
+// Arguments: object is first
 template<typename T>
 std::expected<ExecutionResult, std::runtime_error> ArrayDestructor(PassedExecutionData& data) {
-  if (data.memory.machine_stack.empty()) {
-    return std::unexpected(std::runtime_error("ArrayDestructor: stack empty"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0])) {
+    return std::unexpected(std::runtime_error("ArrayDestructor: invalid argument types"));
   }
+
   using vector_type = std::vector<T>;
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
   auto* vec_data = runtime::GetDataPointer<std::vector<T>>(obj_ptr);
   vec_data->~vector_type();
+
   return ExecutionResult::kNormal;
 }
 
 // Template helper for array Equals
+// Arguments: obj1 is first, obj2 is second
 template<typename T>
 std::expected<ExecutionResult, std::runtime_error> ArrayEquals(PassedExecutionData& data) {
-  if (data.memory.machine_stack.size() < 2) {
-    return std::unexpected(std::runtime_error("ArrayEquals: insufficient arguments"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("ArrayEquals: invalid argument types"));
   }
-  void* obj2_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
-  void* obj1_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
 
+  void* obj1_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  void* obj2_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
   const auto* vec1 = runtime::GetDataPointer<const std::vector<T>>(obj1_ptr);
   const auto* vec2 = runtime::GetDataPointer<const std::vector<T>>(obj2_ptr);
   bool equals = (*vec1 == *vec2);
   data.memory.machine_stack.emplace(equals);
+
   return ExecutionResult::kNormal;
 }
 
 // Template helper for array IsLess
+// Arguments: obj1 is first, obj2 is second
 template<typename T>
 std::expected<ExecutionResult, std::runtime_error> ArrayIsLess(PassedExecutionData& data) {
-  if (data.memory.machine_stack.size() < 2) {
-    return std::unexpected(std::runtime_error("ArrayIsLess: insufficient arguments"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("ArrayIsLess: invalid argument types"));
   }
-  void* obj2_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
-  void* obj1_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
 
+  void* obj1_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  void* obj2_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
   const auto* vec1 = runtime::GetDataPointer<const std::vector<T>>(obj1_ptr);
   const auto* vec2 = runtime::GetDataPointer<const std::vector<T>>(obj2_ptr);
   bool is_less = (*vec1 < *vec2);
   data.memory.machine_stack.emplace(is_less);
+
   return ExecutionResult::kNormal;
 }
 
 // Template helper for array Length
+// Arguments: object is first
 template<typename T>
 std::expected<ExecutionResult, std::runtime_error> ArrayLength(PassedExecutionData& data) {
-  if (data.memory.machine_stack.empty()) {
-    return std::unexpected(std::runtime_error("ArrayLength: stack empty"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0])) {
+    return std::unexpected(std::runtime_error("ArrayLength: invalid argument types"));
   }
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
   const auto* vec = runtime::GetDataPointer<const std::vector<T>>(obj_ptr);
   auto length = static_cast<int64_t>(vec->size());
   data.memory.machine_stack.emplace(length);
+
   return ExecutionResult::kNormal;
 }
 
 // Template helper for array GetHash
+// Arguments: object is first
 template<typename T>
 std::expected<ExecutionResult, std::runtime_error> ArrayGetHash(PassedExecutionData& data) {
-  if (data.memory.machine_stack.empty()) {
-    return std::unexpected(std::runtime_error("ArrayGetHash: stack empty"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0])) {
+    return std::unexpected(std::runtime_error("ArrayGetHash: invalid argument types"));
   }
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
   const auto* vec = runtime::GetDataPointer<const std::vector<T>>(obj_ptr);
   int64_t hash = runtime::HashVector(*vec);
   data.memory.machine_stack.emplace(hash);
+
   return ExecutionResult::kNormal;
 }
 
@@ -445,18 +466,18 @@ std::expected<ExecutionResult, std::runtime_error> BoolEquals(PassedExecutionDat
 }
 
 std::expected<ExecutionResult, std::runtime_error> BoolIsLess(PassedExecutionData& data) {
-  if (data.memory.machine_stack.size() < 2) {
-    return std::unexpected(std::runtime_error("Bool::IsLess: insufficient arguments"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("Bool::IsLess: invalid argument types"));
   }
-  void* obj2_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
-  void* obj1_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
 
+  void* obj1_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  void* obj2_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
   const bool* value1 = runtime::GetDataPointer<const bool>(obj1_ptr);
   const bool* value2 = runtime::GetDataPointer<const bool>(obj2_ptr);
   bool is_less = (!*value1 && *value2); // false < true
   data.memory.machine_stack.emplace(is_less);
+
   return ExecutionResult::kNormal;
 }
 
@@ -465,98 +486,108 @@ std::expected<ExecutionResult, std::runtime_error> NullableDestructor(PassedExec
 }
 
 std::expected<ExecutionResult, std::runtime_error> StringToString(PassedExecutionData& data) {
-  if (data.memory.machine_stack.empty()) {
-    return std::unexpected(std::runtime_error("String::ToString: stack empty"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0])) {
+    return std::unexpected(std::runtime_error("String::ToString: invalid argument types"));
   }
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
   // Return self
   data.memory.machine_stack.emplace(obj_ptr);
+
   return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> StringGetHash(PassedExecutionData& data) {
-  if (data.memory.machine_stack.empty()) {
-    return std::unexpected(std::runtime_error("String::GetHash: stack empty"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0])) {
+    return std::unexpected(std::runtime_error("String::GetHash: invalid argument types"));
   }
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
   auto* str = runtime::GetDataPointer<std::string>(obj_ptr);
   int64_t hash = static_cast<int64_t>(std::hash<std::string>{}(*str));
   data.memory.machine_stack.emplace(hash);
+
   return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> StringLength(PassedExecutionData& data) {
-  if (data.memory.machine_stack.empty()) {
-    return std::unexpected(std::runtime_error("String::Length: stack empty"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0])) {
+    return std::unexpected(std::runtime_error("String::Length: invalid argument types"));
   }
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
   auto* str = runtime::GetDataPointer<std::string>(obj_ptr);
   auto length = static_cast<int64_t>(str->length());
   data.memory.machine_stack.emplace(length);
+
   return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> StringToUtf8Bytes(PassedExecutionData& data) {
-  if (data.memory.machine_stack.empty()) {
-    return std::unexpected(std::runtime_error("String::ToUtf8Bytes: stack empty"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0])) {
+    return std::unexpected(std::runtime_error("String::ToUtf8Bytes: invalid argument types"));
   }
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
   auto* str = runtime::GetDataPointer<std::string>(obj_ptr);
 
   // Create ByteArray object
   auto vtable_result = data.virtual_table_repository.GetByName("ByteArray");
+
   if (!vtable_result.has_value()) {
     return std::unexpected(std::runtime_error("String::ToUtf8Bytes: ByteArray vtable not found"));
   }
+
   const runtime::VirtualTable* byte_array_vtable = vtable_result.value();
   auto vtable_index_result = data.virtual_table_repository.GetIndexByName("ByteArray");
+
   if (!vtable_index_result.has_value()) {
     return std::unexpected(vtable_index_result.error());
   }
 
   auto byte_array_obj_result = runtime::AllocateObject(
       *byte_array_vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository);
+
   if (!byte_array_obj_result.has_value()) {
     return std::unexpected(byte_array_obj_result.error());
   }
+
   void* byte_array_obj = byte_array_obj_result.value();
   auto* vec_data = runtime::GetDataPointer<std::vector<uint8_t>>(byte_array_obj);
   new (vec_data) std::vector<uint8_t>(str->begin(), str->end());
   data.memory.machine_stack.emplace(byte_array_obj);
+
   return ExecutionResult::kNormal;
 }
 
 // String methods
 
 std::expected<ExecutionResult, std::runtime_error> StringCopyConstructor(PassedExecutionData& data) {
-  if (data.memory.machine_stack.size() < 2) {
-    return std::unexpected(std::runtime_error("String::CopyConstructor: insufficient arguments"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("String::CopyConstructor: invalid argument types"));
   }
-  void* source_obj = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
 
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  void* source_obj = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
   const auto* source_string = runtime::GetDataPointer<const std::string>(source_obj);
   auto* string_data = runtime::GetDataPointer<std::string>(obj_ptr);
   new (string_data) std::string(*source_string);
   data.memory.machine_stack.emplace(obj_ptr);
+
   return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> StringDestructor(PassedExecutionData& data) {
-  if (data.memory.machine_stack.empty()) {
-    return std::unexpected(std::runtime_error("String::Destructor: stack empty"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0])) {
+    return std::unexpected(std::runtime_error("String::Destructor: invalid argument types"));
   }
+
   using string_type = std::string;
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
   auto* string_data = runtime::GetDataPointer<std::string>(obj_ptr);
   string_data->~string_type();
+
   return ExecutionResult::kNormal;
 }
 
@@ -639,24 +670,24 @@ std::expected<ExecutionResult, std::runtime_error> PointerArrayGetHash(PassedExe
 }
 
 // File methods
+// Arguments: file is first, path is second, mode is third
 std::expected<ExecutionResult, std::runtime_error> FileOpen(PassedExecutionData& data) {
-  if (data.memory.machine_stack.size() < 3) {
-    return std::unexpected(std::runtime_error("File::Open: insufficient arguments (need file, path and mode)"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[1]) ||
+      !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[2])) {
+    return std::unexpected(std::runtime_error("File::Open: invalid argument types"));
   }
-  // Pop mode (String), then path (String), then file (File)
-  void* mode_obj = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
-  void* path_obj = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
-  void* file_obj = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
 
+  void* file_obj = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  void* path_obj = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
+  void* mode_obj = std::get<void*>(data.memory.stack_frames.top().local_variables[2]);
   auto* path = runtime::GetDataPointer<std::string>(path_obj);
   auto* mode = runtime::GetDataPointer<std::string>(mode_obj);
   auto* file = runtime::GetDataPointer<std::fstream>(file_obj);
 
   // Parse mode string
   std::ios_base::openmode open_mode = std::ios_base::in | std::ios_base::out;
+
   if (*mode == "r") {
     open_mode = std::ios_base::in;
   } else if (*mode == "w") {
@@ -678,6 +709,7 @@ std::expected<ExecutionResult, std::runtime_error> FileOpen(PassedExecutionData&
 
   // Open file
   file->open(*path, open_mode);
+
   if (!file->is_open()) {
     return std::unexpected(std::runtime_error("File::Open: failed to open file: " + *path));
   }
@@ -686,11 +718,11 @@ std::expected<ExecutionResult, std::runtime_error> FileOpen(PassedExecutionData&
 }
 
 std::expected<ExecutionResult, std::runtime_error> FileClose(PassedExecutionData& data) {
-  if (data.memory.machine_stack.empty()) {
-    return std::unexpected(std::runtime_error("File::Close: stack empty"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0])) {
+    return std::unexpected(std::runtime_error("File::Close: invalid argument types"));
   }
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
   auto* file = runtime::GetDataPointer<std::fstream>(obj_ptr);
 
   if (file->is_open()) {
@@ -701,15 +733,15 @@ std::expected<ExecutionResult, std::runtime_error> FileClose(PassedExecutionData
 }
 
 std::expected<ExecutionResult, std::runtime_error> FileIsOpen(PassedExecutionData& data) {
-  if (data.memory.machine_stack.empty()) {
-    return std::unexpected(std::runtime_error("File::IsOpen: stack empty"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0])) {
+    return std::unexpected(std::runtime_error("File::IsOpen: invalid argument types"));
   }
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
-  auto* file = runtime::GetDataPointer<std::fstream>(obj_ptr);
 
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  auto* file = runtime::GetDataPointer<std::fstream>(obj_ptr);
   bool is_open = file->is_open();
   data.memory.machine_stack.emplace(is_open);
+
   return ExecutionResult::kNormal;
 }
 
@@ -800,15 +832,15 @@ std::expected<ExecutionResult, std::runtime_error> ByteArrayIsLess(PassedExecuti
 
 // ByteArray view casting constructors (from other array types)
 // These create ByteArray by interpreting the raw bytes of other array types
+// Arguments: object (this) is first, source is second
 std::expected<ExecutionResult, std::runtime_error> ByteArrayFromIntArray(PassedExecutionData& data) {
-  if (data.memory.machine_stack.size() < 2) {
-    return std::unexpected(std::runtime_error("ByteArray::FromIntArray: insufficient arguments"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("ByteArray::FromIntArray: invalid argument types"));
   }
-  void* source_obj = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
 
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  void* source_obj = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
   const auto* source_vec = runtime::GetDataPointer<const std::vector<int64_t>>(source_obj);
   auto* vec_data = runtime::GetDataPointer<std::vector<uint8_t>>(obj_ptr);
 
@@ -816,20 +848,20 @@ std::expected<ExecutionResult, std::runtime_error> ByteArrayFromIntArray(PassedE
   size_t byte_count = source_vec->size() * sizeof(int64_t);
   new (vec_data) std::vector<uint8_t>(byte_count);
   std::memcpy(vec_data->data(), source_vec->data(), byte_count);
-
   data.memory.machine_stack.emplace(obj_ptr);
+
   return ExecutionResult::kNormal;
 }
 
+// Arguments: object (this) is first, source is second
 std::expected<ExecutionResult, std::runtime_error> ByteArrayFromFloatArray(PassedExecutionData& data) {
-  if (data.memory.machine_stack.size() < 2) {
-    return std::unexpected(std::runtime_error("ByteArray::FromFloatArray: insufficient arguments"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("ByteArray::FromFloatArray: invalid argument types"));
   }
-  void* source_obj = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
 
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  void* source_obj = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
   const auto* source_vec = runtime::GetDataPointer<const std::vector<double>>(source_obj);
   auto* vec_data = runtime::GetDataPointer<std::vector<uint8_t>>(obj_ptr);
 
@@ -837,50 +869,52 @@ std::expected<ExecutionResult, std::runtime_error> ByteArrayFromFloatArray(Passe
   size_t byte_count = source_vec->size() * sizeof(double);
   new (vec_data) std::vector<uint8_t>(byte_count);
   std::memcpy(vec_data->data(), source_vec->data(), byte_count);
-
   data.memory.machine_stack.emplace(obj_ptr);
+
   return ExecutionResult::kNormal;
 }
 
+// Arguments: object (this) is first, source is second
 std::expected<ExecutionResult, std::runtime_error> ByteArrayFromCharArray(PassedExecutionData& data) {
-  if (data.memory.machine_stack.size() < 2) {
-    return std::unexpected(std::runtime_error("ByteArray::FromCharArray: insufficient arguments"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("ByteArray::FromCharArray: invalid argument types"));
   }
-  void* source_obj = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
 
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  void* source_obj = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
   const auto* source_vec = runtime::GetDataPointer<const std::vector<char>>(source_obj);
   auto* vec_data = runtime::GetDataPointer<std::vector<uint8_t>>(obj_ptr);
 
   // Convert char array to byte array (direct copy, char and uint8_t are compatible)
   new (vec_data) std::vector<uint8_t>(source_vec->begin(), source_vec->end());
-
   data.memory.machine_stack.emplace(obj_ptr);
+
   return ExecutionResult::kNormal;
 }
 
+// Arguments: object (this) is first, source is second
 std::expected<ExecutionResult, std::runtime_error> ByteArrayFromBoolArray(PassedExecutionData& data) {
-  if (data.memory.machine_stack.size() < 2) {
-    return std::unexpected(std::runtime_error("ByteArray::FromBoolArray: insufficient arguments"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("ByteArray::FromBoolArray: invalid argument types"));
   }
-  void* source_obj = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
 
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  void* source_obj = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
   const auto* source_vec = runtime::GetDataPointer<const std::vector<bool>>(source_obj);
   auto* vec_data = runtime::GetDataPointer<std::vector<uint8_t>>(obj_ptr);
 
   // Convert bool array to byte array (bool is stored as bits in vector<bool>, so we convert each to uint8_t)
   new (vec_data) std::vector<uint8_t>();
   vec_data->reserve(source_vec->size());
+
   for (bool val : *source_vec) {
     vec_data->push_back(val ? static_cast<uint8_t>(1) : static_cast<uint8_t>(0));
   }
 
   data.memory.machine_stack.emplace(obj_ptr);
+
   return ExecutionResult::kNormal;
 }
 
@@ -906,20 +940,21 @@ std::expected<ExecutionResult, std::runtime_error> BoolArrayIsLess(PassedExecuti
 }
 
 // ObjectArray methods
+// Arguments: object (this) is first, size is second, default_value is third
 std::expected<ExecutionResult, std::runtime_error> ObjectArrayConstructor(PassedExecutionData& data) {
-  if (data.memory.machine_stack.size() < 3) {
-    return std::unexpected(std::runtime_error("ObjectArray::Constructor: insufficient arguments"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<int64_t>(data.memory.stack_frames.top().local_variables[1]) ||
+      !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[2])) {
+    return std::unexpected(std::runtime_error("ObjectArray::Constructor: invalid argument types"));
   }
-  void* default_value = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
-  int64_t size = std::get<int64_t>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
 
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  int64_t size = std::get<int64_t>(data.memory.stack_frames.top().local_variables[1]);
+  void* default_value = std::get<void*>(data.memory.stack_frames.top().local_variables[2]);
   auto* vec_data = runtime::GetDataPointer<std::vector<void*>>(obj_ptr);
   new (vec_data) std::vector<void*>(static_cast<size_t>(size), default_value);
   data.memory.machine_stack.emplace(obj_ptr);
+
   return ExecutionResult::kNormal;
 }
 
@@ -1002,15 +1037,15 @@ std::expected<ExecutionResult, std::runtime_error> PointerIsLess(PassedExecution
   return FundamentalTypeIsLess<void*>(data);
 }
 
+// Arguments: file is first, size is second
 std::expected<ExecutionResult, std::runtime_error> FileRead(PassedExecutionData& data) {
-  if (data.memory.machine_stack.size() < 2) {
-    return std::unexpected(std::runtime_error("File::Read: insufficient arguments (need file and size)"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<int64_t>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("File::Read: invalid argument types"));
   }
-  int64_t size = std::get<int64_t>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
 
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  int64_t size = std::get<int64_t>(data.memory.stack_frames.top().local_variables[1]);
   auto* file = runtime::GetDataPointer<std::fstream>(obj_ptr);
 
   if (!file->is_open()) {
@@ -1025,36 +1060,42 @@ std::expected<ExecutionResult, std::runtime_error> FileRead(PassedExecutionData&
 
   // Create ByteArray object
   auto vtable_result = data.virtual_table_repository.GetByName("ByteArray");
+
   if (!vtable_result.has_value()) {
     return std::unexpected(std::runtime_error("File::Read: ByteArray vtable not found"));
   }
+
   const runtime::VirtualTable* byte_array_vtable = vtable_result.value();
   auto vtable_index_result = data.virtual_table_repository.GetIndexByName("ByteArray");
+
   if (!vtable_index_result.has_value()) {
     return std::unexpected(vtable_index_result.error());
   }
 
   auto byte_array_obj_result = runtime::AllocateObject(
       *byte_array_vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository);
+
   if (!byte_array_obj_result.has_value()) {
     return std::unexpected(byte_array_obj_result.error());
   }
+
   void* byte_array_obj = byte_array_obj_result.value();
   auto* vec_data = runtime::GetDataPointer<std::vector<uint8_t>>(byte_array_obj);
   new (vec_data) std::vector<uint8_t>(std::move(buffer));
   data.memory.machine_stack.emplace(byte_array_obj);
+
   return ExecutionResult::kNormal;
 }
 
+// Arguments: file is first, byte_array is second
 std::expected<ExecutionResult, std::runtime_error> FileWrite(PassedExecutionData& data) {
-  if (data.memory.machine_stack.size() < 2) {
-    return std::unexpected(std::runtime_error("File::Write: insufficient arguments (need file and data)"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("File::Write: invalid argument types"));
   }
-  void* byte_array_obj = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
 
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  void* byte_array_obj = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
   auto* file = runtime::GetDataPointer<std::fstream>(obj_ptr);
   auto* data_vec = runtime::GetDataPointer<std::vector<uint8_t>>(byte_array_obj);
 
@@ -1064,21 +1105,23 @@ std::expected<ExecutionResult, std::runtime_error> FileWrite(PassedExecutionData
 
   // Write bytes
   file->write(reinterpret_cast<const char*>(data_vec->data()), static_cast<std::streamsize>(data_vec->size()));
+
   if (file->fail()) {
     return std::unexpected(std::runtime_error("File::Write: write failed"));
   }
 
   auto bytes_written = static_cast<int64_t>(data_vec->size());
   data.memory.machine_stack.emplace(bytes_written);
+
   return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> FileReadLine(PassedExecutionData& data) {
-  if (data.memory.machine_stack.empty()) {
-    return std::unexpected(std::runtime_error("File::ReadLine: stack empty"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0])) {
+    return std::unexpected(std::runtime_error("File::ReadLine: invalid argument types"));
   }
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
 
   auto* file = runtime::GetDataPointer<std::fstream>(obj_ptr);
 
@@ -1088,6 +1131,7 @@ std::expected<ExecutionResult, std::runtime_error> FileReadLine(PassedExecutionD
 
   // Read line
   std::string line;
+
   if (!std::getline(*file, line)) {
     // EOF or error - return empty string
     line = "";
@@ -1095,20 +1139,25 @@ std::expected<ExecutionResult, std::runtime_error> FileReadLine(PassedExecutionD
 
   // Create String object
   auto vtable_result = data.virtual_table_repository.GetByName("String");
+
   if (!vtable_result.has_value()) {
     return std::unexpected(std::runtime_error("File::ReadLine: String vtable not found"));
   }
+
   const runtime::VirtualTable* string_vtable = vtable_result.value();
   auto vtable_index_result = data.virtual_table_repository.GetIndexByName("String");
+
   if (!vtable_index_result.has_value()) {
     return std::unexpected(vtable_index_result.error());
   }
 
   auto string_obj_result = runtime::AllocateObject(
       *string_vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository);
+
   if (!string_obj_result.has_value()) {
     return std::unexpected(string_obj_result.error());
   }
+
   void* string_obj = string_obj_result.value();
   auto* string_data = runtime::GetDataPointer<std::string>(string_obj);
   new (string_data) std::string(line);
@@ -1116,14 +1165,15 @@ std::expected<ExecutionResult, std::runtime_error> FileReadLine(PassedExecutionD
   return ExecutionResult::kNormal;
 }
 
+// Arguments: file is first, line is second
 std::expected<ExecutionResult, std::runtime_error> FileWriteLine(PassedExecutionData& data) {
-  if (data.memory.machine_stack.size() < 2) {
-    return std::unexpected(std::runtime_error("File::WriteLine: insufficient arguments (need file and line)"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("File::WriteLine: invalid argument types"));
   }
-  void* line_obj = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  void* line_obj = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
 
   auto* file = runtime::GetDataPointer<std::fstream>(obj_ptr);
   auto* line = runtime::GetDataPointer<std::string>(line_obj);
@@ -1134,6 +1184,7 @@ std::expected<ExecutionResult, std::runtime_error> FileWriteLine(PassedExecution
 
   // Write line with newline
   *file << *line << '\n';
+
   if (file->fail()) {
     return std::unexpected(std::runtime_error("File::WriteLine: write failed"));
   }
@@ -1141,15 +1192,15 @@ std::expected<ExecutionResult, std::runtime_error> FileWriteLine(PassedExecution
   return ExecutionResult::kNormal;
 }
 
+// Arguments: file is first, position is second
 std::expected<ExecutionResult, std::runtime_error> FileSeek(PassedExecutionData& data) {
-  if (data.memory.machine_stack.size() < 2) {
-    return std::unexpected(std::runtime_error("File::Seek: insufficient arguments (need file and position)"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<int64_t>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("File::Seek: invalid argument types"));
   }
-  int64_t position = std::get<int64_t>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
 
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  int64_t position = std::get<int64_t>(data.memory.stack_frames.top().local_variables[1]);
   auto* file = runtime::GetDataPointer<std::fstream>(obj_ptr);
 
   if (!file->is_open()) {
@@ -1158,6 +1209,7 @@ std::expected<ExecutionResult, std::runtime_error> FileSeek(PassedExecutionData&
 
   file->seekg(static_cast<std::streampos>(position));
   file->seekp(static_cast<std::streampos>(position));
+
   if (file->fail()) {
     return std::unexpected(std::runtime_error("File::Seek: seek failed"));
   }
@@ -1166,12 +1218,11 @@ std::expected<ExecutionResult, std::runtime_error> FileSeek(PassedExecutionData&
 }
 
 std::expected<ExecutionResult, std::runtime_error> FileTell(PassedExecutionData& data) {
-  if (data.memory.machine_stack.empty()) {
-    return std::unexpected(std::runtime_error("File::Tell: stack empty"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0])) {
+    return std::unexpected(std::runtime_error("File::Tell: invalid argument types"));
   }
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
 
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
   auto* file = runtime::GetDataPointer<std::fstream>(obj_ptr);
 
   if (!file->is_open()) {
@@ -1181,16 +1232,16 @@ std::expected<ExecutionResult, std::runtime_error> FileTell(PassedExecutionData&
   std::streampos pos = file->tellg();
   auto position = static_cast<int64_t>(pos);
   data.memory.machine_stack.emplace(position);
+
   return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> FileEof(PassedExecutionData& data) {
-  if (data.memory.machine_stack.empty()) {
-    return std::unexpected(std::runtime_error("File::Eof: stack empty"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0])) {
+    return std::unexpected(std::runtime_error("File::Eof: invalid argument types"));
   }
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
 
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
   auto* file = runtime::GetDataPointer<std::fstream>(obj_ptr);
 
   if (!file->is_open()) {
@@ -1199,35 +1250,39 @@ std::expected<ExecutionResult, std::runtime_error> FileEof(PassedExecutionData& 
 
   bool eof = file->eof();
   data.memory.machine_stack.emplace(eof);
+
   return ExecutionResult::kNormal;
 }
 
 // File methods (constructor, destructor)
 std::expected<ExecutionResult, std::runtime_error> FileConstructor(PassedExecutionData& data) {
-  if (data.memory.machine_stack.empty()) {
-    return std::unexpected(std::runtime_error("File::Constructor: stack empty"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0])) {
+    return std::unexpected(std::runtime_error("File::Constructor: invalid argument types"));
   }
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
 
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
   auto* file_data = runtime::GetDataPointer<std::fstream>(obj_ptr);
   new (file_data) std::fstream();
   data.memory.machine_stack.emplace(obj_ptr);
+
   return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> FileDestructor(PassedExecutionData& data) {
-  if (data.memory.machine_stack.empty()) {
-    return std::unexpected(std::runtime_error("File::Destructor: stack empty"));
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0])) {
+    return std::unexpected(std::runtime_error("File::Destructor: invalid argument types"));
   }
+
   using fstream_type = std::fstream;
-  void* obj_ptr = std::get<void*>(data.memory.machine_stack.top());
-  data.memory.machine_stack.pop();
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
   auto* file_data = runtime::GetDataPointer<std::fstream>(obj_ptr);
+
   if (file_data->is_open()) {
     file_data->close();
   }
+
   file_data->~fstream_type();
+
   return ExecutionResult::kNormal;
 }
 
