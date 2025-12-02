@@ -1,12 +1,18 @@
 #include "FunctionParser.hpp"
 
+#include <utility>
+
 #include "lib/execution_tree/Block.hpp"
 
+#include "CommandFactory.hpp"
 #include "CommandParser.hpp"
 #include "FunctionFactory.hpp"
 #include "lib/bytecode_parser/BytecodeParserError.hpp"
 
 namespace ovum::bytecode::parser {
+
+FunctionParser::FunctionParser(const ICommandFactory& factory) : factory_(std::move(factory)) {
+}
 
 std::expected<void, BytecodeParserError> FunctionParser::Handle(ParsingSessionPtr ctx) {
   std::vector<std::string> pure_types;
@@ -87,7 +93,7 @@ std::expected<void, BytecodeParserError> FunctionParser::Handle(ParsingSessionPt
   ctx->SetCurrentBlock(body.get());
 
   while (!ctx->IsPunct('}') && !ctx->IsEof()) {
-    std::expected<void, BytecodeParserError> res = CommandParser::ParseSingleStatement(ctx, *body);
+    std::expected<void, BytecodeParserError> res = CommandParser::ParseSingleStatement(ctx, *body, std::move(factory_));
 
     if (!res) {
       return res;

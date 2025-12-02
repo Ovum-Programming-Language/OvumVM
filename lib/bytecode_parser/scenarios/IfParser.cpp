@@ -5,14 +5,18 @@
 #include "lib/execution_tree/IfMultibranch.hpp"
 #include "lib/execution_tree/command_factory.hpp"
 
+#include "CommandFactory.hpp"
 #include "CommandParser.hpp"
 #include "lib/bytecode_parser/BytecodeParserError.hpp"
 
 namespace ovum::bytecode::parser {
 
+IfParser::IfParser(const ICommandFactory& factory) : factory_(factory) {
+}
+
 std::expected<void, BytecodeParserError> IfParser::Handle(std::shared_ptr<ParsingSession> ctx) {
   if (!ctx->IsKeyword("if")) {
-    return std::unexpected(BytecodeParserError("Expected 'if'"));
+    return std::unexpected(BytecodeParserError("Expected 'if'", BytecodeParserErrorCode::kNotMatched));
   }
 
   ctx->Advance();
@@ -32,7 +36,8 @@ std::expected<void, BytecodeParserError> IfParser::Handle(std::shared_ptr<Parsin
   ctx->SetCurrentBlock(cond1.get());
 
   while (!ctx->IsPunct('}')) {
-    std::expected<void, BytecodeParserError> res = CommandParser::ParseSingleStatement(ctx, *cond1);
+    std::expected<void, BytecodeParserError> res =
+        CommandParser::ParseSingleStatement(ctx, *cond1, std::move(factory_));
 
     if (!res) {
       return res;
@@ -62,7 +67,8 @@ std::expected<void, BytecodeParserError> IfParser::Handle(std::shared_ptr<Parsin
   ctx->SetCurrentBlock(body1.get());
 
   while (!ctx->IsPunct('}')) {
-    std::expected<void, BytecodeParserError> res = CommandParser::ParseSingleStatement(ctx, *body1);
+    std::expected<void, BytecodeParserError> res =
+        CommandParser::ParseSingleStatement(ctx, *body1, std::move(factory_));
 
     if (!res) {
       return res;
@@ -94,7 +100,8 @@ std::expected<void, BytecodeParserError> IfParser::Handle(std::shared_ptr<Parsin
       ctx->SetCurrentBlock(cond.get());
 
       while (!ctx->IsPunct('}')) {
-        std::expected<void, BytecodeParserError> res = CommandParser::ParseSingleStatement(ctx, *cond);
+        std::expected<void, BytecodeParserError> res =
+            CommandParser::ParseSingleStatement(ctx, *cond, std::move(factory_));
 
         if (!res) {
           return res;
@@ -124,7 +131,8 @@ std::expected<void, BytecodeParserError> IfParser::Handle(std::shared_ptr<Parsin
       ctx->SetCurrentBlock(body.get());
 
       while (!ctx->IsPunct('}')) {
-        std::expected<void, BytecodeParserError> res = CommandParser::ParseSingleStatement(ctx, *body);
+        std::expected<void, BytecodeParserError> res =
+            CommandParser::ParseSingleStatement(ctx, *body, std::move(factory_));
 
         if (!res) {
           return res;
@@ -150,7 +158,8 @@ std::expected<void, BytecodeParserError> IfParser::Handle(std::shared_ptr<Parsin
       ctx->SetCurrentBlock(else_body.get());
 
       while (!ctx->IsPunct('}')) {
-        std::expected<void, BytecodeParserError> res = CommandParser::ParseSingleStatement(ctx, *else_body);
+        std::expected<void, BytecodeParserError> res =
+            CommandParser::ParseSingleStatement(ctx, *else_body, std::move(factory_));
 
         if (!res) {
           return res;

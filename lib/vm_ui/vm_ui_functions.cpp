@@ -1,5 +1,6 @@
 #include "lib/bytecode_lexer/BytecodeLexer.hpp"
 #include "lib/bytecode_parser/BytecodeParser.hpp"
+#include "lib/bytecode_parser/scenarios/PlaceholderCommandFactory.hpp"
 #include "lib/execution_tree/FunctionRepository.hpp"
 #include "lib/execution_tree/IFunctionExecutable.hpp"
 #include "lib/executor/PlaceholderJitExecutorFactory.hpp"
@@ -30,7 +31,11 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
     out << "\n\n\n";
 
     auto factory = std::make_unique<ovum::vm::executor::PlaceholderJitExecutorFactory>();
-    ovum::bytecode::parser::BytecodeParser parser(std::move(factory), 1);
+
+    ovum::bytecode::parser::PlaceholderCommandFactory command_factory =
+        ovum::bytecode::parser::PlaceholderCommandFactory();
+
+    ovum::bytecode::parser::BytecodeParser parser(std::move(factory), 1, command_factory);
     ovum::vm::execution_tree::FunctionRepository func_repo;
     ovum::vm::runtime::VirtualTableRepository vtable_repo;
     ovum::vm::runtime::RuntimeMemory memory;

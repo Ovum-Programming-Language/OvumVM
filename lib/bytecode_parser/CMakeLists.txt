@@ -9,6 +9,7 @@ add_library(bytecode_parser STATIC
         scenarios/VtableParser.cpp
         scenarios/CommandFactory.cpp
         scenarios/FunctionFactory.cpp
+        scenarios/PlaceholderCommandFactory.cpp
 )
 
 

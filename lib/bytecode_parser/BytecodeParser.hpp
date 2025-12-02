@@ -18,7 +18,7 @@ class BytecodeParser {
 public:
   BytecodeParser(std::unique_ptr<vm::executor::IJitExecutorFactory> jit_factory,
                  size_t jit_boundary,
-                 std::unique_ptr<ICommandFactory> command_factory = nullptr);
+                 const ICommandFactory& command_factory);
 
   std::expected<std::unique_ptr<vm::execution_tree::Block>, BytecodeParserError> Parse(
       const std::vector<TokenPtr>& tokens,

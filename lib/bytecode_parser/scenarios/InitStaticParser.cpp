@@ -2,10 +2,14 @@
 
 #include "lib/execution_tree/Block.hpp"
 
+#include "CommandFactory.hpp"
 #include "CommandParser.hpp"
 #include "lib/bytecode_parser/BytecodeParserError.hpp"
 
 namespace ovum::bytecode::parser {
+
+InitStaticParser::InitStaticParser(const ICommandFactory& factory) : factory_(std::move(factory)) {
+}
 
 std::expected<void, BytecodeParserError> InitStaticParser::Handle(ParsingSessionPtr ctx) {
   if (!ctx->IsKeyword("init-static")) {
@@ -29,7 +33,8 @@ std::expected<void, BytecodeParserError> InitStaticParser::Handle(ParsingSession
   ctx->SetCurrentBlock(block.get());
 
   while (!ctx->IsPunct('}') && !ctx->IsEof()) {
-    std::expected<void, BytecodeParserError> res = CommandParser::ParseSingleStatement(ctx, *block);
+    std::expected<void, BytecodeParserError> res =
+        CommandParser::ParseSingleStatement(ctx, *block, std::move(factory_));
 
     if (!res) {
       return res;

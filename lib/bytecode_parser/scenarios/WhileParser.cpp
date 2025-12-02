@@ -3,10 +3,14 @@
 #include "lib/execution_tree/Block.hpp"
 #include "lib/execution_tree/WhileExecution.hpp"
 
+#include "CommandFactory.hpp"
 #include "CommandParser.hpp"
 #include "lib/bytecode_parser/BytecodeParserError.hpp"
 
 namespace ovum::bytecode::parser {
+
+WhileParser::WhileParser(const ICommandFactory& factory) : factory_(factory) {
+}
 
 std::expected<void, BytecodeParserError> WhileParser::Handle(std::shared_ptr<ParsingSession> ctx) {
   if (!ctx->IsKeyword("while")) {
@@ -26,7 +30,7 @@ std::expected<void, BytecodeParserError> WhileParser::Handle(std::shared_ptr<Par
   ctx->SetCurrentBlock(condition.get());
 
   while (!ctx->IsPunct('}')) {
-    std::expected<void, BytecodeParserError> res = CommandParser::ParseSingleStatement(ctx, *condition);
+    std::expected<void, BytecodeParserError> res = CommandParser::ParseSingleStatement(ctx, *condition, factory_);
 
     if (!res) {
       return res;
@@ -56,7 +60,7 @@ std::expected<void, BytecodeParserError> WhileParser::Handle(std::shared_ptr<Par
   ctx->SetCurrentBlock(body.get());
 
   while (!ctx->IsPunct('}')) {
-    std::expected<void, BytecodeParserError> res = CommandParser::ParseSingleStatement(ctx, *body);
+    std::expected<void, BytecodeParserError> res = CommandParser::ParseSingleStatement(ctx, *body, factory_);
 
     if (!res) {
       return res;

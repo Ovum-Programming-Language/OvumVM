@@ -19,7 +19,7 @@ public:
   CommandFactory() = default;
 
   std::expected<std::unique_ptr<vm::execution_tree::IExecutable>, BytecodeParserError> CreateCommand(
-      const std::string& cmd_name, std::shared_ptr<ParsingSession> ctx) override;
+      const std::string& cmd_name, std::shared_ptr<ParsingSession> ctx) const override;
 
 private:
   static const std::unordered_set<std::string> kStringCommands;

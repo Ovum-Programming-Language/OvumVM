@@ -15,13 +15,13 @@ namespace ovum::bytecode::parser {
 
 class CommandParser : public IParserHandler {
 public:
-  explicit CommandParser(std::unique_ptr<ICommandFactory> factory = nullptr);
+  explicit CommandParser(const ICommandFactory& factory);
 
   std::expected<void, BytecodeParserError> Handle(std::shared_ptr<ParsingSession> ctx) override;
 
   static std::expected<void, BytecodeParserError> ParseSingleStatement(const std::shared_ptr<ParsingSession>& ctx,
                                                                        vm::execution_tree::Block& block,
-                                                                       ICommandFactory& factory);
+                                                                       const ICommandFactory& factory);
 
   static std::expected<void, BytecodeParserError> ParseSingleStatement(const std::shared_ptr<ParsingSession>& ctx,
                                                                        vm::execution_tree::Block& block);
@@ -29,7 +29,7 @@ public:
   static ICommandFactory& DefaultFactory();
 
 private:
-  std::unique_ptr<ICommandFactory> factory_;
+  const ICommandFactory& factory_;
 };
 
 } // namespace ovum::bytecode::parser

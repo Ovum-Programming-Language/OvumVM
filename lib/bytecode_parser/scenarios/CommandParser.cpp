@@ -6,23 +6,22 @@
 
 namespace ovum::bytecode::parser {
 
-CommandParser::CommandParser(std::unique_ptr<ICommandFactory> factory) :
-    factory_(factory ? std::move(factory) : std::make_unique<CommandFactory>()) {
+CommandParser::CommandParser(const ICommandFactory& factory) : factory_(factory) {
 }
 
 std::expected<void, BytecodeParserError> CommandParser::Handle(std::shared_ptr<ParsingSession> ctx) {
-  return ParseSingleStatement(ctx, *ctx->CurrentBlock(), *factory_);
+  return ParseSingleStatement(ctx, *ctx->CurrentBlock(), factory_);
 }
 
 std::expected<void, BytecodeParserError> CommandParser::ParseSingleStatement(const std::shared_ptr<ParsingSession>& ctx,
                                                                              vm::execution_tree::Block& block,
-                                                                             ICommandFactory& factory) {
+                                                                             const ICommandFactory& factory) {
   if (ctx->IsEof()) {
     return std::unexpected(BytecodeParserError("Unexpected end of input"));
   }
 
   if (ctx->IsKeyword("if")) {
-    IfParser parser;
+    IfParser parser(factory);
     std::expected<void, BytecodeParserError> res = parser.Handle(ctx);
 
     if (!res) {
@@ -35,7 +34,7 @@ std::expected<void, BytecodeParserError> CommandParser::ParseSingleStatement(con
   }
 
   if (ctx->IsKeyword("while")) {
-    WhileParser parser;
+    WhileParser parser(factory);
     std::expected<void, BytecodeParserError> res = parser.Handle(ctx);
 
     if (!res) {
@@ -79,7 +78,8 @@ ICommandFactory& CommandParser::DefaultFactory() {
 
 std::expected<void, BytecodeParserError> CommandParser::ParseSingleStatement(const std::shared_ptr<ParsingSession>& ctx,
                                                                              vm::execution_tree::Block& block) {
-  return ParseSingleStatement(ctx, block, DefaultFactory());
+  CommandFactory cmd_factory;
+  return ParseSingleStatement(ctx, block, cmd_factory);
 }
 
 } // namespace ovum::bytecode::parser

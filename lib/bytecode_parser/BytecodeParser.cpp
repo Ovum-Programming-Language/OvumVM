@@ -17,17 +17,14 @@ namespace ovum::bytecode::parser {
 
 BytecodeParser::BytecodeParser(std::unique_ptr<vm::executor::IJitExecutorFactory> jit_factory,
                                size_t jit_boundary,
-                               std::unique_ptr<ICommandFactory> command_factory) :
+                               const ICommandFactory& command_factory) :
     jit_factory_(std::move(jit_factory)), jit_boundary_(jit_boundary) {
-  std::unique_ptr<ICommandFactory> cmd_factory =
-      command_factory ? std::move(command_factory) : std::make_unique<CommandFactory>();
-
-  handlers_.push_back(std::make_unique<InitStaticParser>());
+  handlers_.push_back(std::make_unique<InitStaticParser>(command_factory));
   handlers_.push_back(std::make_unique<VtableParser>());
-  handlers_.push_back(std::make_unique<FunctionParser>());
-  handlers_.push_back(std::make_unique<IfParser>());
-  handlers_.push_back(std::make_unique<WhileParser>());
-  handlers_.push_back(std::make_unique<CommandParser>(std::move(cmd_factory)));
+  handlers_.push_back(std::make_unique<FunctionParser>(command_factory));
+  handlers_.push_back(std::make_unique<IfParser>(command_factory));
+  handlers_.push_back(std::make_unique<WhileParser>(command_factory));
+  handlers_.push_back(std::make_unique<CommandParser>(command_factory));
 }
 
 std::expected<std::unique_ptr<vm::execution_tree::Block>, BytecodeParserError> BytecodeParser::Parse(
