@@ -33,8 +33,7 @@ std::expected<void, BytecodeParserError> InitStaticParser::Handle(ParsingSession
   ctx->SetCurrentBlock(block.get());
 
   while (!ctx->IsPunct('}') && !ctx->IsEof()) {
-    std::expected<void, BytecodeParserError> res =
-        CommandParser::ParseSingleStatement(ctx, *block, std::move(factory_));
+    std::expected<void, BytecodeParserError> res = CommandParser::ParseSingleStatement(ctx, *block, factory_);
 
     if (!res) {
       return res;
