@@ -90,14 +90,21 @@ std::expected<ExecutionResult, std::runtime_error> Dup(PassedExecutionData& data
 }
 
 std::expected<ExecutionResult, std::runtime_error> Swap(PassedExecutionData& data) {
-  auto arguments = TryExtractTwoArguments<runtime::Variable, runtime::Variable>(data, "Swap");
-
-  if (!arguments) {
-    return std::unexpected(arguments.error());
+  if (data.memory.machine_stack.empty()) {
+    return std::unexpected(std::runtime_error("Swap: not enought arguments on the stack"));
   }
 
-  data.memory.machine_stack.push(arguments.value().first);
-  data.memory.machine_stack.push(arguments.value().second);
+  runtime::Variable var_argument1 = data.memory.machine_stack.top();
+
+  if (data.memory.machine_stack.empty()) {
+    data.memory.machine_stack.push(var_argument1);
+    return std::unexpected(std::runtime_error("Swap: not enought arguments on the stack"));
+  }
+
+  runtime::Variable var_argument2 = data.memory.machine_stack.top();
+
+  data.memory.machine_stack.push(var_argument1);
+  data.memory.machine_stack.push(var_argument2);
 
   return ExecutionResult::kNormal;
 }
@@ -900,19 +907,25 @@ std::expected<ExecutionResult, std::runtime_error> GetField(PassedExecutionData&
 }
 
 std::expected<ExecutionResult, std::runtime_error> SetField(PassedExecutionData& data, size_t number) {
-  auto arguments = TryExtractTwoArguments<void*, runtime::Variable>(data, "SetField");
+  auto argument1 = TryExtractArgument<void*>(data, "SetField");
 
-  if (!arguments) {
-    return std::unexpected(arguments.error());
+  if (!argument1) {
+    return std::unexpected(argument1.error());
   }
 
-  auto vtable = data.virtual_table_repository.GetByIndex(reinterpret_cast<runtime::ObjectDescriptor*>(arguments.value().first)->vtable_index);
+  if (data.memory.machine_stack.empty()) {
+    return std::unexpected(std::runtime_error("SetField: not enought arguments on the stack"));
+  }
+
+  runtime::Variable argument2 = data.memory.machine_stack.top();
+
+  auto vtable = data.virtual_table_repository.GetByIndex(reinterpret_cast<runtime::ObjectDescriptor*>(argument1.value())->vtable_index);
 
   if (!vtable) {
     return std::unexpected(vtable.error());
   }
 
-  auto result = vtable.value()->SetVariableByIndex(arguments.value().first, number, arguments.value().second);
+  auto result = vtable.value()->SetVariableByIndex(argument1.value(), number, argument2);
 
   if (!result) {
     return std::unexpected(result.error());
