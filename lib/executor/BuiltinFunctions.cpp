@@ -312,9 +312,209 @@ std::expected<ExecutionResult, std::runtime_error> ArrayGetHash(PassedExecutionD
   return ExecutionResult::kNormal;
 }
 
-} // namespace ovum::vm::execution_tree
+// Template helper for array Clear
+// Arguments: object is first
+template<typename T>
+std::expected<ExecutionResult, std::runtime_error> ArrayClear(PassedExecutionData& data) {
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0])) {
+    return std::unexpected(std::runtime_error("ArrayClear: invalid argument types"));
+  }
 
-namespace ovum::vm::runtime {} // namespace ovum::vm::runtime
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  auto* vec = runtime::GetDataPointer<std::vector<T>>(obj_ptr);
+  vec->clear();
+
+  return ExecutionResult::kNormal;
+}
+
+// Template helper for array ShrinkToFit
+// Arguments: object is first
+template<typename T>
+std::expected<ExecutionResult, std::runtime_error> ArrayShrinkToFit(PassedExecutionData& data) {
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0])) {
+    return std::unexpected(std::runtime_error("ArrayShrinkToFit: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  auto* vec = runtime::GetDataPointer<std::vector<T>>(obj_ptr);
+  vec->shrink_to_fit();
+
+  return ExecutionResult::kNormal;
+}
+
+// Template helper for array Reserve
+// Arguments: object is first, capacity is second
+template<typename T>
+std::expected<ExecutionResult, std::runtime_error> ArrayReserve(PassedExecutionData& data) {
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<int64_t>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("ArrayReserve: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  int64_t capacity = std::get<int64_t>(data.memory.stack_frames.top().local_variables[1]);
+  auto* vec = runtime::GetDataPointer<std::vector<T>>(obj_ptr);
+  vec->reserve(static_cast<size_t>(capacity));
+
+  return ExecutionResult::kNormal;
+}
+
+// Template helper for array Capacity
+// Arguments: object is first
+template<typename T>
+std::expected<ExecutionResult, std::runtime_error> ArrayCapacity(PassedExecutionData& data) {
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0])) {
+    return std::unexpected(std::runtime_error("ArrayCapacity: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  const auto* vec = runtime::GetDataPointer<const std::vector<T>>(obj_ptr);
+  auto capacity = static_cast<int64_t>(vec->capacity());
+  data.memory.machine_stack.emplace(capacity);
+
+  return ExecutionResult::kNormal;
+}
+
+// Template helper for array Add
+// Arguments: object is first, value is second
+template<typename T>
+std::expected<ExecutionResult, std::runtime_error> ArrayAdd(PassedExecutionData& data) {
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<T>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("ArrayAdd: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  T value = std::get<T>(data.memory.stack_frames.top().local_variables[1]);
+  auto* vec = runtime::GetDataPointer<std::vector<T>>(obj_ptr);
+  vec->push_back(value);
+
+  return ExecutionResult::kNormal;
+}
+
+// Specialization for ObjectArray/StringArray/PointerArray (value is void*)
+template<>
+std::expected<ExecutionResult, std::runtime_error> ArrayAdd<void*>(PassedExecutionData& data) {
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("ArrayAdd: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  void* value = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
+  auto* vec = runtime::GetDataPointer<std::vector<void*>>(obj_ptr);
+  vec->push_back(value);
+
+  return ExecutionResult::kNormal;
+}
+
+// Template helper for array RemoveAt
+// Arguments: object is first, index is second
+// Uses circular indexing: index wraps around array size
+template<typename T>
+std::expected<ExecutionResult, std::runtime_error> ArrayRemoveAt(PassedExecutionData& data) {
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<int64_t>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("ArrayRemoveAt: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  int64_t index = std::get<int64_t>(data.memory.stack_frames.top().local_variables[1]);
+  auto* vec = runtime::GetDataPointer<std::vector<T>>(obj_ptr);
+
+  if (vec->empty()) {
+    return std::unexpected(std::runtime_error("ArrayRemoveAt: cannot remove from empty array"));
+  }
+
+  // Circular indexing: wrap index to valid range
+  size_t size = vec->size();
+  size_t circular_index = ((static_cast<int64_t>(index % static_cast<int64_t>(size)) + static_cast<int64_t>(size)) %
+                           static_cast<int64_t>(size));
+
+  vec->erase(vec->begin() + static_cast<ptrdiff_t>(circular_index));
+
+  return ExecutionResult::kNormal;
+}
+
+// Template helper for array InsertAt
+// Arguments: object is first, index is second, value is third
+// Uses circular indexing: index wraps around array size
+template<typename T>
+std::expected<ExecutionResult, std::runtime_error> ArrayInsertAt(PassedExecutionData& data) {
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<int64_t>(data.memory.stack_frames.top().local_variables[1]) ||
+      !std::holds_alternative<T>(data.memory.stack_frames.top().local_variables[2])) {
+    return std::unexpected(std::runtime_error("ArrayInsertAt: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  int64_t index = std::get<int64_t>(data.memory.stack_frames.top().local_variables[1]);
+  T value = std::get<T>(data.memory.stack_frames.top().local_variables[2]);
+  auto* vec = runtime::GetDataPointer<std::vector<T>>(obj_ptr);
+
+  // Circular indexing: wrap index to valid range
+  // For insert, we allow index == size (append), so we handle it specially
+  size_t size = vec->size();
+  size_t circular_index = 0;
+
+  if (size == 0) {
+    // Empty array: any index becomes 0 (append)
+    circular_index = 0;
+  } else {
+    // Check if index equals size (append case)
+    if (index == static_cast<int64_t>(size)) {
+      circular_index = size; // Append
+    } else {
+      // Wrap index: for size 5, index 6→1, 11→1, -1→4
+      circular_index = ((static_cast<int64_t>(index % static_cast<int64_t>(size)) + static_cast<int64_t>(size)) %
+                        static_cast<int64_t>(size));
+    }
+  }
+
+  vec->insert(vec->begin() + static_cast<ptrdiff_t>(circular_index), value);
+
+  return ExecutionResult::kNormal;
+}
+
+// Specialization for ObjectArray/StringArray/PointerArray (value is void*)
+// Uses circular indexing: index wraps around array size
+template<>
+std::expected<ExecutionResult, std::runtime_error> ArrayInsertAt<void*>(PassedExecutionData& data) {
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<int64_t>(data.memory.stack_frames.top().local_variables[1]) ||
+      !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[2])) {
+    return std::unexpected(std::runtime_error("ArrayInsertAt: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  int64_t index = std::get<int64_t>(data.memory.stack_frames.top().local_variables[1]);
+  void* value = std::get<void*>(data.memory.stack_frames.top().local_variables[2]);
+  auto* vec = runtime::GetDataPointer<std::vector<void*>>(obj_ptr);
+
+  // Circular indexing: wrap index to valid range
+  // For insert, we allow index == size (append), so we handle it specially
+  size_t size = vec->size();
+  size_t circular_index = 0;
+
+  if (size == 0) {
+    // Empty array: any index becomes 0 (append)
+    circular_index = 0;
+  } else {
+    // Check if index equals size (append case)
+    if (index == static_cast<int64_t>(size)) {
+      circular_index = size; // Append
+    } else {
+      // Wrap index: for size 5, index 6→1, 11→1, -1→4
+      circular_index = ((static_cast<int64_t>(index % static_cast<int64_t>(size)) + static_cast<int64_t>(size)) %
+                        static_cast<int64_t>(size));
+    }
+  }
+
+  vec->insert(vec->begin() + static_cast<ptrdiff_t>(circular_index), value);
+  return ExecutionResult::kNormal;
+}
+
+} // namespace ovum::vm::execution_tree
 
 namespace ovum::vm::execution_tree {
 
@@ -607,12 +807,68 @@ std::expected<ExecutionResult, std::runtime_error> IntArrayGetHash(PassedExecuti
   return ArrayGetHash<int64_t>(data);
 }
 
+std::expected<ExecutionResult, std::runtime_error> IntArrayClear(PassedExecutionData& data) {
+  return ArrayClear<int64_t>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> IntArrayShrinkToFit(PassedExecutionData& data) {
+  return ArrayShrinkToFit<int64_t>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> IntArrayReserve(PassedExecutionData& data) {
+  return ArrayReserve<int64_t>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> IntArrayCapacity(PassedExecutionData& data) {
+  return ArrayCapacity<int64_t>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> IntArrayAdd(PassedExecutionData& data) {
+  return ArrayAdd<int64_t>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> IntArrayRemoveAt(PassedExecutionData& data) {
+  return ArrayRemoveAt<int64_t>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> IntArrayInsertAt(PassedExecutionData& data) {
+  return ArrayInsertAt<int64_t>(data);
+}
+
 std::expected<ExecutionResult, std::runtime_error> FloatArrayLength(PassedExecutionData& data) {
   return ArrayLength<double>(data);
 }
 
 std::expected<ExecutionResult, std::runtime_error> FloatArrayGetHash(PassedExecutionData& data) {
   return ArrayGetHash<double>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> FloatArrayClear(PassedExecutionData& data) {
+  return ArrayClear<double>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> FloatArrayShrinkToFit(PassedExecutionData& data) {
+  return ArrayShrinkToFit<double>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> FloatArrayReserve(PassedExecutionData& data) {
+  return ArrayReserve<double>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> FloatArrayCapacity(PassedExecutionData& data) {
+  return ArrayCapacity<double>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> FloatArrayAdd(PassedExecutionData& data) {
+  return ArrayAdd<double>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> FloatArrayRemoveAt(PassedExecutionData& data) {
+  return ArrayRemoveAt<double>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> FloatArrayInsertAt(PassedExecutionData& data) {
+  return ArrayInsertAt<double>(data);
 }
 
 std::expected<ExecutionResult, std::runtime_error> CharArrayLength(PassedExecutionData& data) {
@@ -623,12 +879,68 @@ std::expected<ExecutionResult, std::runtime_error> CharArrayGetHash(PassedExecut
   return ArrayGetHash<char>(data);
 }
 
+std::expected<ExecutionResult, std::runtime_error> CharArrayClear(PassedExecutionData& data) {
+  return ArrayClear<char>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> CharArrayShrinkToFit(PassedExecutionData& data) {
+  return ArrayShrinkToFit<char>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> CharArrayReserve(PassedExecutionData& data) {
+  return ArrayReserve<char>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> CharArrayCapacity(PassedExecutionData& data) {
+  return ArrayCapacity<char>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> CharArrayAdd(PassedExecutionData& data) {
+  return ArrayAdd<char>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> CharArrayRemoveAt(PassedExecutionData& data) {
+  return ArrayRemoveAt<char>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> CharArrayInsertAt(PassedExecutionData& data) {
+  return ArrayInsertAt<char>(data);
+}
+
 std::expected<ExecutionResult, std::runtime_error> ByteArrayLength(PassedExecutionData& data) {
   return ArrayLength<uint8_t>(data);
 }
 
 std::expected<ExecutionResult, std::runtime_error> ByteArrayGetHash(PassedExecutionData& data) {
   return ArrayGetHash<uint8_t>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> ByteArrayClear(PassedExecutionData& data) {
+  return ArrayClear<uint8_t>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> ByteArrayShrinkToFit(PassedExecutionData& data) {
+  return ArrayShrinkToFit<uint8_t>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> ByteArrayReserve(PassedExecutionData& data) {
+  return ArrayReserve<uint8_t>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> ByteArrayCapacity(PassedExecutionData& data) {
+  return ArrayCapacity<uint8_t>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> ByteArrayAdd(PassedExecutionData& data) {
+  return ArrayAdd<uint8_t>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> ByteArrayRemoveAt(PassedExecutionData& data) {
+  return ArrayRemoveAt<uint8_t>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> ByteArrayInsertAt(PassedExecutionData& data) {
+  return ArrayInsertAt<uint8_t>(data);
 }
 
 std::expected<ExecutionResult, std::runtime_error> BoolArrayLength(PassedExecutionData& data) {
@@ -639,6 +951,34 @@ std::expected<ExecutionResult, std::runtime_error> BoolArrayGetHash(PassedExecut
   return ArrayGetHash<bool>(data);
 }
 
+std::expected<ExecutionResult, std::runtime_error> BoolArrayClear(PassedExecutionData& data) {
+  return ArrayClear<bool>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> BoolArrayShrinkToFit(PassedExecutionData& data) {
+  return ArrayShrinkToFit<bool>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> BoolArrayReserve(PassedExecutionData& data) {
+  return ArrayReserve<bool>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> BoolArrayCapacity(PassedExecutionData& data) {
+  return ArrayCapacity<bool>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> BoolArrayAdd(PassedExecutionData& data) {
+  return ArrayAdd<bool>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> BoolArrayRemoveAt(PassedExecutionData& data) {
+  return ArrayRemoveAt<bool>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> BoolArrayInsertAt(PassedExecutionData& data) {
+  return ArrayInsertAt<bool>(data);
+}
+
 std::expected<ExecutionResult, std::runtime_error> ObjectArrayLength(PassedExecutionData& data) {
   return ArrayLength<void*>(data);
 }
@@ -647,12 +987,68 @@ std::expected<ExecutionResult, std::runtime_error> ObjectArrayGetHash(PassedExec
   return ArrayGetHash<void*>(data);
 }
 
+std::expected<ExecutionResult, std::runtime_error> ObjectArrayClear(PassedExecutionData& data) {
+  return ArrayClear<void*>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> ObjectArrayShrinkToFit(PassedExecutionData& data) {
+  return ArrayShrinkToFit<void*>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> ObjectArrayReserve(PassedExecutionData& data) {
+  return ArrayReserve<void*>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> ObjectArrayCapacity(PassedExecutionData& data) {
+  return ArrayCapacity<void*>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> ObjectArrayAdd(PassedExecutionData& data) {
+  return ArrayAdd<void*>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> ObjectArrayRemoveAt(PassedExecutionData& data) {
+  return ArrayRemoveAt<void*>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> ObjectArrayInsertAt(PassedExecutionData& data) {
+  return ArrayInsertAt<void*>(data);
+}
+
 std::expected<ExecutionResult, std::runtime_error> StringArrayLength(PassedExecutionData& data) {
   return ObjectArrayLength(data);
 }
 
 std::expected<ExecutionResult, std::runtime_error> StringArrayGetHash(PassedExecutionData& data) {
   return ObjectArrayGetHash(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> StringArrayClear(PassedExecutionData& data) {
+  return ObjectArrayClear(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> StringArrayShrinkToFit(PassedExecutionData& data) {
+  return ObjectArrayShrinkToFit(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> StringArrayReserve(PassedExecutionData& data) {
+  return ObjectArrayReserve(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> StringArrayCapacity(PassedExecutionData& data) {
+  return ObjectArrayCapacity(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> StringArrayAdd(PassedExecutionData& data) {
+  return ObjectArrayAdd(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> StringArrayRemoveAt(PassedExecutionData& data) {
+  return ObjectArrayRemoveAt(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> StringArrayInsertAt(PassedExecutionData& data) {
+  return ObjectArrayInsertAt(data);
 }
 
 std::expected<ExecutionResult, std::runtime_error> PointerGetHash(PassedExecutionData& data) {
@@ -667,6 +1063,34 @@ std::expected<ExecutionResult, std::runtime_error> PointerArrayLength(PassedExec
 
 std::expected<ExecutionResult, std::runtime_error> PointerArrayGetHash(PassedExecutionData& data) {
   return ObjectArrayGetHash(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> PointerArrayClear(PassedExecutionData& data) {
+  return ObjectArrayClear(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> PointerArrayShrinkToFit(PassedExecutionData& data) {
+  return ObjectArrayShrinkToFit(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> PointerArrayReserve(PassedExecutionData& data) {
+  return ObjectArrayReserve(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> PointerArrayCapacity(PassedExecutionData& data) {
+  return ObjectArrayCapacity(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> PointerArrayAdd(PassedExecutionData& data) {
+  return ObjectArrayAdd(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> PointerArrayRemoveAt(PassedExecutionData& data) {
+  return ObjectArrayRemoveAt(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> PointerArrayInsertAt(PassedExecutionData& data) {
+  return ObjectArrayInsertAt(data);
 }
 
 // File methods

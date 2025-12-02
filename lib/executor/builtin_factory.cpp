@@ -747,6 +747,62 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
     }
   }
 
+  {
+    auto function = CreateMethodFunction("_IntArray_Clear_<M>", 1, IntArrayClear);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_IntArray_ShrinkToFit_<M>", 1, IntArrayShrinkToFit);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_IntArray_Reserve_<M>_int", 2, IntArrayReserve);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_IntArray_Capacity_<C>", 1, IntArrayCapacity);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_IntArray_Add_<M>_int", 2, IntArrayAdd);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_IntArray_RemoveAt_<M>_int", 2, IntArrayRemoveAt);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_IntArray_InsertAt_<M>_int_int", 3, IntArrayInsertAt);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
   // FloatArray methods
   {
     auto function = CreateMethodFunction("_FloatArray_int_float", 3, FloatArrayConstructor);
@@ -798,6 +854,62 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
 
   {
     auto function = CreateMethodFunction("_FloatArray_GetHash_<C>", 1, FloatArrayGetHash);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_FloatArray_Clear_<M>", 1, FloatArrayClear);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_FloatArray_ShrinkToFit_<M>", 1, FloatArrayShrinkToFit);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_FloatArray_Reserve_<M>_int", 2, FloatArrayReserve);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_FloatArray_Capacity_<C>", 1, FloatArrayCapacity);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_FloatArray_Add_<M>_float", 2, FloatArrayAdd);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_FloatArray_RemoveAt_<M>_int", 2, FloatArrayRemoveAt);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_FloatArray_InsertAt_<M>_int_float", 3, FloatArrayInsertAt);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -861,6 +973,62 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
     }
   }
 
+  {
+    auto function = CreateMethodFunction("_CharArray_Clear_<M>", 1, CharArrayClear);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_CharArray_ShrinkToFit_<M>", 1, CharArrayShrinkToFit);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_CharArray_Reserve_<M>_int", 2, CharArrayReserve);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_CharArray_Capacity_<C>", 1, CharArrayCapacity);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_CharArray_Add_<M>_char", 2, CharArrayAdd);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_CharArray_RemoveAt_<M>_int", 2, CharArrayRemoveAt);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_CharArray_InsertAt_<M>_int_char", 3, CharArrayInsertAt);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
   // ByteArray methods
   {
     auto function = CreateMethodFunction("_ByteArray_int_byte", 3, ByteArrayConstructor);
@@ -912,6 +1080,62 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
 
   {
     auto function = CreateMethodFunction("_ByteArray_GetHash_<C>", 1, ByteArrayGetHash);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_ByteArray_Clear_<M>", 1, ByteArrayClear);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_ByteArray_ShrinkToFit_<M>", 1, ByteArrayShrinkToFit);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_ByteArray_Reserve_<M>_int", 2, ByteArrayReserve);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_ByteArray_Capacity_<C>", 1, ByteArrayCapacity);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_ByteArray_Add_<M>_byte", 2, ByteArrayAdd);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_ByteArray_RemoveAt_<M>_int", 2, ByteArrayRemoveAt);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_ByteArray_InsertAt_<M>_int_byte", 3, ByteArrayInsertAt);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -1008,6 +1232,62 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
     }
   }
 
+  {
+    auto function = CreateMethodFunction("_BoolArray_Clear_<M>", 1, BoolArrayClear);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_BoolArray_ShrinkToFit_<M>", 1, BoolArrayShrinkToFit);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_BoolArray_Reserve_<M>_int", 2, BoolArrayReserve);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_BoolArray_Capacity_<C>", 1, BoolArrayCapacity);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_BoolArray_Add_<M>_bool", 2, BoolArrayAdd);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_BoolArray_RemoveAt_<M>_int", 2, BoolArrayRemoveAt);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_BoolArray_InsertAt_<M>_int_bool", 3, BoolArrayInsertAt);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
   // ObjectArray methods
   {
     auto function = CreateMethodFunction("_ObjectArray_int_Object", 3, ObjectArrayConstructor);
@@ -1065,6 +1345,62 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
     }
   }
 
+  {
+    auto function = CreateMethodFunction("_ObjectArray_Clear_<M>", 1, ObjectArrayClear);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_ObjectArray_ShrinkToFit_<M>", 1, ObjectArrayShrinkToFit);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_ObjectArray_Reserve_<M>_int", 2, ObjectArrayReserve);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_ObjectArray_Capacity_<C>", 1, ObjectArrayCapacity);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_ObjectArray_Add_<M>_Object", 2, ObjectArrayAdd);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_ObjectArray_RemoveAt_<M>_int", 2, ObjectArrayRemoveAt);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_ObjectArray_InsertAt_<M>_<C>_int_Object", 3, ObjectArrayInsertAt);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
   // StringArray methods
   {
     auto function = CreateMethodFunction("_StringArray_int_String", 3, StringArrayConstructor);
@@ -1116,6 +1452,62 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
 
   {
     auto function = CreateMethodFunction("_StringArray_GetHash_<C>", 1, StringArrayGetHash);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_StringArray_Clear_<M>", 1, StringArrayClear);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_StringArray_ShrinkToFit_<M>", 1, StringArrayShrinkToFit);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_StringArray_Reserve_<M>_int", 2, StringArrayReserve);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_StringArray_Capacity_<C>", 1, StringArrayCapacity);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_StringArray_Add_<M>_String", 2, StringArrayAdd);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_StringArray_RemoveAt_<M>_int", 2, StringArrayRemoveAt);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_StringArray_InsertAt_<M>_int_String", 3, StringArrayInsertAt);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -1222,6 +1614,62 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
 
   {
     auto function = CreateMethodFunction("_PointerArray_GetHash_<C>", 1, PointerArrayGetHash);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_PointerArray_Clear_<M>", 1, PointerArrayClear);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_PointerArray_ShrinkToFit_<M>", 1, PointerArrayShrinkToFit);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_PointerArray_Reserve_<M>_int", 2, PointerArrayReserve);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_PointerArray_Capacity_<C>", 1, PointerArrayCapacity);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_PointerArray_Add_<M>_Pointer", 2, PointerArrayAdd);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_PointerArray_RemoveAt_<M>_int", 2, PointerArrayRemoveAt);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_PointerArray_InsertAt_<M>_int_Pointer", 3, PointerArrayInsertAt);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
