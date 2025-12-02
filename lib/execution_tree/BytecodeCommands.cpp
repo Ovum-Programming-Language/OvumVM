@@ -1,6 +1,7 @@
 #include "BytecodeCommands.hpp"
 #include <cmath>
 #include <chrono>
+#include <ctime>
 #include <random>
 #include <iostream>
 #include <fstream>
@@ -956,5 +957,49 @@ std::expected<ExecutionResult, std::runtime_error> SetVTable(PassedExecutionData
 
   return ExecutionResult::kNormal;
 }
+
+std::expected<ExecutionResult, std::runtime_error> UnixTime(PassedExecutionData& data) {
+  auto now = std::chrono::system_clock::now();
+  auto timestamp = std::chrono::duration_cast<std::chrono::seconds>(
+    now.time_since_epoch()).count();
+    
+  data.memory.machine_stack.push(runtime::Variable(static_cast<int64_t>(timestamp)));
+
+  return ExecutionResult::kNormal;
+}
+
+std::expected<ExecutionResult, std::runtime_error> UnixTimeMs(PassedExecutionData& data) {
+  auto now = std::chrono::system_clock::now();
+  auto timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+    now.time_since_epoch()).count();
+  
+  data.memory.machine_stack.push(runtime::Variable(static_cast<int64_t>(timestamp)));
+
+  return ExecutionResult::kNormal;
+}
+
+std::expected<ExecutionResult, std::runtime_error> UnixTimeNs(PassedExecutionData& data) {
+  auto now = std::chrono::system_clock::now();
+  auto timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(
+      now.time_since_epoch()).count();
+  
+  data.memory.machine_stack.push(runtime::Variable(static_cast<int64_t>(timestamp)));
+
+  return ExecutionResult::kNormal;
+}
+
+std::expected<ExecutionResult, std::runtime_error> NanoTime(PassedExecutionData& data) {
+  auto now = std::chrono::steady_clock::now();
+  auto timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(
+    now.time_since_epoch()).count();
+  
+  data.memory.machine_stack.push(runtime::Variable(static_cast<int64_t>(timestamp)));
+
+  return ExecutionResult::kNormal;
+}
+
+std::expected<ExecutionResult, std::runtime_error> FormatDateTime(PassedExecutionData& data);
+
+
 
 } // namespace ovum::vm::execution_tree
