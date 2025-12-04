@@ -22,8 +22,8 @@ std::expected<bool, BytecodeParserError> VtableParser::Handle(std::shared_ptr<Pa
 
   std::string class_name = name_res.value();
 
-  const std::string dtor_virtual_name = class_name + "_Destructor";
-  const std::string dtor_real_name = class_name + "_Destructor";
+  const std::string dtor_virtual_name = class_name + "_destructor_<M>";
+  const std::string dtor_real_name = class_name + "_destructor_<M>";
   bool has_destructor = false;
 
   std::expected<void, BytecodeParserError> e = ctx->ExpectPunct('{');
