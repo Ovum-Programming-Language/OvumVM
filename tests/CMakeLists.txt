@@ -6,10 +6,13 @@ add_executable(
         unit_tests.cpp
         test_functions.cpp
         test_suites/ProjectIntegrationTestSuite.cpp
+        test_suites/BytecodeLexerTestSuite.cpp
+        bytecode_lexer_tests.cpp
 )
 
 target_link_libraries(
         ${PROJECT_NAME}_tests
+        bytecode_lexer
         vm_ui
         GTest::gtest_main
 )
