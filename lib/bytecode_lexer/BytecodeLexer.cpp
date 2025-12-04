@@ -6,7 +6,6 @@
 
 #include "handlers/DefaultHandler.hpp"
 #include "handlers/IdentifierHandler.hpp"
-#include "handlers/NewlineHandler.hpp"
 #include "handlers/NumberHandler.hpp"
 #include "handlers/PunctHandler.hpp"
 #include "handlers/StringHandler.hpp"
@@ -67,7 +66,6 @@ std::array<std::unique_ptr<Handler>, kDefaultBytecodeTokenReserve> BytecodeLexer
   table.at(static_cast<unsigned char>(' ')) = std::make_unique<WhitespaceHandler>();
   table.at(static_cast<unsigned char>('\t')) = std::make_unique<WhitespaceHandler>();
   table.at(static_cast<unsigned char>('\r')) = std::make_unique<WhitespaceHandler>();
-
   table.at(static_cast<unsigned char>('\n')) = std::make_unique<WhitespaceHandler>();
 
   for (unsigned char ch = 'a'; ch <= 'z'; ++ch) {
