@@ -28,6 +28,8 @@ public:
 
   [[nodiscard]] std::expected<const VirtualTable*, std::runtime_error> GetByName(const std::string& name) const;
 
+  [[nodiscard]] std::expected<size_t, std::runtime_error> GetIndexByName(const std::string& name) const;
+
   [[nodiscard]] size_t GetCount() const;
 
 private:
