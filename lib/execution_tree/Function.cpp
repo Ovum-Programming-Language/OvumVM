@@ -23,7 +23,7 @@ std::expected<ExecutionResult, std::runtime_error> Function::Execute(PassedExecu
     execution_data.memory.machine_stack.pop();
   }
 
-  std::reverse(local_frame.local_variables.begin(), local_frame.local_variables.end());
+  std::ranges::reverse(local_frame.local_variables);
 
   execution_data.memory.stack_frames.push(std::move(local_frame));
 
