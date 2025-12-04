@@ -57,16 +57,4 @@ std::unique_ptr<vm::execution_tree::IFunctionExecutable> FunctionFactory::Create
   return TryWrapJit(std::move(pure_func));
 }
 
-template vm::execution_tree::PureFunction<vm::execution_tree::Function>
-FunctionFactory::WrapPure<vm::execution_tree::Function>(vm::execution_tree::Function&& base,
-                                                        std::vector<std::string> argument_types);
-
-template std::unique_ptr<vm::execution_tree::JitCompilingFunction<vm::execution_tree::Function>>
-FunctionFactory::TryWrapJit<vm::execution_tree::Function>(vm::execution_tree::Function&& base);
-
-template std::unique_ptr<
-    vm::execution_tree::JitCompilingFunction<vm::execution_tree::PureFunction<vm::execution_tree::Function>>>
-FunctionFactory::TryWrapJit<vm::execution_tree::PureFunction<vm::execution_tree::Function>>(
-    vm::execution_tree::PureFunction<vm::execution_tree::Function>&& base);
-
 } // namespace ovum::bytecode::parser
