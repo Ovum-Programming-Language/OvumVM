@@ -67,7 +67,10 @@ void VirtualTable::AddFunction(const FunctionId& virtual_function_id, const Func
 }
 
 size_t VirtualTable::AddField(const std::string& type_name, int64_t offset) {
-  fields_.emplace_back(FieldInfo{offset, kVariableAccessorsByTypeName.at(type_name)});
+  fields_.emplace_back(FieldInfo{
+      .offset = offset,
+      .variable_accessor = kVariableAccessorsByTypeName.at(type_name),
+  });
 
   return fields_.size() - 1U;
 }
