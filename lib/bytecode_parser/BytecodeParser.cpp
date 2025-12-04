@@ -66,7 +66,7 @@ std::expected<std::unique_ptr<vm::execution_tree::Block>, BytecodeParserError> B
     }
   }
 
-  return session->ReleaseInitStaticBlock();
+  return session->GetInitStaticBlock();
 }
 
 } // namespace ovum::bytecode::parser

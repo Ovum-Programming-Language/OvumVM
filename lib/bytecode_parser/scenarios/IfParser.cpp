@@ -21,7 +21,7 @@ std::expected<bool, BytecodeParserError> IfParser::Handle(std::shared_ptr<Parsin
 
   ctx->Advance();
 
-  vm::execution_tree::Block* parent_block = ctx->CurrentBlock();
+  vm::execution_tree::Block* parent_block = ctx->GetCurrentBlock();
 
   std::unique_ptr<vm::execution_tree::IfMultibranch> if_node = std::make_unique<vm::execution_tree::IfMultibranch>();
 

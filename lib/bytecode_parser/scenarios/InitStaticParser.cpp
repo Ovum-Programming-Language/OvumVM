@@ -16,7 +16,7 @@ std::expected<bool, BytecodeParserError> InitStaticParser::Handle(ParsingSession
     return false;
   }
 
-  if (ctx->ReleaseInitStaticBlock() != nullptr) {
+  if (ctx->GetInitStaticBlock() != nullptr) {
     return std::unexpected(BytecodeParserError("Multiple init-static blocks are not allowed"));
   }
 

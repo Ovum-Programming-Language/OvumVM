@@ -17,14 +17,13 @@ class ParsingSession {
 public:
   ParsingSession(const std::vector<TokenPtr>& tokens, ParsingSessionData& data);
 
-  const TokenPtr Current() const;
-  bool IsEof() const;
+  [[nodiscard]] const TokenPtr Current() const;
+  [[nodiscard]] bool IsEof() const;
   void Advance();
 
-  bool IsIdentifier() const;
-  bool IsKeyword(const std::string& kw) const;
-  bool IsPunct(char ch) const;
-  bool IsPunct(const std::string& p) const;
+  [[nodiscard]] bool IsIdentifier() const;
+  [[nodiscard]] bool IsKeyword(const std::string& kw) const;
+  [[nodiscard]] bool IsPunct(char ch) const;
 
   std::expected<void, BytecodeParserError> ExpectKeyword(const std::string& kw);
   std::expected<void, BytecodeParserError> ExpectPunct(char ch, const std::string& msg = "");
@@ -35,36 +34,17 @@ public:
   std::expected<double, BytecodeParserError> ConsumeFloatLiteral();
   std::expected<bool, BytecodeParserError> ConsumeBoolLiteral();
 
-  vm::execution_tree::FunctionRepository& FuncRepo() const {
-    return data_.func_repo;
-  }
-  vm::runtime::VirtualTableRepository& VTableRepo() const {
-    return data_.vtable_repo;
-  }
-  vm::runtime::RuntimeMemory& Memory() const {
-    return data_.memory;
-  }
+  [[nodiscard]] vm::execution_tree::FunctionRepository& GetFuncRepo() const;
+  [[nodiscard]] vm::runtime::VirtualTableRepository& GetVTableRepo() const;
 
-  vm::execution_tree::Block* CurrentBlock() const {
-    return data_.current_block;
-  }
-  void SetCurrentBlock(vm::execution_tree::Block* block) {
-    data_.current_block = block;
-  }
+  [[nodiscard]] vm::execution_tree::Block* GetCurrentBlock() const;
+  void SetCurrentBlock(vm::execution_tree::Block* block);
 
-  const std::optional<std::reference_wrapper<vm::executor::IJitExecutorFactory>>& JitFactory() const {
-    return data_.jit_factory;
-  }
-  size_t JitBoundary() const {
-    return data_.jit_boundary;
-  }
+  [[nodiscard]] const std::optional<std::reference_wrapper<vm::executor::IJitExecutorFactory>>& GetJitFactory() const;
+  [[nodiscard]] size_t GetJitBoundary() const;
 
-  std::unique_ptr<vm::execution_tree::Block> ReleaseInitStaticBlock() {
-    return std::move(data_.init_static_block);
-  }
-  void SetInitStaticBlock(std::unique_ptr<vm::execution_tree::Block> block) {
-    data_.init_static_block = std::move(block);
-  }
+  std::unique_ptr<vm::execution_tree::Block> GetInitStaticBlock();
+  void SetInitStaticBlock(std::unique_ptr<vm::execution_tree::Block> block);
 
 private:
   const std::vector<TokenPtr>& tokens_;

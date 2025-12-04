@@ -4,6 +4,35 @@
 
 namespace ovum::bytecode::parser {
 
+vm::execution_tree::FunctionRepository& ParsingSession::GetFuncRepo() const {
+  return data_.func_repo;
+}
+
+vm::runtime::VirtualTableRepository& ParsingSession::GetVTableRepo() const {
+  return data_.vtable_repo;
+}
+
+vm::execution_tree::Block* ParsingSession::GetCurrentBlock() const {
+  return data_.current_block;
+}
+void ParsingSession::SetCurrentBlock(vm::execution_tree::Block* block) {
+  data_.current_block = block;
+}
+
+const std::optional<std::reference_wrapper<vm::executor::IJitExecutorFactory>>& ParsingSession::GetJitFactory() const {
+  return data_.jit_factory;
+}
+[[nodiscard]] size_t ParsingSession::GetJitBoundary() const {
+  return data_.jit_boundary;
+}
+
+std::unique_ptr<vm::execution_tree::Block> ParsingSession::GetInitStaticBlock() {
+  return std::move(data_.init_static_block);
+}
+void ParsingSession::SetInitStaticBlock(std::unique_ptr<vm::execution_tree::Block> block) {
+  data_.init_static_block = std::move(block);
+}
+
 ParsingSession::ParsingSession(const std::vector<TokenPtr>& tokens, ParsingSessionData& data) :
     tokens_(tokens), data_(data) {
 }
@@ -35,10 +64,6 @@ bool ParsingSession::IsKeyword(const std::string& kw) const {
 
 bool ParsingSession::IsPunct(char ch) const {
   return Current()->GetStringType() == "PUNCT" && Current()->GetLexeme() == std::string(1, ch);
-}
-
-bool ParsingSession::IsPunct(const std::string& p) const {
-  return Current()->GetStringType() == "PUNCT" && Current()->GetLexeme() == p;
 }
 
 std::expected<void, BytecodeParserError> ParsingSession::ExpectKeyword(const std::string& kw) {

@@ -111,12 +111,12 @@ std::expected<bool, BytecodeParserError> FunctionParser::Handle(ParsingSessionPt
 
   ctx->SetCurrentBlock(nullptr);
 
-  FunctionFactory factory(ctx->JitFactory(), ctx->JitBoundary());
+  FunctionFactory factory(ctx->GetJitFactory(), ctx->GetJitBoundary());
 
   std::unique_ptr<vm::execution_tree::IFunctionExecutable> func =
       factory.Create(name_res.value(), arity, std::move(body), is_pure, std::move(pure_types), no_jit);
 
-  std::expected<size_t, std::runtime_error> add_res = ctx->FuncRepo().Add(std::move(func));
+  std::expected<size_t, std::runtime_error> add_res = ctx->GetFuncRepo().Add(std::move(func));
 
   if (!add_res) {
     return std::unexpected(BytecodeParserError(std::string("Failed to add function: ") + add_res.error().what()));

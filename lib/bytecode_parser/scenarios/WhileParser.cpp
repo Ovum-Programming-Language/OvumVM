@@ -82,7 +82,7 @@ std::expected<bool, BytecodeParserError> WhileParser::Handle(std::shared_ptr<Par
   std::unique_ptr<vm::execution_tree::WhileExecution> while_node =
       std::make_unique<vm::execution_tree::WhileExecution>(std::move(condition), std::move(body));
 
-  ctx->CurrentBlock()->AddStatement(std::move(while_node));
+  ctx->GetCurrentBlock()->AddStatement(std::move(while_node));
 
   return true;
 }

@@ -194,12 +194,12 @@ std::expected<bool, BytecodeParserError> VtableParser::Handle(std::shared_ptr<Pa
 
     constexpr size_t kDestructorArity = 1;
 
-    FunctionFactory factory(ctx->JitFactory(), ctx->JitBoundary());
+    FunctionFactory factory(ctx->GetJitFactory(), ctx->GetJitBoundary());
 
     std::unique_ptr<vm::execution_tree::IFunctionExecutable> dtor_func =
         factory.Create(dtor_real_name, kDestructorArity, std::move(body), false, {}, false);
 
-    auto add_res = ctx->FuncRepo().Add(std::move(dtor_func));
+    auto add_res = ctx->GetFuncRepo().Add(std::move(dtor_func));
 
     if (!add_res) {
       return std::unexpected(
@@ -209,7 +209,7 @@ std::expected<bool, BytecodeParserError> VtableParser::Handle(std::shared_ptr<Pa
     vtable.AddFunction(dtor_virtual_name, dtor_real_name);
   }
 
-  if (!ctx->VTableRepo().Add(std::move(vtable))) {
+  if (!ctx->GetVTableRepo().Add(std::move(vtable))) {
     return std::unexpected(BytecodeParserError("Failed to add vtable"));
   }
 
