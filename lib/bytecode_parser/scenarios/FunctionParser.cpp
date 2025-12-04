@@ -14,7 +14,7 @@ namespace ovum::bytecode::parser {
 FunctionParser::FunctionParser(const ICommandFactory& factory) : factory_(std::move(factory)) {
 }
 
-std::expected<void, BytecodeParserError> FunctionParser::Handle(ParsingSessionPtr ctx) {
+std::expected<bool, BytecodeParserError> FunctionParser::Handle(ParsingSessionPtr ctx) {
   std::vector<std::string> pure_types;
   bool is_pure = false;
   bool no_jit = false;
@@ -57,7 +57,7 @@ std::expected<void, BytecodeParserError> FunctionParser::Handle(ParsingSessionPt
   }
 
   if (!ctx->IsKeyword("function")) {
-    return std::unexpected(BytecodeParserError("Expected 'function'", BytecodeParserErrorCode::kNotMatched));
+    return false;
   }
 
   ctx->Advance();
@@ -93,10 +93,13 @@ std::expected<void, BytecodeParserError> FunctionParser::Handle(ParsingSessionPt
   ctx->SetCurrentBlock(body.get());
 
   while (!ctx->IsPunct('}') && !ctx->IsEof()) {
-    std::expected<void, BytecodeParserError> res = CommandParser::ParseSingleStatement(ctx, *body, factory_);
+    std::expected<bool, BytecodeParserError> res = CommandParser::ParseSingleStatement(ctx, *body, factory_);
 
     if (!res) {
       return res;
+    } else if (!res.value()) {
+      return std::unexpected(
+          BytecodeParserError("Command expected at line" + std::to_string(ctx->Current()->GetPosition().GetLine())));
     }
   }
 
@@ -119,7 +122,7 @@ std::expected<void, BytecodeParserError> FunctionParser::Handle(ParsingSessionPt
     return std::unexpected(BytecodeParserError(std::string("Failed to add function: ") + add_res.error().what()));
   }
 
-  return {};
+  return true;
 }
 
 } // namespace ovum::bytecode::parser

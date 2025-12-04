@@ -12,7 +12,7 @@ namespace ovum::bytecode::parser {
 
 class VtableParser : public IParserHandler {
 public:
-  std::expected<void, BytecodeParserError> Handle(std::shared_ptr<ParsingSession> ctx) override;
+  std::expected<bool, BytecodeParserError> Handle(std::shared_ptr<ParsingSession> ctx) override;
 };
 
 } // namespace ovum::bytecode::parser

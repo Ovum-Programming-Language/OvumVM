@@ -12,9 +12,9 @@ namespace ovum::bytecode::parser {
 WhileParser::WhileParser(const ICommandFactory& factory) : factory_(factory) {
 }
 
-std::expected<void, BytecodeParserError> WhileParser::Handle(std::shared_ptr<ParsingSession> ctx) {
+std::expected<bool, BytecodeParserError> WhileParser::Handle(std::shared_ptr<ParsingSession> ctx) {
   if (!ctx->IsKeyword("while")) {
-    return std::unexpected(BytecodeParserError("Expected 'while'", BytecodeParserErrorCode::kNotMatched));
+    return false;
   }
 
   ctx->Advance();
@@ -30,10 +30,13 @@ std::expected<void, BytecodeParserError> WhileParser::Handle(std::shared_ptr<Par
   ctx->SetCurrentBlock(condition.get());
 
   while (!ctx->IsPunct('}')) {
-    std::expected<void, BytecodeParserError> res = CommandParser::ParseSingleStatement(ctx, *condition, factory_);
+    std::expected<bool, BytecodeParserError> res = CommandParser::ParseSingleStatement(ctx, *condition, factory_);
 
     if (!res) {
       return res;
+    } else if (!res.value()) {
+      return std::unexpected(
+          BytecodeParserError("Command expected at line" + std::to_string(ctx->Current()->GetPosition().GetLine())));
     }
   }
 
@@ -60,10 +63,13 @@ std::expected<void, BytecodeParserError> WhileParser::Handle(std::shared_ptr<Par
   ctx->SetCurrentBlock(body.get());
 
   while (!ctx->IsPunct('}')) {
-    std::expected<void, BytecodeParserError> res = CommandParser::ParseSingleStatement(ctx, *body, factory_);
+    std::expected<bool, BytecodeParserError> res = CommandParser::ParseSingleStatement(ctx, *body, factory_);
 
     if (!res) {
       return res;
+    } else if (!res.value()) {
+      return std::unexpected(
+          BytecodeParserError("Command expected at line" + std::to_string(ctx->Current()->GetPosition().GetLine())));
     }
   }
 
@@ -78,7 +84,7 @@ std::expected<void, BytecodeParserError> WhileParser::Handle(std::shared_ptr<Par
 
   ctx->CurrentBlock()->AddStatement(std::move(while_node));
 
-  return {};
+  return true;
 }
 
 } // namespace ovum::bytecode::parser

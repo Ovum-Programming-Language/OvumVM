@@ -17,13 +17,13 @@ class CommandParser : public IParserHandler {
 public:
   explicit CommandParser(const ICommandFactory& factory);
 
-  std::expected<void, BytecodeParserError> Handle(std::shared_ptr<ParsingSession> ctx) override;
+  std::expected<bool, BytecodeParserError> Handle(std::shared_ptr<ParsingSession> ctx) override;
 
-  static std::expected<void, BytecodeParserError> ParseSingleStatement(const std::shared_ptr<ParsingSession>& ctx,
+  static std::expected<bool, BytecodeParserError> ParseSingleStatement(const std::shared_ptr<ParsingSession>& ctx,
                                                                        vm::execution_tree::Block& block,
                                                                        const ICommandFactory& factory);
 
-  static std::expected<void, BytecodeParserError> ParseSingleStatement(const std::shared_ptr<ParsingSession>& ctx,
+  static std::expected<bool, BytecodeParserError> ParseSingleStatement(const std::shared_ptr<ParsingSession>& ctx,
                                                                        vm::execution_tree::Block& block);
 
   static ICommandFactory& DefaultFactory();

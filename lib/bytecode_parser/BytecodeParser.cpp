@@ -44,14 +44,14 @@ std::expected<std::unique_ptr<vm::execution_tree::Block>, BytecodeParserError> B
     bool handled = false;
 
     for (std::unique_ptr<IParserHandler>& handler : handlers_) {
-      std::expected<void, BytecodeParserError> result = handler->Handle(session);
+      std::expected<bool, BytecodeParserError> result = handler->Handle(session);
 
       if (result) {
-        handled = true;
-        break;
-      }
-
-      if (result.error().Code() != BytecodeParserErrorCode::kNotMatched) {
+        if (result.value()) {
+          handled = true;
+          break;
+        }
+      } else {
         return std::unexpected(result.error());
       }
     }

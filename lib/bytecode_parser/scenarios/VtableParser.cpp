@@ -7,9 +7,9 @@
 
 namespace ovum::bytecode::parser {
 
-std::expected<void, BytecodeParserError> VtableParser::Handle(std::shared_ptr<ParsingSession> ctx) {
+std::expected<bool, BytecodeParserError> VtableParser::Handle(std::shared_ptr<ParsingSession> ctx) {
   if (!ctx->IsKeyword("vtable")) {
-    return std::unexpected(BytecodeParserError("Expected 'vtable'", BytecodeParserErrorCode::kNotMatched));
+    return false;
   }
 
   ctx->Advance();
@@ -213,7 +213,7 @@ std::expected<void, BytecodeParserError> VtableParser::Handle(std::shared_ptr<Pa
     return std::unexpected(BytecodeParserError("Failed to add vtable"));
   }
 
-  return {};
+  return true;
 }
 
 } // namespace ovum::bytecode::parser

@@ -11,9 +11,9 @@ namespace ovum::bytecode::parser {
 InitStaticParser::InitStaticParser(const ICommandFactory& factory) : factory_(std::move(factory)) {
 }
 
-std::expected<void, BytecodeParserError> InitStaticParser::Handle(ParsingSessionPtr ctx) {
+std::expected<bool, BytecodeParserError> InitStaticParser::Handle(ParsingSessionPtr ctx) {
   if (!ctx->IsKeyword("init-static")) {
-    return std::unexpected(BytecodeParserError("Expected 'init-static'", BytecodeParserErrorCode::kNotMatched));
+    return false;
   }
 
   if (ctx->ReleaseInitStaticBlock() != nullptr) {
@@ -33,10 +33,13 @@ std::expected<void, BytecodeParserError> InitStaticParser::Handle(ParsingSession
   ctx->SetCurrentBlock(block.get());
 
   while (!ctx->IsPunct('}') && !ctx->IsEof()) {
-    std::expected<void, BytecodeParserError> res = CommandParser::ParseSingleStatement(ctx, *block, factory_);
+    std::expected<bool, BytecodeParserError> res = CommandParser::ParseSingleStatement(ctx, *block, factory_);
 
     if (!res) {
       return res;
+    } else if (!res.value()) {
+      return std::unexpected(
+          BytecodeParserError("Command expected at line" + std::to_string(ctx->Current()->GetPosition().GetLine())));
     }
   }
 
@@ -49,7 +52,7 @@ std::expected<void, BytecodeParserError> InitStaticParser::Handle(ParsingSession
   ctx->SetInitStaticBlock(std::move(block));
   ctx->SetCurrentBlock(nullptr);
 
-  return {};
+  return true;
 }
 
 } // namespace ovum::bytecode::parser

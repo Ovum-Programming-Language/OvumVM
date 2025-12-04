@@ -9,11 +9,11 @@ namespace ovum::bytecode::parser {
 CommandParser::CommandParser(const ICommandFactory& factory) : factory_(factory) {
 }
 
-std::expected<void, BytecodeParserError> CommandParser::Handle(std::shared_ptr<ParsingSession> ctx) {
+std::expected<bool, BytecodeParserError> CommandParser::Handle(std::shared_ptr<ParsingSession> ctx) {
   return ParseSingleStatement(ctx, *ctx->CurrentBlock(), factory_);
 }
 
-std::expected<void, BytecodeParserError> CommandParser::ParseSingleStatement(const std::shared_ptr<ParsingSession>& ctx,
+std::expected<bool, BytecodeParserError> CommandParser::ParseSingleStatement(const std::shared_ptr<ParsingSession>& ctx,
                                                                              vm::execution_tree::Block& block,
                                                                              const ICommandFactory& factory) {
   if (ctx->IsEof()) {
@@ -22,7 +22,7 @@ std::expected<void, BytecodeParserError> CommandParser::ParseSingleStatement(con
 
   if (ctx->IsKeyword("if")) {
     IfParser parser(factory);
-    std::expected<void, BytecodeParserError> res = parser.Handle(ctx);
+    std::expected<bool, BytecodeParserError> res = parser.Handle(ctx);
 
     if (!res) {
       return res;
@@ -30,12 +30,12 @@ std::expected<void, BytecodeParserError> CommandParser::ParseSingleStatement(con
 
     ctx->SetCurrentBlock(&block);
 
-    return {};
+    return res;
   }
 
   if (ctx->IsKeyword("while")) {
     WhileParser parser(factory);
-    std::expected<void, BytecodeParserError> res = parser.Handle(ctx);
+    std::expected<bool, BytecodeParserError> res = parser.Handle(ctx);
 
     if (!res) {
       return res;
@@ -43,16 +43,13 @@ std::expected<void, BytecodeParserError> CommandParser::ParseSingleStatement(con
 
     ctx->SetCurrentBlock(&block);
 
-    return {};
+    return res;
   }
 
   TokenPtr token = ctx->Current();
 
   if (token->GetStringType() != "IDENT" && token->GetStringType() != "KEYWORD") {
-    return std::unexpected(BytecodeParserError("Expected command name at line " +
-                                                   std::to_string(token->GetPosition().GetLine()) + " column " +
-                                                   std::to_string(token->GetPosition().GetColumn()),
-                                               BytecodeParserErrorCode::kNotMatched));
+    return false;
   }
 
   std::string cmd_name = token->GetLexeme();
@@ -68,7 +65,7 @@ std::expected<void, BytecodeParserError> CommandParser::ParseSingleStatement(con
 
   block.AddStatement(std::move(cmd_result.value()));
 
-  return {};
+  return true;
 }
 
 ICommandFactory& CommandParser::DefaultFactory() {
@@ -76,7 +73,7 @@ ICommandFactory& CommandParser::DefaultFactory() {
   return instance;
 }
 
-std::expected<void, BytecodeParserError> CommandParser::ParseSingleStatement(const std::shared_ptr<ParsingSession>& ctx,
+std::expected<bool, BytecodeParserError> CommandParser::ParseSingleStatement(const std::shared_ptr<ParsingSession>& ctx,
                                                                              vm::execution_tree::Block& block) {
   CommandFactory cmd_factory;
   return ParseSingleStatement(ctx, block, cmd_factory);
