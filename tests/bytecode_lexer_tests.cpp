@@ -75,7 +75,8 @@ TEST_F(BytecodeLexerTestSuite, WhitespaceHandlerNewlineAtEnd) {
 TEST_F(BytecodeLexerTestSuite, WhitespaceHandlerNewlineBetweenTokens) {
   constexpr size_t kExpectedTokenCountTwoTokens = 3;
   auto tokens = TokenizeSuccessfully("hello\nworld");
-  AssertTokenCount(tokens, kExpectedTokenCountTwoTokens); // identifier + identifier + EOF (newline consumed as whitespace)
+  AssertTokenCount(tokens,
+                   kExpectedTokenCountTwoTokens); // identifier + identifier + EOF (newline consumed as whitespace)
 }
 
 // ============================================================================
@@ -302,37 +303,37 @@ TEST_F(BytecodeLexerTestSuite, StringHandlerStringWithSpaces) {
 }
 
 TEST_F(BytecodeLexerTestSuite, StringHandlerEscapeNewline) {
-  auto tokens = TokenizeSuccessfully("\"hello\\nworld\"");
+  auto tokens = TokenizeSuccessfully(R"("hello\nworld")");
   AssertTokenCount(tokens, 2); // string literal + EOF
 }
 
 TEST_F(BytecodeLexerTestSuite, StringHandlerEscapeTab) {
-  auto tokens = TokenizeSuccessfully("\"hello\\tworld\"");
+  auto tokens = TokenizeSuccessfully(R"("hello\tworld")");
   AssertTokenCount(tokens, 2); // string literal + EOF
 }
 
 TEST_F(BytecodeLexerTestSuite, StringHandlerEscapeCarriageReturn) {
-  auto tokens = TokenizeSuccessfully("\"hello\\rworld\"");
+  auto tokens = TokenizeSuccessfully(R"("hello\rworld")");
   AssertTokenCount(tokens, 2); // string literal + EOF
 }
 
 TEST_F(BytecodeLexerTestSuite, StringHandlerEscapeBackslash) {
-  auto tokens = TokenizeSuccessfully("\"hello\\\\world\"");
+  auto tokens = TokenizeSuccessfully(R"("hello\\world")");
   AssertTokenCount(tokens, 2); // string literal + EOF
 }
 
 TEST_F(BytecodeLexerTestSuite, StringHandlerEscapeQuote) {
-  auto tokens = TokenizeSuccessfully("\"hello\\\"world\"");
+  auto tokens = TokenizeSuccessfully(R"("hello\"world")");
   AssertTokenCount(tokens, 2); // string literal + EOF
 }
 
 TEST_F(BytecodeLexerTestSuite, StringHandlerEscapeNull) {
-  auto tokens = TokenizeSuccessfully("\"hello\\0world\"");
+  auto tokens = TokenizeSuccessfully(R"("hello\0world")");
   AssertTokenCount(tokens, 2); // string literal + EOF
 }
 
 TEST_F(BytecodeLexerTestSuite, StringHandlerMultipleEscapeSequences) {
-  auto tokens = TokenizeSuccessfully("\"hello\\n\\t\\rworld\"");
+  auto tokens = TokenizeSuccessfully(R"("hello\n\t\rworld")");
   AssertTokenCount(tokens, 2); // string literal + EOF
 }
 
@@ -366,7 +367,7 @@ TEST_F(BytecodeLexerTestSuite, StringHandlerBackslashAtEOF) {
 }
 
 TEST_F(BytecodeLexerTestSuite, StringHandlerUnknownEscapeSequence) {
-  AssertTokenizationError("\"hello\\xworld\"", "Unknown escape");
+  AssertTokenizationError(R"("hello\xworld")", "Unknown escape");
 }
 
 // ============================================================================
@@ -512,8 +513,9 @@ TEST_F(BytecodeLexerTestSuite, CombinedComplexExpression) {
 TEST_F(BytecodeLexerTestSuite, CombinedMultipleLines) {
   constexpr size_t kExpectedTokenCountThreeTokens = 4;
   auto tokens = TokenizeSuccessfully("hello\nworld\ntest");
-  AssertTokenCount(tokens,
-                   kExpectedTokenCountThreeTokens); // identifier + identifier + identifier + EOF (newlines consumed as whitespace)
+  AssertTokenCount(
+      tokens,
+      kExpectedTokenCountThreeTokens); // identifier + identifier + identifier + EOF (newlines consumed as whitespace)
 }
 
 TEST_F(BytecodeLexerTestSuite, CombinedKeywordsInContext) {
@@ -554,15 +556,17 @@ TEST_F(BytecodeLexerTestSuite, PositionTrackingSingleLine) {
 TEST_F(BytecodeLexerTestSuite, PositionTrackingMultiLine) {
   constexpr size_t kExpectedTokenCountThreeTokens = 4;
   auto tokens = TokenizeSuccessfully("hello\nworld\ntest");
-  AssertTokenCount(tokens,
-                   kExpectedTokenCountThreeTokens); // identifier + identifier + identifier + EOF (newlines consumed as whitespace)
+  AssertTokenCount(
+      tokens,
+      kExpectedTokenCountThreeTokens); // identifier + identifier + identifier + EOF (newlines consumed as whitespace)
   // Lines should increment
 }
 
 TEST_F(BytecodeLexerTestSuite, PositionTrackingColumnResetAfterNewline) {
   constexpr size_t kExpectedTokenCountTwoTokens = 3;
   auto tokens = TokenizeSuccessfully("hello\nworld");
-  AssertTokenCount(tokens, kExpectedTokenCountTwoTokens); // identifier + identifier + EOF (newline consumed as whitespace)
+  AssertTokenCount(tokens,
+                   kExpectedTokenCountTwoTokens); // identifier + identifier + EOF (newline consumed as whitespace)
   // Column should reset to 1 after newline
 }
 
@@ -657,7 +661,7 @@ TEST_F(BytecodeLexerTestSuite, ErrorHandlingFirstErrorReturned) {
 }
 
 TEST_F(BytecodeLexerTestSuite, ErrorHandlingErrorPropagationFromHandlers) {
-  AssertTokenizationError("\"test\\x\"", "Unknown escape");
+  AssertTokenizationError(R"("test\x")", "Unknown escape");
 }
 
 // ============================================================================
@@ -670,10 +674,10 @@ TEST_F(BytecodeLexerTestSuite, CompleteProgramSimpleFunction) {
     Return
 })";
   auto tokens = TokenizeSuccessfully(program);
-  
+
   // Expected tokens: function : 1 _Global_Main_StringArray { Return } EOF
   AssertTokenCount(tokens, kExpectedTokenCount);
-  
+
   size_t idx = 0;
   // Verify token types and lexemes (positions are verified but flexible)
   AssertTokenIsKeyword(tokens, idx++, "function");
@@ -697,11 +701,12 @@ TEST_F(BytecodeLexerTestSuite, CompleteProgramWhileLoop) {
     Return
 })";
   auto tokens = TokenizeSuccessfully(program);
-  
-  // Expected tokens: function : 1 _Global_Main_StringArray { while { IntLessEqual } then { PrintLine IntAdd } Return } EOF
+
+  // Expected tokens: function : 1 _Global_Main_StringArray { while { IntLessEqual } then { PrintLine IntAdd } Return }
+  // EOF
   constexpr size_t kExpectedTokenCountWhileLoop = 17;
   AssertTokenCount(tokens, kExpectedTokenCountWhileLoop);
-  
+
   size_t idx = 0;
   // Verify token types and lexemes
   AssertTokenIsKeyword(tokens, idx++, "function");
@@ -737,11 +742,11 @@ TEST_F(BytecodeLexerTestSuite, CompleteProgramIfStatement) {
     }
 })";
   auto tokens = TokenizeSuccessfully(program);
-  
+
   // Expected tokens: function : 1 Test { if { IntGreater } then { PrintLine } else { Return } } EOF
   constexpr size_t kExpectedTokenCountIfStatement = 19;
   AssertTokenCount(tokens, kExpectedTokenCountIfStatement);
-  
+
   size_t idx = 0;
   // Verify token types and lexemes
   AssertTokenIsKeyword(tokens, idx++, "function");
@@ -774,11 +779,11 @@ TEST_F(BytecodeLexerTestSuite, CompleteProgramWithStringLiteral) {
     Return
 })";
   auto tokens = TokenizeSuccessfully(program);
-  
+
   // Expected tokens: function : 1 Test { StringLiteral "Hello World" Return } EOF
   constexpr size_t kExpectedTokenCountWithString = 10;
   AssertTokenCount(tokens, kExpectedTokenCountWithString);
-  
+
   size_t idx = 0;
   // Verify token types and lexemes
   AssertTokenIsKeyword(tokens, idx++, "function");
@@ -800,13 +805,13 @@ TEST_F(BytecodeLexerTestSuite, CompleteProgramWithNumericLiterals) {
     Return
 })";
   auto tokens = TokenizeSuccessfully(program);
-  
+
   // Expected tokens: function : 1 Test { IntLiteral 42 FloatLiteral 3.14 Return } EOF
   constexpr size_t kExpectedTokenCount = 12;
   constexpr int64_t kExpectedIntValue = 42;
   constexpr double kExpectedFloatValue = 3.14;
   AssertTokenCount(tokens, kExpectedTokenCount);
-  
+
   size_t idx = 0;
   // Verify token types and lexemes
   AssertTokenIsKeyword(tokens, idx++, "function");
@@ -831,11 +836,11 @@ TEST_F(BytecodeLexerTestSuite, CompleteProgramPureFunction) {
     Return
 })";
   auto tokens = TokenizeSuccessfully(program);
-  
+
   // Expected tokens: pure function : 2 Calculate { IntAdd Return } EOF
   constexpr size_t kExpectedTokenCountPureFunction = 10;
   AssertTokenCount(tokens, kExpectedTokenCountPureFunction);
-  
+
   size_t idx = 0;
   // Verify token types and lexemes
   AssertTokenIsKeyword(tokens, idx++, "pure");
@@ -856,11 +861,11 @@ TEST_F(BytecodeLexerTestSuite, CompleteProgramInitStatic) {
     Return
 })";
   auto tokens = TokenizeSuccessfully(program);
-  
+
   // Expected tokens: init-static { PrintLine Return } EOF
   constexpr size_t kExpectedTokenCount = 6;
   AssertTokenCount(tokens, kExpectedTokenCount);
-  
+
   size_t idx = 0;
   // Verify token types and lexemes
   AssertTokenIsKeyword(tokens, idx++, "init-static");
@@ -893,11 +898,12 @@ TEST_F(BytecodeLexerTestSuite, CompleteProgramComplexWithAllFeatures) {
     Return
 })";
   auto tokens = TokenizeSuccessfully(program);
-  
-  // Verify token count (function : 3 ProcessData { if { IntGreater } then { StringLiteral "Success" IntLiteral 100 } else { StringLiteral "Failure" IntLiteral 0 } while { IntLess } then { IntAdd PrintLine } Return } EOF)
+
+  // Verify token count (function : 3 ProcessData { if { IntGreater } then { StringLiteral "Success" IntLiteral 100 }
+  // else { StringLiteral "Failure" IntLiteral 0 } while { IntLess } then { IntAdd PrintLine } Return } EOF)
   constexpr size_t kExpectedTokenCountComplex = 35;
   AssertTokenCount(tokens, kExpectedTokenCountComplex);
-  
+
   size_t idx = 0;
   // function:3 ProcessData {
   AssertTokenIsKeyword(tokens, idx++, "function");
@@ -905,7 +911,7 @@ TEST_F(BytecodeLexerTestSuite, CompleteProgramComplexWithAllFeatures) {
   AssertTokenIsIntLiteral(tokens, idx++, "3", 3);
   AssertTokenIsIdentifier(tokens, idx++, "ProcessData");
   AssertTokenIsPunct(tokens, idx++, "{");
-  
+
   // if { IntGreater } then { StringLiteral "Success" IntLiteral 100 }
   AssertTokenIsKeyword(tokens, idx++, "if");
   AssertTokenIsPunct(tokens, idx++, "{");
@@ -919,7 +925,7 @@ TEST_F(BytecodeLexerTestSuite, CompleteProgramComplexWithAllFeatures) {
   constexpr int64_t kExpectedIntValue = 100;
   AssertTokenIsIntLiteral(tokens, idx++, "100", kExpectedIntValue);
   AssertTokenIsPunct(tokens, idx++, "}");
-  
+
   // else { StringLiteral "Failure" IntLiteral 0 }
   AssertTokenIsKeyword(tokens, idx++, "else");
   AssertTokenIsPunct(tokens, idx++, "{");
@@ -928,7 +934,7 @@ TEST_F(BytecodeLexerTestSuite, CompleteProgramComplexWithAllFeatures) {
   AssertTokenIsIdentifier(tokens, idx++, "IntLiteral");
   AssertTokenIsIntLiteral(tokens, idx++, "0", 0);
   AssertTokenIsPunct(tokens, idx++, "}");
-  
+
   // while { IntLess } then { IntAdd PrintLine }
   AssertTokenIsKeyword(tokens, idx++, "while");
   AssertTokenIsPunct(tokens, idx++, "{");
@@ -939,7 +945,7 @@ TEST_F(BytecodeLexerTestSuite, CompleteProgramComplexWithAllFeatures) {
   AssertTokenIsIdentifier(tokens, idx++, "IntAdd");
   AssertTokenIsIdentifier(tokens, idx++, "PrintLine");
   AssertTokenIsPunct(tokens, idx++, "}");
-  
+
   // Return }
   AssertTokenIsIdentifier(tokens, idx++, "Return");
   AssertTokenIsPunct(tokens, idx++, "}");
