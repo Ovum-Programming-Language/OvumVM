@@ -35,7 +35,7 @@ std::expected<ExecutionResult, std::runtime_error> ConditionalExecution::Execute
   const bool condition_bool = std::get<bool>(top_value);
 
   if (!condition_bool) {
-    return ExecutionResult::kNormal;
+    return ExecutionResult::kConditionFalse;
   }
 
   return execution_block_->Execute(execution_data);
