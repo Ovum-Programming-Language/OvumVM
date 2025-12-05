@@ -14,12 +14,11 @@ void BytecodeParserTestSuite::TearDown() {
 }
 
 ovum::bytecode::parser::BytecodeParser BytecodeParserTestSuite::CreateParserWithJit(size_t jit_boundary) {
-  return ovum::bytecode::parser::BytecodeParser(
-      std::make_unique<ovum::vm::executor::PlaceholderJitExecutorFactory>(), jit_boundary, command_factory_);
+  return {std::make_unique<ovum::vm::executor::PlaceholderJitExecutorFactory>(), jit_boundary, command_factory_};
 }
 
 ovum::bytecode::parser::BytecodeParser BytecodeParserTestSuite::CreateParserWithoutJit() {
-  return ovum::bytecode::parser::BytecodeParser(nullptr, 0, command_factory_);
+  return {nullptr, 0, command_factory_};
 }
 
 std::vector<ovum::TokenPtr> BytecodeParserTestSuite::TokenizeString(const std::string& input) {
