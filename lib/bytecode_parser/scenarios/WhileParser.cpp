@@ -3,7 +3,6 @@
 #include "lib/execution_tree/Block.hpp"
 #include "lib/execution_tree/WhileExecution.hpp"
 
-#include "CommandFactory.hpp"
 #include "CommandParser.hpp"
 #include "lib/bytecode_parser/BytecodeParserError.hpp"
 

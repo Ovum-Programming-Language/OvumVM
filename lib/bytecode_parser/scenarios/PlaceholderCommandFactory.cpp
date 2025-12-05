@@ -1,5 +1,7 @@
 #include "PlaceholderCommandFactory.hpp"
 
+#include "lib/execution_tree/Command.hpp"
+
 namespace ovum::bytecode::parser {
 
 static const auto kStubCommand = [](const std::string& full_name) -> std::unique_ptr<vm::execution_tree::IExecutable> {

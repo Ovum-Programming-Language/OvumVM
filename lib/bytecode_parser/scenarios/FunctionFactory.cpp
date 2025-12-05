@@ -13,8 +13,10 @@ vm::execution_tree::Function FunctionFactory::MakeRegular(const vm::runtime::Fun
 }
 
 template<vm::execution_tree::ExecutableFunction Base>
-vm::execution_tree::PureFunction<Base> FunctionFactory::WrapPure(Base&& base, std::vector<std::string> argument_types) {
-  return vm::execution_tree::PureFunction<Base>(std::forward<Base>(base), std::move(argument_types));
+vm::execution_tree::PureFunction<Base> FunctionFactory::WrapPure(Base&& base,
+                                                                 std::vector<std::string>&& argument_types) {
+  return vm::execution_tree::PureFunction<Base>(std::forward<Base>(base),
+                                                std::forward<std::vector<std::string>>(argument_types));
 }
 
 template<vm::execution_tree::ExecutableFunction Base>
@@ -50,8 +52,7 @@ std::unique_ptr<vm::execution_tree::IFunctionExecutable> FunctionFactory::Create
       WrapPure(std::move(regular), std::move(pure_argument_types));
 
   if (no_jit || !jit_factory_.has_value()) {
-    return std::make_unique<vm::execution_tree::PureFunction<vm::execution_tree::Function>>(
-        WrapPure(std::move(regular), std::move(pure_argument_types)));
+    return std::make_unique<vm::execution_tree::PureFunction<vm::execution_tree::Function>>(std::move(pure_func));
   }
 
   return TryWrapJit(std::move(pure_func));

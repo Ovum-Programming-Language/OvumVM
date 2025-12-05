@@ -5,7 +5,6 @@
 #include "lib/execution_tree/IfMultibranch.hpp"
 #include "lib/execution_tree/command_factory.hpp"
 
-#include "CommandFactory.hpp"
 #include "CommandParser.hpp"
 #include "lib/bytecode_parser/BytecodeParserError.hpp"
 

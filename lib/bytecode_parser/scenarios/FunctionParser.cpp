@@ -4,14 +4,13 @@
 
 #include "lib/execution_tree/Block.hpp"
 
-#include "CommandFactory.hpp"
 #include "CommandParser.hpp"
 #include "FunctionFactory.hpp"
 #include "lib/bytecode_parser/BytecodeParserError.hpp"
 
 namespace ovum::bytecode::parser {
 
-FunctionParser::FunctionParser(const ICommandFactory& factory) : factory_(std::move(factory)) {
+FunctionParser::FunctionParser(const ICommandFactory& factory) : factory_(factory) {
 }
 
 std::expected<bool, BytecodeParserError> FunctionParser::Handle(ParsingSessionPtr ctx) {

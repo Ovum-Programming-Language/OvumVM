@@ -35,7 +35,7 @@ private:
                                            std::unique_ptr<vm::execution_tree::Block> body);
 
   template<vm::execution_tree::ExecutableFunction Base>
-  vm::execution_tree::PureFunction<Base> WrapPure(Base&& base, std::vector<std::string> argument_types);
+  vm::execution_tree::PureFunction<Base> WrapPure(Base&& base, std::vector<std::string>&& argument_types);
 
   template<vm::execution_tree::ExecutableFunction Base>
   std::unique_ptr<vm::execution_tree::JitCompilingFunction<Base>> TryWrapJit(Base&& base);
