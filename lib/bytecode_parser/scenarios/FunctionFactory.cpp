@@ -15,8 +15,7 @@ vm::execution_tree::Function FunctionFactory::MakeRegular(const vm::runtime::Fun
 template<vm::execution_tree::ExecutableFunction Base>
 vm::execution_tree::PureFunction<Base> FunctionFactory::WrapPure(Base&& base,
                                                                  std::vector<std::string>&& argument_types) {
-  return vm::execution_tree::PureFunction<Base>(std::forward<Base>(base),
-                                                std::forward<std::vector<std::string>>(argument_types));
+  return vm::execution_tree::PureFunction<Base>(std::forward<Base>(base), std::move(argument_types));
 }
 
 template<vm::execution_tree::ExecutableFunction Base>
@@ -26,9 +25,8 @@ std::expected<vm::execution_tree::JitCompilingFunction<Base>, std::runtime_error
     return std::unexpected(std::runtime_error("Jit factory not set"));
   }
 
-  std::unique_ptr<vm::executor::IJitExecutor> executor = jit_factory_->get().Create(base.GetId());
-
-  return {vm::execution_tree::JitCompilingFunction<Base>(std::move(executor), std::forward<Base>(base), jit_boundary_)};
+  return {vm::execution_tree::JitCompilingFunction<Base>(
+      jit_factory_->get().Create(base.GetId()), std::forward<Base>(base), jit_boundary_)};
 }
 
 std::unique_ptr<vm::execution_tree::IFunctionExecutable> FunctionFactory::Create(

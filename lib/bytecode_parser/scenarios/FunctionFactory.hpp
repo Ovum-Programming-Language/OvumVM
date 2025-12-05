@@ -20,7 +20,8 @@ namespace ovum::bytecode::parser {
 using RegularFunction = vm::execution_tree::Function;
 using JitFunction = vm::execution_tree::JitCompilingFunction<vm::execution_tree::Function>;
 using PureFunction = vm::execution_tree::PureFunction<vm::execution_tree::Function>;
-using PureJitFunction = vm::execution_tree::PureFunction<vm::execution_tree::JitCompilingFunction<vm::execution_tree::Function>>;
+using PureJitFunction =
+    vm::execution_tree::PureFunction<vm::execution_tree::JitCompilingFunction<vm::execution_tree::Function>>;
 
 class FunctionFactory {
 public:
