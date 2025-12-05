@@ -10,6 +10,10 @@ CommandParser::CommandParser(const ICommandFactory& factory) : factory_(factory)
 }
 
 std::expected<bool, BytecodeParserError> CommandParser::Handle(std::shared_ptr<ParsingSession> ctx) {
+  if (ctx->GetCurrentBlock() == nullptr) {
+    return std::unexpected(BytecodeParserError("Current block is null"));
+  }
+
   return ParseSingleStatement(ctx, *ctx->GetCurrentBlock(), factory_);
 }
 

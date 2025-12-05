@@ -202,7 +202,7 @@ std::expected<bool, BytecodeParserError> IfParser::Handle(std::shared_ptr<Parsin
   parent_block->AddStatement(std::move(if_node));
   ctx->SetCurrentBlock(parent_block);
 
-  return {};
+  return true;
 }
 
 } // namespace ovum::bytecode::parser
