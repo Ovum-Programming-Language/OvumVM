@@ -64,15 +64,6 @@ void BytecodeLexerTestSuite::AssertTokenIsEof(const std::vector<ovum::TokenPtr>&
   ASSERT_EQ(tokens[index]->GetPosition().GetColumn(), expected_col) << "EOF token should be at column " << expected_col;
 }
 
-void BytecodeLexerTestSuite::AssertTokenIsNewline(const std::vector<ovum::TokenPtr>& tokens,
-                                                  size_t index,
-                                                  int32_t expected_line,
-                                                  int32_t expected_col) {
-  AssertTokenExists(tokens, index);
-  // Note: NewlineHandler was removed, so this is not used, but kept for API compatibility
-  ASSERT_EQ(tokens[index]->GetStringType(), "NEWLINE") << "Token at index " << index << " should be NEWLINE";
-}
-
 void BytecodeLexerTestSuite::AssertTokenIsIdentifier(const std::vector<ovum::TokenPtr>& tokens,
                                                      size_t index,
                                                      const std::string& expected_value,

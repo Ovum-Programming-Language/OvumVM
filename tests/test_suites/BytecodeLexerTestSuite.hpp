@@ -28,10 +28,6 @@ struct BytecodeLexerTestSuite : public testing::Test {
                         size_t index,
                         int32_t expected_line,
                         int32_t expected_col);
-  void AssertTokenIsNewline(const std::vector<ovum::TokenPtr>& tokens,
-                            size_t index,
-                            int32_t expected_line,
-                            int32_t expected_col);
   void AssertTokenIsIdentifier(const std::vector<ovum::TokenPtr>& tokens,
                                size_t index,
                                const std::string& expected_value,

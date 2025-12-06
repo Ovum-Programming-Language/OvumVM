@@ -11,7 +11,9 @@ CommandParser::CommandParser(const ICommandFactory& factory) : factory_(factory)
 
 std::expected<bool, BytecodeParserError> CommandParser::Handle(std::shared_ptr<ParsingSession> ctx) {
   if (ctx->GetCurrentBlock() == nullptr) {
-    return std::unexpected(BytecodeParserError("Current block is null"));
+    return std::unexpected(BytecodeParserError(
+        "Current block is null - parser state may be corrupted or incorrectly initialized. "
+        "Please check that the parsing session is properly set up and that blocks are correctly managed."));
   }
 
   return ParseSingleStatement(ctx, *ctx->GetCurrentBlock(), factory_);

@@ -151,13 +151,14 @@ TEST_F(BytecodeParserTestSuite, Function_Regular_Arity1) {
 }
 
 TEST_F(BytecodeParserTestSuite, Function_Regular_ArityTen) {
+  constexpr size_t kArity = 10;
   auto parser = CreateParserWithoutJit();
-  auto tokens = TokenizeString("function:10 funcTen { Return }");
+  auto tokens = TokenizeString("function:" + std::to_string(kArity) + " funcTen { Return }");
   ovum::vm::execution_tree::FunctionRepository func_repo;
   ovum::vm::runtime::VirtualTableRepository vtable_repo;
 
   auto parsing_result = ParseSuccessfully(parser, tokens, func_repo, vtable_repo);
-  AssertFunctionExists(func_repo, "funcTen", kJitBoundary);
+  AssertFunctionExists(func_repo, "funcTen", kArity);
 }
 
 TEST_F(BytecodeParserTestSuite, Function_Regular_WithCommands) {
