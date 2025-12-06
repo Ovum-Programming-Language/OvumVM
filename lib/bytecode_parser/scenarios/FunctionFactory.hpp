@@ -17,6 +17,12 @@
 
 namespace ovum::bytecode::parser {
 
+using RegularFunction = vm::execution_tree::Function;
+using JitFunction = vm::execution_tree::JitCompilingFunction<vm::execution_tree::Function>;
+using PureFunction = vm::execution_tree::PureFunction<vm::execution_tree::Function>;
+using PureJitFunction =
+    vm::execution_tree::PureFunction<vm::execution_tree::JitCompilingFunction<vm::execution_tree::Function>>;
+
 class FunctionFactory {
 public:
   FunctionFactory(std::optional<std::reference_wrapper<vm::executor::IJitExecutorFactory>> jit_factory,
@@ -35,10 +41,10 @@ private:
                                            std::unique_ptr<vm::execution_tree::Block> body);
 
   template<vm::execution_tree::ExecutableFunction Base>
-  vm::execution_tree::PureFunction<Base> WrapPure(Base&& base, std::vector<std::string> argument_types);
+  vm::execution_tree::PureFunction<Base> WrapPure(Base&& base, std::vector<std::string>&& argument_types);
 
   template<vm::execution_tree::ExecutableFunction Base>
-  std::unique_ptr<vm::execution_tree::JitCompilingFunction<Base>> TryWrapJit(Base&& base);
+  std::expected<vm::execution_tree::JitCompilingFunction<Base>, std::runtime_error> WrapJit(Base&& base);
 
   std::optional<std::reference_wrapper<vm::executor::IJitExecutorFactory>> jit_factory_;
   size_t jit_boundary_;

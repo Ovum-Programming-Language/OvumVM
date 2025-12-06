@@ -3,9 +3,7 @@
 #include "lib/execution_tree/Block.hpp"
 #include "lib/execution_tree/ConditionalExecution.hpp"
 #include "lib/execution_tree/IfMultibranch.hpp"
-#include "lib/execution_tree/command_factory.hpp"
 
-#include "CommandFactory.hpp"
 #include "CommandParser.hpp"
 #include "lib/bytecode_parser/BytecodeParserError.hpp"
 
@@ -182,19 +180,8 @@ std::expected<bool, BytecodeParserError> IfParser::Handle(std::shared_ptr<Parsin
         return std::unexpected(e.error());
       }
 
-      std::unique_ptr<vm::execution_tree::Block> true_cond = std::make_unique<vm::execution_tree::Block>();
-
-      std::expected<std::unique_ptr<vm::execution_tree::IExecutable>, std::out_of_range> bool_com_res =
-          ovum::vm::execution_tree::CreateBooleanCommandByName("PushBool", true);
-
-      if (!bool_com_res) {
-        return std::unexpected(BytecodeParserError(bool_com_res.error().what()));
-      }
-
-      true_cond->AddStatement(std::move(bool_com_res.value()));
-
-      if_node->AddBranch(
-          std::make_unique<vm::execution_tree::ConditionalExecution>(std::move(true_cond), std::move(else_body)));
+      // Set the else block directly instead of creating a branch with PushBool true
+      if_node->SetElseBlock(std::move(else_body));
 
       break;
     }
@@ -203,7 +190,7 @@ std::expected<bool, BytecodeParserError> IfParser::Handle(std::shared_ptr<Parsin
   parent_block->AddStatement(std::move(if_node));
   ctx->SetCurrentBlock(parent_block);
 
-  return {};
+  return true;
 }
 
 } // namespace ovum::bytecode::parser

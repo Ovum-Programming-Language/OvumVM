@@ -4,14 +4,13 @@
 
 #include "lib/execution_tree/Block.hpp"
 
-#include "CommandFactory.hpp"
 #include "CommandParser.hpp"
 #include "FunctionFactory.hpp"
 #include "lib/bytecode_parser/BytecodeParserError.hpp"
 
 namespace ovum::bytecode::parser {
 
-FunctionParser::FunctionParser(const ICommandFactory& factory) : factory_(std::move(factory)) {
+FunctionParser::FunctionParser(const ICommandFactory& factory) : factory_(factory) {
 }
 
 std::expected<bool, BytecodeParserError> FunctionParser::Handle(ParsingSessionPtr ctx) {
@@ -115,6 +114,10 @@ std::expected<bool, BytecodeParserError> FunctionParser::Handle(ParsingSessionPt
 
   std::unique_ptr<vm::execution_tree::IFunctionExecutable> func =
       factory.Create(name_res.value(), arity, std::move(body), is_pure, std::move(pure_types), no_jit);
+
+  if (func == nullptr) {
+    return std::unexpected(BytecodeParserError("Failed to create function: JIT compilation failed"));
+  }
 
   std::expected<size_t, std::runtime_error> add_res = ctx->GetFuncRepo().Add(std::move(func));
 

@@ -6,7 +6,6 @@
 #include <string>
 
 #include "ICommandFactory.hpp"
-#include "lib/execution_tree/Command.hpp"
 #include "lib/execution_tree/IExecutable.hpp"
 
 namespace ovum::bytecode::parser {

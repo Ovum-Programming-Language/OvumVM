@@ -13,20 +13,20 @@ vm::execution_tree::Function FunctionFactory::MakeRegular(const vm::runtime::Fun
 }
 
 template<vm::execution_tree::ExecutableFunction Base>
-vm::execution_tree::PureFunction<Base> FunctionFactory::WrapPure(Base&& base, std::vector<std::string> argument_types) {
+vm::execution_tree::PureFunction<Base> FunctionFactory::WrapPure(Base&& base,
+                                                                 std::vector<std::string>&& argument_types) {
   return vm::execution_tree::PureFunction<Base>(std::forward<Base>(base), std::move(argument_types));
 }
 
 template<vm::execution_tree::ExecutableFunction Base>
-std::unique_ptr<vm::execution_tree::JitCompilingFunction<Base>> FunctionFactory::TryWrapJit(Base&& base) {
+std::expected<vm::execution_tree::JitCompilingFunction<Base>, std::runtime_error> FunctionFactory::WrapJit(
+    Base&& base) {
   if (!jit_factory_.has_value()) {
-    return nullptr;
+    return std::unexpected(std::runtime_error("Jit factory not set"));
   }
 
-  std::unique_ptr<vm::executor::IJitExecutor> executor = jit_factory_->get().Create(base.GetId());
-
-  return std::make_unique<vm::execution_tree::JitCompilingFunction<Base>>(
-      std::move(executor), std::forward<Base>(base), jit_boundary_);
+  return {vm::execution_tree::JitCompilingFunction<Base>(
+      jit_factory_->get().Create(base.GetId()), std::forward<Base>(base), jit_boundary_)};
 }
 
 std::unique_ptr<vm::execution_tree::IFunctionExecutable> FunctionFactory::Create(
@@ -36,25 +36,34 @@ std::unique_ptr<vm::execution_tree::IFunctionExecutable> FunctionFactory::Create
     bool pure,
     std::vector<std::string> pure_argument_types,
     bool no_jit) {
-  vm::execution_tree::Function regular = MakeRegular(id, arity, std::move(body));
+  RegularFunction regular = MakeRegular(id, arity, std::move(body));
 
   if (!pure || pure_argument_types.empty()) {
     if (no_jit || !jit_factory_.has_value()) {
-      return std::make_unique<vm::execution_tree::Function>(std::move(regular));
+      return std::make_unique<RegularFunction>(std::move(regular));
     }
 
-    return TryWrapJit(std::move(regular));
-  }
+    std::expected<JitFunction, std::runtime_error> jit_func = WrapJit(std::move(regular));
 
-  vm::execution_tree::PureFunction<vm::execution_tree::Function> pure_func =
-      WrapPure(std::move(regular), std::move(pure_argument_types));
+    if (!jit_func) {
+      return nullptr;
+    }
+
+    return std::make_unique<JitFunction>(std::move(jit_func.value()));
+  }
 
   if (no_jit || !jit_factory_.has_value()) {
-    return std::make_unique<vm::execution_tree::PureFunction<vm::execution_tree::Function>>(
-        WrapPure(std::move(regular), std::move(pure_argument_types)));
+    return std::make_unique<PureFunction>(WrapPure(std::move(regular), std::move(pure_argument_types)));
   }
 
-  return TryWrapJit(std::move(pure_func));
+  std::expected<JitFunction, std::runtime_error> jit_func = WrapJit(std::move(regular));
+
+  if (!jit_func) {
+    return nullptr;
+  }
+
+  return std::make_unique<PureJitFunction>(
+      std::move(WrapPure(std::move(jit_func.value()), std::move(pure_argument_types))));
 }
 
 } // namespace ovum::bytecode::parser

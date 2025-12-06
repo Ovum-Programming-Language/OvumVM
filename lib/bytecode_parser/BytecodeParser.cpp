@@ -1,11 +1,12 @@
 #include "BytecodeParser.hpp"
 
+#include <ranges>
+
 #include "lib/execution_tree/FunctionRepository.hpp"
 #include "lib/executor/IJitExecutorFactory.hpp"
 #include "lib/runtime/RuntimeMemory.hpp"
 #include "lib/runtime/VirtualTableRepository.hpp"
 
-#include "scenarios/CommandFactory.hpp"
 #include "scenarios/CommandParser.hpp"
 #include "scenarios/FunctionParser.hpp"
 #include "scenarios/IfParser.hpp"
@@ -43,7 +44,7 @@ std::expected<std::unique_ptr<vm::execution_tree::Block>, BytecodeParserError> B
   while (!session->IsEof()) {
     bool handled = false;
 
-    for (std::unique_ptr<IParserHandler>& handler : handlers_) {
+    for (std::unique_ptr<IParserHandler>& handler : std::ranges::take_view(handlers_, 3)) {
       std::expected<bool, BytecodeParserError> result = handler->Handle(session);
 
       if (result) {
