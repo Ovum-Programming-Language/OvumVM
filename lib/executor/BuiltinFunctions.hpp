@@ -46,7 +46,7 @@ template<typename Allocator = std::allocator<char>>
 std::expected<void*, std::runtime_error> AllocateObject(const VirtualTable& vtable,
                                                         uint32_t vtable_index,
                                                         ObjectRepository& object_repository,
-                                                        Allocator allocator = Allocator{}) {
+                                                        Allocator&& allocator = Allocator{}) {
   const size_t size = vtable.GetSize();
   char* memory = allocator.allocate(size);
   if (memory == nullptr) {
@@ -142,6 +142,13 @@ std::expected<ExecutionResult, std::runtime_error> IntArrayEquals(PassedExecutio
 std::expected<ExecutionResult, std::runtime_error> IntArrayIsLess(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> IntArrayLength(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> IntArrayGetHash(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> IntArrayClear(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> IntArrayShrinkToFit(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> IntArrayReserve(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> IntArrayCapacity(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> IntArrayAdd(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> IntArrayRemoveAt(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> IntArrayInsertAt(PassedExecutionData& data);
 
 std::expected<ExecutionResult, std::runtime_error> FloatArrayConstructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> FloatArrayCopyConstructor(PassedExecutionData& data);
@@ -150,6 +157,13 @@ std::expected<ExecutionResult, std::runtime_error> FloatArrayEquals(PassedExecut
 std::expected<ExecutionResult, std::runtime_error> FloatArrayIsLess(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> FloatArrayLength(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> FloatArrayGetHash(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> FloatArrayClear(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> FloatArrayShrinkToFit(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> FloatArrayReserve(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> FloatArrayCapacity(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> FloatArrayAdd(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> FloatArrayRemoveAt(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> FloatArrayInsertAt(PassedExecutionData& data);
 
 std::expected<ExecutionResult, std::runtime_error> CharArrayConstructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> CharArrayCopyConstructor(PassedExecutionData& data);
@@ -158,6 +172,13 @@ std::expected<ExecutionResult, std::runtime_error> CharArrayEquals(PassedExecuti
 std::expected<ExecutionResult, std::runtime_error> CharArrayIsLess(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> CharArrayLength(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> CharArrayGetHash(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> CharArrayClear(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> CharArrayShrinkToFit(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> CharArrayReserve(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> CharArrayCapacity(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> CharArrayAdd(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> CharArrayRemoveAt(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> CharArrayInsertAt(PassedExecutionData& data);
 
 std::expected<ExecutionResult, std::runtime_error> ByteArrayConstructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> ByteArrayCopyConstructor(PassedExecutionData& data);
@@ -166,6 +187,13 @@ std::expected<ExecutionResult, std::runtime_error> ByteArrayEquals(PassedExecuti
 std::expected<ExecutionResult, std::runtime_error> ByteArrayIsLess(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> ByteArrayLength(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> ByteArrayGetHash(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> ByteArrayClear(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> ByteArrayShrinkToFit(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> ByteArrayReserve(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> ByteArrayCapacity(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> ByteArrayAdd(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> ByteArrayRemoveAt(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> ByteArrayInsertAt(PassedExecutionData& data);
 
 // ByteArray view casting constructors (from other array types)
 std::expected<ExecutionResult, std::runtime_error> ByteArrayFromIntArray(PassedExecutionData& data);
@@ -180,6 +208,13 @@ std::expected<ExecutionResult, std::runtime_error> BoolArrayEquals(PassedExecuti
 std::expected<ExecutionResult, std::runtime_error> BoolArrayIsLess(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> BoolArrayLength(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> BoolArrayGetHash(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> BoolArrayClear(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> BoolArrayShrinkToFit(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> BoolArrayReserve(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> BoolArrayCapacity(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> BoolArrayAdd(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> BoolArrayRemoveAt(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> BoolArrayInsertAt(PassedExecutionData& data);
 
 std::expected<ExecutionResult, std::runtime_error> ObjectArrayConstructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> ObjectArrayCopyConstructor(PassedExecutionData& data);
@@ -188,6 +223,13 @@ std::expected<ExecutionResult, std::runtime_error> ObjectArrayEquals(PassedExecu
 std::expected<ExecutionResult, std::runtime_error> ObjectArrayIsLess(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> ObjectArrayLength(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> ObjectArrayGetHash(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> ObjectArrayClear(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> ObjectArrayShrinkToFit(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> ObjectArrayReserve(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> ObjectArrayCapacity(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> ObjectArrayAdd(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> ObjectArrayRemoveAt(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> ObjectArrayInsertAt(PassedExecutionData& data);
 
 std::expected<ExecutionResult, std::runtime_error> StringArrayConstructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> StringArrayCopyConstructor(PassedExecutionData& data);
@@ -196,6 +238,13 @@ std::expected<ExecutionResult, std::runtime_error> StringArrayEquals(PassedExecu
 std::expected<ExecutionResult, std::runtime_error> StringArrayIsLess(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> StringArrayLength(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> StringArrayGetHash(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> StringArrayClear(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> StringArrayShrinkToFit(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> StringArrayReserve(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> StringArrayCapacity(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> StringArrayAdd(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> StringArrayRemoveAt(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> StringArrayInsertAt(PassedExecutionData& data);
 
 // Pointer methods
 std::expected<ExecutionResult, std::runtime_error> PointerConstructor(PassedExecutionData& data);
@@ -212,6 +261,13 @@ std::expected<ExecutionResult, std::runtime_error> PointerArrayEquals(PassedExec
 std::expected<ExecutionResult, std::runtime_error> PointerArrayIsLess(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> PointerArrayLength(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> PointerArrayGetHash(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> PointerArrayClear(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> PointerArrayShrinkToFit(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> PointerArrayReserve(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> PointerArrayCapacity(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> PointerArrayAdd(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> PointerArrayRemoveAt(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> PointerArrayInsertAt(PassedExecutionData& data);
 
 // File methods
 std::expected<ExecutionResult, std::runtime_error> FileConstructor(PassedExecutionData& data);

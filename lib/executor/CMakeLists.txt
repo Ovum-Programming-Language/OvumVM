@@ -1,5 +1,6 @@
 add_library(executor STATIC
         PlaceholderJitExecutor.cpp
+        PlaceholderJitExecutorFactory.cpp
         BuiltinFunctions.cpp
         builtin_factory.cpp
 )

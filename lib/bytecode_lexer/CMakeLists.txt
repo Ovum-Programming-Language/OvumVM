@@ -7,7 +7,6 @@ add_library(bytecode_lexer STATIC
         handlers/StringHandler.cpp
         handlers/DefaultHandler.cpp
         handlers/NumberHandler.cpp
-        handlers/NewlineHandler.cpp
 )
 
 target_include_directories(bytecode_lexer PUBLIC ${PROJECT_SOURCE_DIR})
