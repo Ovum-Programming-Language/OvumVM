@@ -13,7 +13,7 @@
 #include "PassedExecutionData.hpp"
 
 
-namespace ovum::vm::execution_tree {
+namespace ovum::vm::execution_tree::bytecode {
 
 std::expected<ExecutionResult, std::runtime_error> PushInt(PassedExecutionData& data, int64_t value);
 std::expected<ExecutionResult, std::runtime_error> PushFloat(PassedExecutionData& data, double value);
@@ -32,8 +32,8 @@ std::expected<ExecutionResult, std::runtime_error> SetLocal(PassedExecutionData&
 std::expected<ExecutionResult, std::runtime_error> LoadStatic(PassedExecutionData& data, size_t index);
 std::expected<ExecutionResult, std::runtime_error> SetStatic(PassedExecutionData& data, size_t index);
 
-std::expected<ExecutionResult, std::runtime_error> NewArray(PassedExecutionData& data, const std::string& type);
-std::expected<ExecutionResult, std::runtime_error> ArrayLength(PassedExecutionData& data);
+//std::expected<ExecutionResult, std::runtime_error> NewArray(PassedExecutionData& data, const std::string& type);
+//std::expected<ExecutionResult, std::runtime_error> ArrayLength(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> ArrayGet(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> ArraySet(PassedExecutionData& data);
 
