@@ -1,17 +1,16 @@
 #ifndef BYTECODE_COMMANDS_HPP
 #define BYTECODE_COMMANDS_HPP
 
-#include <expected>
-#include <stdexcept>
-#include <stack>
-#include <vector>
-#include <string>
 #include <cstdint>
+#include <expected>
+#include <stack>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 #include "ExecutionConcepts.hpp"
 #include "ExecutionResult.hpp"
 #include "PassedExecutionData.hpp"
-
 
 namespace ovum::vm::execution_tree::bytecode {
 
@@ -123,7 +122,8 @@ std::expected<ExecutionResult, std::runtime_error> Return(PassedExecutionData& d
 
 std::expected<ExecutionResult, std::runtime_error> GetField(PassedExecutionData& data, size_t number);
 std::expected<ExecutionResult, std::runtime_error> SetField(PassedExecutionData& data, size_t number);
-std::expected<ExecutionResult, std::runtime_error> CallConstructor(PassedExecutionData& data, const std::string& constructor);
+std::expected<ExecutionResult, std::runtime_error> CallConstructor(PassedExecutionData& data,
+                                                                   const std::string& constructor);
 std::expected<ExecutionResult, std::runtime_error> Unwrap(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> GetVTable(PassedExecutionData& data, const std::string& class_name);
 std::expected<ExecutionResult, std::runtime_error> SetVTable(PassedExecutionData& data, const std::string& class_name);
@@ -187,6 +187,6 @@ std::expected<ExecutionResult, std::runtime_error> TypeOf(PassedExecutionData& d
 std::expected<ExecutionResult, std::runtime_error> IsType(PassedExecutionData& data, const std::string& type);
 std::expected<ExecutionResult, std::runtime_error> SizeOf(PassedExecutionData& data, const std::string& type);
 
-} //namespace ovum::vm::execution_tree
+} // namespace ovum::vm::execution_tree::bytecode
 
 #endif // BYTECODE_COMMANDS_HPP
