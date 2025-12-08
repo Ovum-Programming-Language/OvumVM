@@ -122,6 +122,7 @@ std::expected<ExecutionResult, std::runtime_error> BoolToString(PassedExecutionD
 std::expected<ExecutionResult, std::runtime_error> BoolGetHash(PassedExecutionData& data);
 
 // Nullable methods
+std::expected<ExecutionResult, std::runtime_error> NullableConstructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> NullableDestructor(PassedExecutionData& data);
 
 // String methods
@@ -149,6 +150,8 @@ std::expected<ExecutionResult, std::runtime_error> IntArrayCapacity(PassedExecut
 std::expected<ExecutionResult, std::runtime_error> IntArrayAdd(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> IntArrayRemoveAt(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> IntArrayInsertAt(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> IntArraySetAt(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> IntArrayGetAt(PassedExecutionData& data);
 
 std::expected<ExecutionResult, std::runtime_error> FloatArrayConstructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> FloatArrayCopyConstructor(PassedExecutionData& data);
@@ -164,6 +167,8 @@ std::expected<ExecutionResult, std::runtime_error> FloatArrayCapacity(PassedExec
 std::expected<ExecutionResult, std::runtime_error> FloatArrayAdd(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> FloatArrayRemoveAt(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> FloatArrayInsertAt(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> FloatArraySetAt(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> FloatArrayGetAt(PassedExecutionData& data);
 
 std::expected<ExecutionResult, std::runtime_error> CharArrayConstructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> CharArrayCopyConstructor(PassedExecutionData& data);
@@ -179,6 +184,8 @@ std::expected<ExecutionResult, std::runtime_error> CharArrayCapacity(PassedExecu
 std::expected<ExecutionResult, std::runtime_error> CharArrayAdd(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> CharArrayRemoveAt(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> CharArrayInsertAt(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> CharArraySetAt(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> CharArrayGetAt(PassedExecutionData& data);
 
 std::expected<ExecutionResult, std::runtime_error> ByteArrayConstructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> ByteArrayCopyConstructor(PassedExecutionData& data);
@@ -194,6 +201,8 @@ std::expected<ExecutionResult, std::runtime_error> ByteArrayCapacity(PassedExecu
 std::expected<ExecutionResult, std::runtime_error> ByteArrayAdd(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> ByteArrayRemoveAt(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> ByteArrayInsertAt(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> ByteArraySetAt(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> ByteArrayGetAt(PassedExecutionData& data);
 
 // ByteArray view casting constructors (from other array types)
 std::expected<ExecutionResult, std::runtime_error> ByteArrayFromIntArray(PassedExecutionData& data);
@@ -215,6 +224,8 @@ std::expected<ExecutionResult, std::runtime_error> BoolArrayCapacity(PassedExecu
 std::expected<ExecutionResult, std::runtime_error> BoolArrayAdd(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> BoolArrayRemoveAt(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> BoolArrayInsertAt(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> BoolArraySetAt(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> BoolArrayGetAt(PassedExecutionData& data);
 
 std::expected<ExecutionResult, std::runtime_error> ObjectArrayConstructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> ObjectArrayCopyConstructor(PassedExecutionData& data);
@@ -230,6 +241,8 @@ std::expected<ExecutionResult, std::runtime_error> ObjectArrayCapacity(PassedExe
 std::expected<ExecutionResult, std::runtime_error> ObjectArrayAdd(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> ObjectArrayRemoveAt(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> ObjectArrayInsertAt(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> ObjectArraySetAt(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> ObjectArrayGetAt(PassedExecutionData& data);
 
 std::expected<ExecutionResult, std::runtime_error> StringArrayConstructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> StringArrayCopyConstructor(PassedExecutionData& data);
@@ -245,6 +258,8 @@ std::expected<ExecutionResult, std::runtime_error> StringArrayCapacity(PassedExe
 std::expected<ExecutionResult, std::runtime_error> StringArrayAdd(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> StringArrayRemoveAt(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> StringArrayInsertAt(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> StringArraySetAt(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> StringArrayGetAt(PassedExecutionData& data);
 
 // Pointer methods
 std::expected<ExecutionResult, std::runtime_error> PointerConstructor(PassedExecutionData& data);
@@ -268,6 +283,8 @@ std::expected<ExecutionResult, std::runtime_error> PointerArrayCapacity(PassedEx
 std::expected<ExecutionResult, std::runtime_error> PointerArrayAdd(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> PointerArrayRemoveAt(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> PointerArrayInsertAt(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> PointerArraySetAt(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> PointerArrayGetAt(PassedExecutionData& data);
 
 // File methods
 std::expected<ExecutionResult, std::runtime_error> FileConstructor(PassedExecutionData& data);

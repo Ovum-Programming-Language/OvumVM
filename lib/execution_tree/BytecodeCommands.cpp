@@ -1,5 +1,6 @@
 #include "BytecodeCommands.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <ctime>
