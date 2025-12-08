@@ -32,8 +32,6 @@ std::expected<ExecutionResult, std::runtime_error> SetLocal(PassedExecutionData&
 std::expected<ExecutionResult, std::runtime_error> LoadStatic(PassedExecutionData& data, size_t index);
 std::expected<ExecutionResult, std::runtime_error> SetStatic(PassedExecutionData& data, size_t index);
 
-//std::expected<ExecutionResult, std::runtime_error> NewArray(PassedExecutionData& data, const std::string& type);
-//std::expected<ExecutionResult, std::runtime_error> ArrayLength(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> ArrayGet(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> ArraySet(PassedExecutionData& data);
 
@@ -185,15 +183,10 @@ std::expected<ExecutionResult, std::runtime_error> GetArchitecture(PassedExecuti
 std::expected<ExecutionResult, std::runtime_error> GetUserName(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> GetHomeDirectory(PassedExecutionData& data);
 
-//std::expected<ExecutionResult, std::runtime_error> GetLastError(PassedExecutionData& data);
-//std::expected<ExecutionResult, std::runtime_error> ClearError(PassedExecutionData& data);
-
-//std::expected<ExecutionResult, std::runtime_error> Interop(PassedExecutionData& data);
-
 std::expected<ExecutionResult, std::runtime_error> TypeOf(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> IsType(PassedExecutionData& data, const std::string& type);
 std::expected<ExecutionResult, std::runtime_error> SizeOf(PassedExecutionData& data, const std::string& type);
 
-} // namespace ovum::vm::execution_tree
+} //namespace ovum::vm::execution_tree
 
 #endif // BYTECODE_COMMANDS_HPP
