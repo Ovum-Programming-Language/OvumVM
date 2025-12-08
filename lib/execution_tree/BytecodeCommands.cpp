@@ -20,7 +20,6 @@
 namespace ovum::vm::execution_tree::bytecode {
 
 static std::mt19937_64 runtime_random_engine(std::random_device{}());
-static std::mutex runtime_random_mutex;
 
 template<typename ArgumentType>
 std::expected<ArgumentType, std::runtime_error> TryExtractArgument(PassedExecutionData& data,
