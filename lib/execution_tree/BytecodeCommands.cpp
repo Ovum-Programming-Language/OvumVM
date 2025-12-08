@@ -1118,8 +1118,43 @@ std::expected<ExecutionResult, std::runtime_error> SetField(PassedExecutionData&
   return ExecutionResult::kNormal;
 }
 
-std::expected<ExecutionResult, std::runtime_error> CallConstructor(PassedExecutionData& data, const std::string& constructor);
-std::expected<ExecutionResult, std::runtime_error> Unwrap(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> CallConstructor(PassedExecutionData& data, const std::string& constructor) {
+
+}
+
+std::expected<ExecutionResult, std::runtime_error> Unwrap(PassedExecutionData& data) {
+  auto res = Dup(data);
+  if (!res) {
+    return std::unexpected(res.error());
+  }
+
+  res = IsNull(data);
+  if (!res) {
+    data.memory.machine_stack.pop();
+    return std::unexpected(res.error());
+  }
+
+  auto is_null = TryExtractArgument<bool>(data, "Unwrap");
+  if (!is_null) {
+    return std::unexpected(is_null.error());
+  }
+
+  if (is_null.value()) {
+    return std::unexpected(std::runtime_error("Unwrap: cannot unwrap null"));
+  } else {
+    auto nullable_result = TryExtractArgument<void*>(data, "Unwrap");
+
+    if (!nullable_result) {
+      return std::unexpected(nullable_result.error());
+    }
+
+    auto result = runtime::GetDataPointer<void*>(nullable_result.value());
+
+    data.memory.machine_stack.push(runtime::Variable(*result));
+  }
+
+  return ExecutionResult::kNormal;
+}
 
 std::expected<ExecutionResult, std::runtime_error> GetVTable(PassedExecutionData& data, const std::string& class_name) {
   auto vtable_idx = data.virtual_table_repository.GetIndexByName(class_name);
@@ -1346,7 +1381,7 @@ std::expected<ExecutionResult, std::runtime_error> NullCoalesce(PassedExecutionD
     data.memory.machine_stack.pop();
     data.memory.machine_stack.push(result);
   }
-  
+
   return ExecutionResult::kNormal;
 }
 
