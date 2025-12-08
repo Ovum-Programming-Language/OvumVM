@@ -7,6 +7,7 @@
 #include <random>
 #include <sstream>
 #include <thread>
+#include <unistd.h>
 #include "BytecodeCommands.hpp"
 #include "FunctionRepository.hpp"
 #include "IFunctionExecutable.hpp"
@@ -2026,7 +2027,6 @@ std::expected<ExecutionResult, std::runtime_error> SetEnvironmentVariable(Passed
 }
 
 std::expected<ExecutionResult, std::runtime_error> Random(PassedExecutionData& data) {
-  std::lock_guard<std::mutex> lock(runtime_random_mutex);
   auto value = runtime_random_engine();
   data.memory.machine_stack.push(runtime::Variable(static_cast<int64_t>(value)));
   return ExecutionResult::kNormal;
@@ -2046,7 +2046,6 @@ std::expected<ExecutionResult, std::runtime_error> RandomRange(PassedExecutionDa
     std::swap(min, max);
   }
 
-  std::lock_guard<std::mutex> lock(runtime_random_mutex);
   std::uniform_int_distribution<int64_t> distribution(min, max);
   auto value = distribution(runtime_random_engine);
 
@@ -2055,7 +2054,6 @@ std::expected<ExecutionResult, std::runtime_error> RandomRange(PassedExecutionDa
 }
 
 std::expected<ExecutionResult, std::runtime_error> RandomFloat(PassedExecutionData& data) {
-  std::lock_guard<std::mutex> lock(runtime_random_mutex);
   std::uniform_real_distribution<double> distribution(0.0, 1.0);
   auto value = distribution(runtime_random_engine);
   data.memory.machine_stack.push(runtime::Variable(value));
@@ -2076,7 +2074,6 @@ std::expected<ExecutionResult, std::runtime_error> RandomFloatRange(PassedExecut
     std::swap(min, max);
   }
 
-  std::lock_guard<std::mutex> lock(runtime_random_mutex);
   std::uniform_real_distribution<double> distribution(min, max);
   auto value = distribution(runtime_random_engine);
 
@@ -2091,7 +2088,6 @@ std::expected<ExecutionResult, std::runtime_error> SeedRandom(PassedExecutionDat
   }
 
   auto seed = seed_arg.value();
-  std::lock_guard<std::mutex> lock(runtime_random_mutex);
   runtime_random_engine.seed(static_cast<uint64_t>(seed));
   return ExecutionResult::kNormal;
 }
