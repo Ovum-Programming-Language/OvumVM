@@ -13,7 +13,9 @@
 #include "lib/executor/BuiltinFunctions.hpp"
 #include "lib/runtime/ObjectDescriptor.hpp"
 
-#ifndef _WIN32
+#ifdef _WIN32
+#include  <windows.h>
+#else
 #include <unistd.h>
 #endif
 
@@ -1019,9 +1021,7 @@ std::expected<ExecutionResult, std::runtime_error> Call(PassedExecutionData& dat
     return std::unexpected(function.error());
   }
 
-  function.value()->Execute(data);
-
-  return ExecutionResult::kNormal;
+  return function.value()->Execute(data);
 }
 
 std::expected<ExecutionResult, std::runtime_error> CallIndirect(PassedExecutionData& data) {
@@ -2019,7 +2019,7 @@ std::expected<ExecutionResult, std::runtime_error> SetEnvironmentVariable(Passed
   auto value_ptr = runtime::GetDataPointer<std::string>(arguments.value().second);
 
 #ifdef _WIN32
-  bool success = SetEnvironmentVariableA(name_ptr->c_str(), value_ptr->c_str()) != 0;
+  bool success = SetEnvironmentVariable(name_ptr->c_str(), value_ptr->c_str()) != 0;
 #else
   bool success = setenv(name_ptr->c_str(), value_ptr->c_str(), 1) == 0;
 #endif
