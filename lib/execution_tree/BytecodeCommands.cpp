@@ -1118,8 +1118,37 @@ std::expected<ExecutionResult, std::runtime_error> SetField(PassedExecutionData&
   return ExecutionResult::kNormal;
 }
 
-std::expected<ExecutionResult, std::runtime_error> CallConstructor(PassedExecutionData& data, const std::string& constructor) {
+std::expected<ExecutionResult, std::runtime_error> CallConstructor(PassedExecutionData& data, const std::string& constructor_name) {
+  std::stringstream ctor_name_ss(constructor_name);
+  std::string class_name;
+  std::getline(ctor_name_ss, class_name, '_');
+  auto vtable_idx = data.virtual_table_repository.GetIndexByName(class_name);
 
+  if (!vtable_idx) {
+    return std::unexpected(vtable_idx.error());
+  }
+
+  auto vtable = data.virtual_table_repository.GetByIndex(vtable_idx.value());
+
+  if (!vtable) {
+    return std::unexpected(vtable.error());
+  }
+
+  auto obj_ptr = runtime::AllocateObject(*vtable.value(), vtable_idx.value(), data.memory.object_repository);
+
+  if (!obj_ptr) {
+    return std::unexpected(obj_ptr.error());
+  }
+
+  auto ctor = data.function_repository.GetByName(constructor_name);
+
+  if (!ctor) {
+    return std::unexpected(ctor.error());
+  }
+
+  data.memory.machine_stack.push(runtime::Variable(obj_ptr.value()));
+
+  return ctor.value()->Execute(data);
 }
 
 std::expected<ExecutionResult, std::runtime_error> Unwrap(PassedExecutionData& data) {
