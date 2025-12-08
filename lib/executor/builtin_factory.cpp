@@ -37,8 +37,8 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     VirtualTable int_vtable("Int", sizeof(ObjectDescriptor) + sizeof(int64_t));
     int_vtable.AddField("int", sizeof(ObjectDescriptor));
     int_vtable.AddFunction("_destructor_<M>", "_Int_destructor_<M>");
-    int_vtable.AddFunction("_Equals_<C>_IComparable", "_Int_Equals_<C>_IComparable");
-    int_vtable.AddFunction("_IsLess_<C>_IComparable", "_Int_IsLess_<C>_IComparable");
+    int_vtable.AddFunction("_Equals_<C>_Object", "_Int_Equals_<C>_Object");
+    int_vtable.AddFunction("_IsLess_<C>_Object", "_Int_IsLess_<C>_Object");
     int_vtable.AddFunction("_ToString_<C>", "_Int_ToString_<C>");
     int_vtable.AddFunction("_GetHash_<C>", "_Int_GetHash_<C>");
     int_vtable.AddInterface("IComparable");
@@ -55,8 +55,8 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     VirtualTable float_vtable("Float", sizeof(ObjectDescriptor) + sizeof(double));
     float_vtable.AddField("float", sizeof(ObjectDescriptor));
     float_vtable.AddFunction("_destructor_<M>", "_Float_destructor_<M>");
-    float_vtable.AddFunction("_Equals_<C>_IComparable", "_Float_Equals_<C>_IComparable");
-    float_vtable.AddFunction("_IsLess_<C>_IComparable", "_Float_IsLess_<C>_IComparable");
+    float_vtable.AddFunction("_Equals_<C>_Object", "_Float_Equals_<C>_Object");
+    float_vtable.AddFunction("_IsLess_<C>_Object", "_Float_IsLess_<C>_Object");
     float_vtable.AddFunction("_ToString_<C>", "_Float_ToString_<C>");
     float_vtable.AddFunction("_GetHash_<C>", "_Float_GetHash_<C>");
     float_vtable.AddInterface("IComparable");
@@ -73,8 +73,8 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     VirtualTable char_vtable("Char", sizeof(ObjectDescriptor) + sizeof(char));
     char_vtable.AddField("char", sizeof(ObjectDescriptor));
     char_vtable.AddFunction("_destructor_<M>", "_Char_destructor_<M>");
-    char_vtable.AddFunction("_Equals_<C>_IComparable", "_Char_Equals_<C>_IComparable");
-    char_vtable.AddFunction("_IsLess_<C>_IComparable", "_Char_IsLess_<C>_IComparable");
+    char_vtable.AddFunction("_Equals_<C>_Object", "_Char_Equals_<C>_Object");
+    char_vtable.AddFunction("_IsLess_<C>_Object", "_Char_IsLess_<C>_Object");
     char_vtable.AddFunction("_ToString_<C>", "_Char_ToString_<C>");
     char_vtable.AddFunction("_GetHash_<C>", "_Char_GetHash_<C>");
     char_vtable.AddInterface("IComparable");
@@ -91,8 +91,8 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     VirtualTable byte_vtable("Byte", sizeof(ObjectDescriptor) + sizeof(uint8_t));
     byte_vtable.AddField("byte", sizeof(ObjectDescriptor));
     byte_vtable.AddFunction("_destructor_<M>", "_Byte_destructor_<M>");
-    byte_vtable.AddFunction("_Equals_<C>_IComparable", "_Byte_Equals_<C>_IComparable");
-    byte_vtable.AddFunction("_IsLess_<C>_IComparable", "_Byte_IsLess_<C>_IComparable");
+    byte_vtable.AddFunction("_Equals_<C>_Object", "_Byte_Equals_<C>_Object");
+    byte_vtable.AddFunction("_IsLess_<C>_Object", "_Byte_IsLess_<C>_Object");
     byte_vtable.AddFunction("_ToString_<C>", "_Byte_ToString_<C>");
     byte_vtable.AddFunction("_GetHash_<C>", "_Byte_GetHash_<C>");
     byte_vtable.AddInterface("IComparable");
@@ -109,8 +109,8 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     VirtualTable bool_vtable("Bool", sizeof(ObjectDescriptor) + sizeof(bool));
     bool_vtable.AddField("bool", sizeof(ObjectDescriptor));
     bool_vtable.AddFunction("_destructor_<M>", "_Bool_destructor_<M>");
-    bool_vtable.AddFunction("_Equals_<C>_IComparable", "_Bool_Equals_<C>_IComparable");
-    bool_vtable.AddFunction("_IsLess_<C>_IComparable", "_Bool_IsLess_<C>_IComparable");
+    bool_vtable.AddFunction("_Equals_<C>_Object", "_Bool_Equals_<C>_Object");
+    bool_vtable.AddFunction("_IsLess_<C>_Object", "_Bool_IsLess_<C>_Object");
     bool_vtable.AddFunction("_ToString_<C>", "_Bool_ToString_<C>");
     bool_vtable.AddFunction("_GetHash_<C>", "_Bool_GetHash_<C>");
     bool_vtable.AddInterface("IComparable");
@@ -138,8 +138,8 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     VirtualTable string_vtable("String", sizeof(ObjectDescriptor) + sizeof(std::string));
     string_vtable.AddField("Object", sizeof(ObjectDescriptor));
     string_vtable.AddFunction("_destructor_<M>", "_String_destructor_<M>");
-    string_vtable.AddFunction("_Equals_<C>_IComparable", "_String_Equals_<C>_IComparable");
-    string_vtable.AddFunction("_IsLess_<C>_IComparable", "_String_IsLess_<C>_IComparable");
+    string_vtable.AddFunction("_Equals_<C>_Object", "_String_Equals_<C>_Object");
+    string_vtable.AddFunction("_IsLess_<C>_Object", "_String_IsLess_<C>_Object");
     string_vtable.AddFunction("_ToString_<C>", "_String_ToString_<C>");
     string_vtable.AddFunction("_GetHash_<C>", "_String_GetHash_<C>");
     string_vtable.AddFunction("_Length_<C>", "_String_Length_<C>");
@@ -180,8 +180,8 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     VirtualTable int_array_vtable("IntArray", sizeof(ObjectDescriptor) + sizeof(std::vector<int64_t>));
     int_array_vtable.AddField("Object", sizeof(ObjectDescriptor));
     int_array_vtable.AddFunction("_destructor_<M>", "_IntArray_destructor_<M>");
-    int_array_vtable.AddFunction("_Equals_<C>_IComparable", "_IntArray_Equals_<C>_IComparable");
-    int_array_vtable.AddFunction("_IsLess_<C>_IComparable", "_IntArray_IsLess_<C>_IComparable");
+    int_array_vtable.AddFunction("_Equals_<C>_Object", "_IntArray_Equals_<C>_Object");
+    int_array_vtable.AddFunction("_IsLess_<C>_Object", "_IntArray_IsLess_<C>_Object");
     int_array_vtable.AddFunction("_GetHash_<C>", "_IntArray_GetHash_<C>");
     int_array_vtable.AddInterface("IComparable");
     int_array_vtable.AddInterface("IHashable");
@@ -196,8 +196,8 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     VirtualTable float_array_vtable("FloatArray", sizeof(ObjectDescriptor) + sizeof(std::vector<double>));
     float_array_vtable.AddField("Object", sizeof(ObjectDescriptor));
     float_array_vtable.AddFunction("_destructor_<M>", "_FloatArray_destructor_<M>");
-    float_array_vtable.AddFunction("_Equals_<C>_IComparable", "_FloatArray_Equals_<C>_IComparable");
-    float_array_vtable.AddFunction("_IsLess_<C>_IComparable", "_FloatArray_IsLess_<C>_IComparable");
+    float_array_vtable.AddFunction("_Equals_<C>_Object", "_FloatArray_Equals_<C>_Object");
+    float_array_vtable.AddFunction("_IsLess_<C>_Object", "_FloatArray_IsLess_<C>_Object");
     float_array_vtable.AddFunction("_GetHash_<C>", "_FloatArray_GetHash_<C>");
     float_array_vtable.AddInterface("IComparable");
     float_array_vtable.AddInterface("IHashable");
@@ -212,8 +212,8 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     VirtualTable char_array_vtable("CharArray", sizeof(ObjectDescriptor) + sizeof(std::vector<char>));
     char_array_vtable.AddField("Object", sizeof(ObjectDescriptor));
     char_array_vtable.AddFunction("_destructor_<M>", "_CharArray_destructor_<M>");
-    char_array_vtable.AddFunction("_Equals_<C>_IComparable", "_CharArray_Equals_<C>_IComparable");
-    char_array_vtable.AddFunction("_IsLess_<C>_IComparable", "_CharArray_IsLess_<C>_IComparable");
+    char_array_vtable.AddFunction("_Equals_<C>_Object", "_CharArray_Equals_<C>_Object");
+    char_array_vtable.AddFunction("_IsLess_<C>_Object", "_CharArray_IsLess_<C>_Object");
     char_array_vtable.AddFunction("_GetHash_<C>", "_CharArray_GetHash_<C>");
     char_array_vtable.AddInterface("IComparable");
     char_array_vtable.AddInterface("IHashable");
@@ -229,8 +229,8 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     VirtualTable byte_array_vtable("ByteArray", sizeof(ObjectDescriptor) + sizeof(std::vector<uint8_t>));
     byte_array_vtable.AddField("Object", sizeof(ObjectDescriptor));
     byte_array_vtable.AddFunction("_destructor_<M>", "_ByteArray_destructor_<M>");
-    byte_array_vtable.AddFunction("_Equals_<C>_IComparable", "_ByteArray_Equals_<C>_IComparable");
-    byte_array_vtable.AddFunction("_IsLess_<C>_IComparable", "_ByteArray_IsLess_<C>_IComparable");
+    byte_array_vtable.AddFunction("_Equals_<C>_Object", "_ByteArray_Equals_<C>_Object");
+    byte_array_vtable.AddFunction("_IsLess_<C>_Object", "_ByteArray_IsLess_<C>_Object");
     byte_array_vtable.AddFunction("_GetHash_<C>", "_ByteArray_GetHash_<C>");
     byte_array_vtable.AddInterface("IComparable");
     byte_array_vtable.AddInterface("IHashable");
@@ -245,8 +245,8 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     VirtualTable bool_array_vtable("BoolArray", sizeof(ObjectDescriptor) + sizeof(std::vector<bool>));
     bool_array_vtable.AddField("Object", sizeof(ObjectDescriptor));
     bool_array_vtable.AddFunction("_destructor_<M>", "_BoolArray_destructor_<M>");
-    bool_array_vtable.AddFunction("_Equals_<C>_IComparable", "_BoolArray_Equals_<C>_IComparable");
-    bool_array_vtable.AddFunction("_IsLess_<C>_IComparable", "_BoolArray_IsLess_<C>_IComparable");
+    bool_array_vtable.AddFunction("_Equals_<C>_Object", "_BoolArray_Equals_<C>_Object");
+    bool_array_vtable.AddFunction("_IsLess_<C>_Object", "_BoolArray_IsLess_<C>_Object");
     bool_array_vtable.AddFunction("_GetHash_<C>", "_BoolArray_GetHash_<C>");
     bool_array_vtable.AddInterface("IComparable");
     bool_array_vtable.AddInterface("IHashable");
@@ -261,8 +261,8 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     VirtualTable object_array_vtable("ObjectArray", sizeof(ObjectDescriptor) + sizeof(std::vector<void*>));
     object_array_vtable.AddField("Object", sizeof(ObjectDescriptor));
     object_array_vtable.AddFunction("_destructor_<M>", "_ObjectArray_destructor_<M>");
-    object_array_vtable.AddFunction("_Equals_<C>_IComparable", "_ObjectArray_Equals_<C>_IComparable");
-    object_array_vtable.AddFunction("_IsLess_<C>_IComparable", "_ObjectArray_IsLess_<C>_IComparable");
+    object_array_vtable.AddFunction("_Equals_<C>_Object", "_ObjectArray_Equals_<C>_Object");
+    object_array_vtable.AddFunction("_IsLess_<C>_Object", "_ObjectArray_IsLess_<C>_Object");
     object_array_vtable.AddFunction("_GetHash_<C>", "_ObjectArray_GetHash_<C>");
     object_array_vtable.AddInterface("IComparable");
     object_array_vtable.AddInterface("IHashable");
@@ -277,8 +277,8 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     VirtualTable string_array_vtable("StringArray", sizeof(ObjectDescriptor) + sizeof(std::vector<void*>));
     string_array_vtable.AddField("Object", sizeof(ObjectDescriptor));
     string_array_vtable.AddFunction("_destructor_<M>", "_StringArray_destructor_<M>");
-    string_array_vtable.AddFunction("_Equals_<C>_IComparable", "_StringArray_Equals_<C>_IComparable");
-    string_array_vtable.AddFunction("_IsLess_<C>_IComparable", "_StringArray_IsLess_<C>_IComparable");
+    string_array_vtable.AddFunction("_Equals_<C>_Object", "_StringArray_Equals_<C>_Object");
+    string_array_vtable.AddFunction("_IsLess_<C>_Object", "_StringArray_IsLess_<C>_Object");
     string_array_vtable.AddFunction("_GetHash_<C>", "_StringArray_GetHash_<C>");
     string_array_vtable.AddInterface("IComparable");
     string_array_vtable.AddInterface("IHashable");
@@ -293,8 +293,8 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     VirtualTable pointer_vtable("Pointer", sizeof(ObjectDescriptor) + sizeof(void*));
     pointer_vtable.AddField("Object", sizeof(ObjectDescriptor));
     pointer_vtable.AddFunction("_destructor_<M>", "_Pointer_destructor_<M>");
-    pointer_vtable.AddFunction("_Equals_<C>_IComparable", "_Pointer_Equals_<C>_IComparable");
-    pointer_vtable.AddFunction("_IsLess_<C>_IComparable", "_Pointer_IsLess_<C>_IComparable");
+    pointer_vtable.AddFunction("_Equals_<C>_Object", "_Pointer_Equals_<C>_Object");
+    pointer_vtable.AddFunction("_IsLess_<C>_Object", "_Pointer_IsLess_<C>_Object");
     pointer_vtable.AddFunction("_GetHash_<C>", "_Pointer_GetHash_<C>");
     pointer_vtable.AddInterface("IComparable");
     pointer_vtable.AddInterface("IHashable");
@@ -309,8 +309,8 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     VirtualTable pointer_array_vtable("PointerArray", sizeof(ObjectDescriptor) + sizeof(std::vector<void*>));
     pointer_array_vtable.AddField("Object", sizeof(ObjectDescriptor));
     pointer_array_vtable.AddFunction("_destructor_<M>", "_PointerArray_destructor_<M>");
-    pointer_array_vtable.AddFunction("_Equals_<C>_IComparable", "_PointerArray_Equals_<C>_IComparable");
-    pointer_array_vtable.AddFunction("_IsLess_<C>_IComparable", "_PointerArray_IsLess_<C>_IComparable");
+    pointer_array_vtable.AddFunction("_Equals_<C>_Object", "_PointerArray_Equals_<C>_Object");
+    pointer_array_vtable.AddFunction("_IsLess_<C>_Object", "_PointerArray_IsLess_<C>_Object");
     pointer_array_vtable.AddFunction("_GetHash_<C>", "_PointerArray_GetHash_<C>");
     pointer_array_vtable.AddInterface("IComparable");
     pointer_array_vtable.AddInterface("IHashable");
@@ -357,7 +357,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_Int_Equals_<C>_IComparable", 2, IntEquals);
+    auto function = CreateMethodFunction("_Int_Equals_<C>_Object", 2, IntEquals);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -365,7 +365,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_Int_IsLess_<C>_IComparable", 2, IntIsLess);
+    auto function = CreateMethodFunction("_Int_IsLess_<C>_Object", 2, IntIsLess);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -414,7 +414,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_Float_Equals_<C>_IComparable", 2, FloatEquals);
+    auto function = CreateMethodFunction("_Float_Equals_<C>_Object", 2, FloatEquals);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -422,7 +422,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_Float_IsLess_<C>_IComparable", 2, FloatIsLess);
+    auto function = CreateMethodFunction("_Float_IsLess_<C>_Object", 2, FloatIsLess);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -471,7 +471,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_Char_Equals_<C>_IComparable", 2, CharEquals);
+    auto function = CreateMethodFunction("_Char_Equals_<C>_Object", 2, CharEquals);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -479,7 +479,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_Char_IsLess_<C>_IComparable", 2, CharIsLess);
+    auto function = CreateMethodFunction("_Char_IsLess_<C>_Object", 2, CharIsLess);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -528,7 +528,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_Byte_Equals_<C>_IComparable", 2, ByteEquals);
+    auto function = CreateMethodFunction("_Byte_Equals_<C>_Object", 2, ByteEquals);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -536,7 +536,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_Byte_IsLess_<C>_IComparable", 2, ByteIsLess);
+    auto function = CreateMethodFunction("_Byte_IsLess_<C>_Object", 2, ByteIsLess);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -585,7 +585,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_Bool_Equals_<C>_IComparable", 2, BoolEquals);
+    auto function = CreateMethodFunction("_Bool_Equals_<C>_Object", 2, BoolEquals);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -593,7 +593,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_Bool_IsLess_<C>_IComparable", 2, BoolIsLess);
+    auto function = CreateMethodFunction("_Bool_IsLess_<C>_Object", 2, BoolIsLess);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -651,7 +651,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_String_Equals_<C>_IComparable", 2, StringEquals);
+    auto function = CreateMethodFunction("_String_Equals_<C>_Object", 2, StringEquals);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -659,7 +659,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_String_IsLess_<C>_IComparable", 2, StringIsLess);
+    auto function = CreateMethodFunction("_String_IsLess_<C>_Object", 2, StringIsLess);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -724,7 +724,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_IntArray_Equals_<C>_IComparable", 2, IntArrayEquals);
+    auto function = CreateMethodFunction("_IntArray_Equals_<C>_Object", 2, IntArrayEquals);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -732,7 +732,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_IntArray_IsLess_<C>_IComparable", 2, IntArrayIsLess);
+    auto function = CreateMethodFunction("_IntArray_IsLess_<C>_Object", 2, IntArrayIsLess);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -853,7 +853,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_FloatArray_Equals_<C>_IComparable", 2, FloatArrayEquals);
+    auto function = CreateMethodFunction("_FloatArray_Equals_<C>_Object", 2, FloatArrayEquals);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -861,7 +861,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_FloatArray_IsLess_<C>_IComparable", 2, FloatArrayIsLess);
+    auto function = CreateMethodFunction("_FloatArray_IsLess_<C>_Object", 2, FloatArrayIsLess);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -982,7 +982,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_CharArray_Equals_<C>_IComparable", 2, CharArrayEquals);
+    auto function = CreateMethodFunction("_CharArray_Equals_<C>_Object", 2, CharArrayEquals);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -990,7 +990,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_CharArray_IsLess_<C>_IComparable", 2, CharArrayIsLess);
+    auto function = CreateMethodFunction("_CharArray_IsLess_<C>_Object", 2, CharArrayIsLess);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -1111,7 +1111,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_ByteArray_Equals_<C>_IComparable", 2, ByteArrayEquals);
+    auto function = CreateMethodFunction("_ByteArray_Equals_<C>_Object", 2, ByteArrayEquals);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -1119,7 +1119,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_ByteArray_IsLess_<C>_IComparable", 2, ByteArrayIsLess);
+    auto function = CreateMethodFunction("_ByteArray_IsLess_<C>_Object", 2, ByteArrayIsLess);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -1273,7 +1273,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_BoolArray_Equals_<C>_IComparable", 2, BoolArrayEquals);
+    auto function = CreateMethodFunction("_BoolArray_Equals_<C>_Object", 2, BoolArrayEquals);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -1281,7 +1281,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_BoolArray_IsLess_<C>_IComparable", 2, BoolArrayIsLess);
+    auto function = CreateMethodFunction("_BoolArray_IsLess_<C>_Object", 2, BoolArrayIsLess);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -1402,7 +1402,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_ObjectArray_Equals_<C>_IComparable", 2, ObjectArrayEquals);
+    auto function = CreateMethodFunction("_ObjectArray_Equals_<C>_Object", 2, ObjectArrayEquals);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -1410,7 +1410,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_ObjectArray_IsLess_<C>_IComparable", 2, ObjectArrayIsLess);
+    auto function = CreateMethodFunction("_ObjectArray_IsLess_<C>_Object", 2, ObjectArrayIsLess);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -1531,7 +1531,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_StringArray_Equals_<C>_IComparable", 2, StringArrayEquals);
+    auto function = CreateMethodFunction("_StringArray_Equals_<C>_Object", 2, StringArrayEquals);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -1539,7 +1539,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_StringArray_IsLess_<C>_IComparable", 2, StringArrayIsLess);
+    auto function = CreateMethodFunction("_StringArray_IsLess_<C>_Object", 2, StringArrayIsLess);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -1660,7 +1660,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_PointerArray_Equals_<C>_IComparable", 2, PointerArrayEquals);
+    auto function = CreateMethodFunction("_PointerArray_Equals_<C>_Object", 2, PointerArrayEquals);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -1668,7 +1668,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_PointerArray_IsLess_<C>_IComparable", 2, PointerArrayIsLess);
+    auto function = CreateMethodFunction("_PointerArray_IsLess_<C>_Object", 2, PointerArrayIsLess);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -1701,7 +1701,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_Pointer_Equals_<C>_IComparable", 2, PointerEquals);
+    auto function = CreateMethodFunction("_Pointer_Equals_<C>_Object", 2, PointerEquals);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -1709,7 +1709,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
-    auto function = CreateMethodFunction("_Pointer_IsLess_<C>_IComparable", 2, PointerIsLess);
+    auto function = CreateMethodFunction("_Pointer_IsLess_<C>_Object", 2, PointerIsLess);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());

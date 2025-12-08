@@ -82,13 +82,13 @@ std::expected<ExecutionResult, std::runtime_error> FundamentalTypeEquals(PassedE
 
   void* obj1_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
   void* obj2_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
-  
+
   // Check if types match - if not, return false
   if (!AreSameType(obj1_ptr, obj2_ptr)) {
     data.memory.machine_stack.emplace(false);
     return ExecutionResult::kNormal;
   }
-  
+
   const T* value1 = runtime::GetDataPointer<const T>(obj1_ptr);
   const T* value2 = runtime::GetDataPointer<const T>(obj2_ptr);
   bool equals = (*value1 == *value2);
@@ -273,13 +273,13 @@ std::expected<ExecutionResult, std::runtime_error> ArrayEquals(PassedExecutionDa
 
   void* obj1_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
   void* obj2_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
-  
+
   // Check if types match - if not, return false
   if (!AreSameType(obj1_ptr, obj2_ptr)) {
     data.memory.machine_stack.emplace(false);
     return ExecutionResult::kNormal;
   }
-  
+
   const auto* vec1 = runtime::GetDataPointer<const std::vector<T>>(obj1_ptr);
   const auto* vec2 = runtime::GetDataPointer<const std::vector<T>>(obj2_ptr);
   bool equals = (*vec1 == *vec2);
@@ -299,13 +299,13 @@ std::expected<ExecutionResult, std::runtime_error> ArrayIsLess(PassedExecutionDa
 
   void* obj1_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
   void* obj2_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
-  
+
   // Check if types match - if not, return false
   if (!AreSameType(obj1_ptr, obj2_ptr)) {
     data.memory.machine_stack.emplace(false);
     return ExecutionResult::kNormal;
   }
-  
+
   const auto* vec1 = runtime::GetDataPointer<const std::vector<T>>(obj1_ptr);
   const auto* vec2 = runtime::GetDataPointer<const std::vector<T>>(obj2_ptr);
   bool is_less = (*vec1 < *vec2);
@@ -820,13 +820,13 @@ std::expected<ExecutionResult, std::runtime_error> BoolIsLess(PassedExecutionDat
 
   void* obj1_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
   void* obj2_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
-  
+
   // Check if types match - if not, return false
   if (!AreSameType(obj1_ptr, obj2_ptr)) {
     data.memory.machine_stack.emplace(false);
     return ExecutionResult::kNormal;
   }
-  
+
   const bool* value1 = runtime::GetDataPointer<const bool>(obj1_ptr);
   const bool* value2 = runtime::GetDataPointer<const bool>(obj2_ptr);
   bool is_less = (!*value1 && *value2); // false < true
