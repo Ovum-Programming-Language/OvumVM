@@ -1270,12 +1270,12 @@ std::expected<ExecutionResult, std::runtime_error> SafeCall(PassedExecutionData&
       size_t arity = function.value()->GetArity();
 
       if (arity > 0) {
-        size_t method_arg_count = arity - 1; // -1 for this pointer
+        method_arg_count = arity - 1; // -1 for this pointer
       }
     } else {
       // Count underscores in method name to get arity - no classname, virtual function
-      size_t underscores_count = std::ranges::count(method.begin(), method.end(), '_');
-      size_t method_arg_count = underscores_count - 2; // -1 for method name, -1 for this pointer
+      auto underscores_count = std::count(method.begin(), method.end(), '_');
+      method_arg_count = underscores_count - 2; // -1 for method name, -1 for this pointer
     }
 
     for (size_t i = 0; i < method_arg_count && !data.memory.machine_stack.empty(); ++i) {
