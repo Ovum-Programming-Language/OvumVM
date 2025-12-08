@@ -3,12 +3,9 @@
 
 #include <cstdint>
 #include <expected>
-#include <stack>
 #include <stdexcept>
 #include <string>
-#include <vector>
 
-#include "ExecutionConcepts.hpp"
 #include "ExecutionResult.hpp"
 #include "PassedExecutionData.hpp"
 
@@ -146,8 +143,6 @@ std::expected<ExecutionResult, std::runtime_error> NanoTime(PassedExecutionData&
 std::expected<ExecutionResult, std::runtime_error> FormatDateTime(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> ParseDateTime(PassedExecutionData& data);
 
-std::expected<ExecutionResult, std::runtime_error> OpenFile(PassedExecutionData& data);
-std::expected<ExecutionResult, std::runtime_error> CloseFile(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> FileExists(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> DirectoryExists(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> CreateDirectory(PassedExecutionData& data);

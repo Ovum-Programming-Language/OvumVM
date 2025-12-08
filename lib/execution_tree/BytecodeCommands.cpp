@@ -1,13 +1,17 @@
+#include "BytecodeCommands.hpp"
+
 #include <chrono>
 #include <cmath>
 #include <ctime>
 #include <filesystem>
-#include <fstream>
 #include <iostream>
 #include <random>
+#include <ranges>
 #include <sstream>
+#include <string>
 #include <thread>
-#include "BytecodeCommands.hpp"
+#include <vector>
+
 #include "FunctionRepository.hpp"
 #include "IFunctionExecutable.hpp"
 #include "lib/executor/BuiltinFunctions.hpp"
@@ -21,17 +25,20 @@
 
 namespace ovum::vm::execution_tree::bytecode {
 
-static std::mt19937_64 runtime_random_engine(std::random_device{}());
+static std::mt19937_64 runtime_random_engine(std::random_device{}()); // NOLINT
 
 template<typename ArgumentType>
 std::expected<ArgumentType, std::runtime_error> TryExtractArgument(PassedExecutionData& data,
-                                                                   std::string function_name) {
+                                                                   const std::string& function_name) {
   if (data.memory.machine_stack.empty()) {
     return std::unexpected(std::runtime_error(function_name + ": not enought arguments on the stack"));
   }
 
   runtime::Variable var_argument = data.memory.machine_stack.top();
+  data.memory.machine_stack.pop();
+
   if (!std::holds_alternative<ArgumentType>(var_argument)) {
+    data.memory.machine_stack.emplace(var_argument);
     return std::unexpected(std::runtime_error(function_name + ": variable on the top of the stack has incorrect type"));
   }
 
@@ -40,7 +47,7 @@ std::expected<ArgumentType, std::runtime_error> TryExtractArgument(PassedExecuti
 
 template<typename ArgumentOneType, typename ArgumentTwoType>
 std::expected<std::pair<ArgumentOneType, ArgumentTwoType>, std::runtime_error> TryExtractTwoArguments(
-    PassedExecutionData& data, std::string function_name) {
+    PassedExecutionData& data, const std::string& function_name) {
   auto argument_one = TryExtractArgument<ArgumentOneType>(data, function_name);
   if (!argument_one) {
     return std::unexpected(argument_one.error());
@@ -48,7 +55,7 @@ std::expected<std::pair<ArgumentOneType, ArgumentTwoType>, std::runtime_error> T
 
   auto argument_two = TryExtractArgument<ArgumentTwoType>(data, function_name);
   if (!argument_two) {
-    data.memory.machine_stack.emplace(runtime::Variable(*argument_one));
+    data.memory.machine_stack.emplace(*argument_one);
     return std::unexpected(argument_two.error());
   }
 
@@ -108,7 +115,7 @@ std::expected<ExecutionResult, std::runtime_error> PushString(PassedExecutionDat
 
   void* string_obj = string_obj_result.value();
   auto* string_data = runtime::GetDataPointer<std::string>(string_obj);
-  new (string_data) std::string(std::move(value)); // Move to avoid copying
+  new (string_data) std::string(value);
   data.memory.machine_stack.emplace(string_obj);
 
   return ExecutionResult::kNormal;
@@ -118,7 +125,7 @@ std::expected<ExecutionResult, std::runtime_error> PushNull(PassedExecutionData&
   auto vtable_result = data.virtual_table_repository.GetByName("Nullable");
 
   if (!vtable_result.has_value()) {
-    return std::unexpected(std::runtime_error("PushNull: String vtable not found"));
+    return std::unexpected(std::runtime_error("PushNull: Nullable vtable not found"));
   }
 
   const runtime::VirtualTable* null_vtable = vtable_result.value();
@@ -137,7 +144,7 @@ std::expected<ExecutionResult, std::runtime_error> PushNull(PassedExecutionData&
 
   void* null_obj = null_obj_result.value();
   auto* null_data = runtime::GetDataPointer<void*>(null_obj);
-  new (null_data) void*(std::move(nullptr)); // Move to avoid copying
+  *null_data = nullptr;
   data.memory.machine_stack.emplace(null_obj);
 
   return ExecutionResult::kNormal;
@@ -161,6 +168,7 @@ std::expected<ExecutionResult, std::runtime_error> Swap(PassedExecutionData& dat
   }
 
   runtime::Variable var_argument1 = data.memory.machine_stack.top();
+  data.memory.machine_stack.pop();
 
   if (data.memory.machine_stack.empty()) {
     data.memory.machine_stack.emplace(var_argument1);
@@ -168,6 +176,7 @@ std::expected<ExecutionResult, std::runtime_error> Swap(PassedExecutionData& dat
   }
 
   runtime::Variable var_argument2 = data.memory.machine_stack.top();
+  data.memory.machine_stack.pop();
 
   data.memory.machine_stack.emplace(var_argument1);
   data.memory.machine_stack.emplace(var_argument2);
@@ -175,27 +184,29 @@ std::expected<ExecutionResult, std::runtime_error> Swap(PassedExecutionData& dat
   return ExecutionResult::kNormal;
 }
 
-std::expected<ExecutionResult, std::runtime_error> Rotate(PassedExecutionData& data, uint64_t n) {
-  try {
-    auto top = data.memory.machine_stack.top();
+std::expected<ExecutionResult, std::runtime_error> Rotate(PassedExecutionData& data, int64_t n) {
+  if (n <= 0) {
+    return std::unexpected(std::runtime_error("Rotate: n must be greater than 0"));
+  }
+
+  if (n == 1) {
+    return ExecutionResult::kNormal;
+  }
+
+  if (n > data.memory.machine_stack.size()) {
+    return std::unexpected(std::runtime_error("Rotate: n is greater than the size of the stack"));
+  }
+
+  std::vector<runtime::Variable> temp;
+  temp.reserve(static_cast<size_t>(n));
+
+  for (int64_t i = 0; i < n - 1; ++i) {
+    temp.push_back(data.memory.machine_stack.top());
     data.memory.machine_stack.pop();
+  }
 
-    std::vector<runtime::Variable> temp;
-    temp.reserve(n - 1);
-
-    for (int i = 0; i < n - 1; ++i) {
-      temp.push_back(data.memory.machine_stack.top());
-      data.memory.machine_stack.pop();
-    }
-
-    for (auto it = temp.rbegin(); it != temp.rend(); ++it) {
-      data.memory.machine_stack.emplace(*it);
-    }
-
-    data.memory.machine_stack.emplace(top);
-
-  } catch (const std::exception& e) {
-    return std::unexpected(std::runtime_error("Rotate: not enough elements in stack"));
+  for (auto& it : std::ranges::reverse_view(temp)) {
+    data.memory.machine_stack.emplace(it);
   }
 
   return ExecutionResult::kNormal;
@@ -209,6 +220,7 @@ std::expected<ExecutionResult, std::runtime_error> LoadLocal(PassedExecutionData
 
 std::expected<ExecutionResult, std::runtime_error> SetLocal(PassedExecutionData& data, size_t index) {
   data.memory.stack_frames.top().local_variables[index] = data.memory.machine_stack.top();
+  data.memory.machine_stack.pop();
 
   return ExecutionResult::kNormal;
 }
@@ -221,6 +233,7 @@ std::expected<ExecutionResult, std::runtime_error> LoadStatic(PassedExecutionDat
 
 std::expected<ExecutionResult, std::runtime_error> SetStatic(PassedExecutionData& data, size_t index) {
   data.memory.global_variables[index] = data.memory.machine_stack.top();
+  data.memory.machine_stack.pop();
 
   return ExecutionResult::kNormal;
 }
@@ -234,7 +247,7 @@ std::expected<ExecutionResult, std::runtime_error> IntAdd(PassedExecutionData& d
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first + arguments->second));
+  data.memory.machine_stack.emplace(arguments->first + arguments->second);
 
   return ExecutionResult::kNormal;
 }
@@ -245,7 +258,7 @@ std::expected<ExecutionResult, std::runtime_error> IntSubtract(PassedExecutionDa
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first - arguments->second));
+  data.memory.machine_stack.emplace(arguments->first - arguments->second);
 
   return ExecutionResult::kNormal;
 }
@@ -256,7 +269,7 @@ std::expected<ExecutionResult, std::runtime_error> IntMultiply(PassedExecutionDa
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first * arguments->second));
+  data.memory.machine_stack.emplace(arguments->first * arguments->second);
 
   return ExecutionResult::kNormal;
 }
@@ -271,7 +284,7 @@ std::expected<ExecutionResult, std::runtime_error> IntDivide(PassedExecutionData
     return std::unexpected(std::runtime_error("IntDivide: division by zero"));
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first / arguments->second));
+  data.memory.machine_stack.emplace(arguments->first / arguments->second);
 
   return ExecutionResult::kNormal;
 }
@@ -286,7 +299,7 @@ std::expected<ExecutionResult, std::runtime_error> IntModulo(PassedExecutionData
     return std::unexpected(std::runtime_error("IntModulo: division by zero"));
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first % arguments->second));
+  data.memory.machine_stack.emplace(arguments->first % arguments->second);
 
   return ExecutionResult::kNormal;
 }
@@ -297,7 +310,7 @@ std::expected<ExecutionResult, std::runtime_error> IntNegate(PassedExecutionData
     return std::unexpected(argument.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(-(*argument)));
+  data.memory.machine_stack.emplace(-(*argument));
 
   return ExecutionResult::kNormal;
 }
@@ -308,7 +321,7 @@ std::expected<ExecutionResult, std::runtime_error> IntIncrement(PassedExecutionD
     return std::unexpected(argument.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(*argument + 1));
+  data.memory.machine_stack.emplace(*argument + 1);
 
   return ExecutionResult::kNormal;
 }
@@ -319,7 +332,7 @@ std::expected<ExecutionResult, std::runtime_error> IntDecrement(PassedExecutionD
     return std::unexpected(argument.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(*argument - 1));
+  data.memory.machine_stack.emplace(*argument - 1);
 
   return ExecutionResult::kNormal;
 }
@@ -330,7 +343,7 @@ std::expected<ExecutionResult, std::runtime_error> FloatAdd(PassedExecutionData&
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first + arguments->second));
+  data.memory.machine_stack.emplace(arguments->first + arguments->second);
 
   return ExecutionResult::kNormal;
 }
@@ -341,7 +354,7 @@ std::expected<ExecutionResult, std::runtime_error> FloatSubtract(PassedExecution
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first - arguments->second));
+  data.memory.machine_stack.emplace(arguments->first - arguments->second);
 
   return ExecutionResult::kNormal;
 }
@@ -352,7 +365,7 @@ std::expected<ExecutionResult, std::runtime_error> FloatMultiply(PassedExecution
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first * arguments->second));
+  data.memory.machine_stack.emplace(arguments->first * arguments->second);
 
   return ExecutionResult::kNormal;
 }
@@ -367,7 +380,7 @@ std::expected<ExecutionResult, std::runtime_error> FloatDivide(PassedExecutionDa
     return std::unexpected(std::runtime_error("FloatDivide: division by zero"));
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first / arguments->second));
+  data.memory.machine_stack.emplace(arguments->first / arguments->second);
 
   return ExecutionResult::kNormal;
 }
@@ -378,7 +391,7 @@ std::expected<ExecutionResult, std::runtime_error> FloatNegate(PassedExecutionDa
     return std::unexpected(argument.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(-(*argument)));
+  data.memory.machine_stack.emplace(-(*argument));
 
   return ExecutionResult::kNormal;
 }
@@ -393,7 +406,7 @@ std::expected<ExecutionResult, std::runtime_error> FloatSqrt(PassedExecutionData
     return std::unexpected(std::runtime_error("FloatSqrt: negative argument"));
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(std::sqrt(*argument)));
+  data.memory.machine_stack.emplace(std::sqrt(*argument));
 
   return ExecutionResult::kNormal;
 }
@@ -404,7 +417,7 @@ std::expected<ExecutionResult, std::runtime_error> ByteAdd(PassedExecutionData& 
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<uint8_t>(arguments->first + arguments->second)));
+  data.memory.machine_stack.emplace(static_cast<uint8_t>(arguments->first + arguments->second));
 
   return ExecutionResult::kNormal;
 }
@@ -415,7 +428,7 @@ std::expected<ExecutionResult, std::runtime_error> ByteSubtract(PassedExecutionD
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<uint8_t>(arguments->first - arguments->second)));
+  data.memory.machine_stack.emplace(static_cast<uint8_t>(arguments->first - arguments->second));
 
   return ExecutionResult::kNormal;
 }
@@ -426,7 +439,7 @@ std::expected<ExecutionResult, std::runtime_error> ByteMultiply(PassedExecutionD
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<uint8_t>(arguments->first * arguments->second)));
+  data.memory.machine_stack.emplace(static_cast<uint8_t>(arguments->first * arguments->second));
 
   return ExecutionResult::kNormal;
 }
@@ -441,7 +454,7 @@ std::expected<ExecutionResult, std::runtime_error> ByteDivide(PassedExecutionDat
     return std::unexpected(std::runtime_error("ByteDivide: division by zero"));
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<uint8_t>(arguments->first / arguments->second)));
+  data.memory.machine_stack.emplace(static_cast<uint8_t>(arguments->first / arguments->second));
 
   return ExecutionResult::kNormal;
 }
@@ -456,7 +469,7 @@ std::expected<ExecutionResult, std::runtime_error> ByteModulo(PassedExecutionDat
     return std::unexpected(std::runtime_error("ByteModulo: division by zero"));
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<uint8_t>(arguments->first % arguments->second)));
+  data.memory.machine_stack.emplace(static_cast<uint8_t>(arguments->first % arguments->second));
 
   return ExecutionResult::kNormal;
 }
@@ -467,7 +480,7 @@ std::expected<ExecutionResult, std::runtime_error> ByteNegate(PassedExecutionDat
     return std::unexpected(argument.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<uint8_t>(-(*argument))));
+  data.memory.machine_stack.emplace(static_cast<uint8_t>(-(*argument)));
 
   return ExecutionResult::kNormal;
 }
@@ -478,7 +491,7 @@ std::expected<ExecutionResult, std::runtime_error> ByteIncrement(PassedExecution
     return std::unexpected(argument.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<uint8_t>(*argument + 1)));
+  data.memory.machine_stack.emplace(static_cast<uint8_t>(*argument + 1));
 
   return ExecutionResult::kNormal;
 }
@@ -489,7 +502,7 @@ std::expected<ExecutionResult, std::runtime_error> ByteDecrement(PassedExecution
     return std::unexpected(argument.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<uint8_t>(*argument - 1)));
+  data.memory.machine_stack.emplace(static_cast<uint8_t>(*argument - 1));
 
   return ExecutionResult::kNormal;
 }
@@ -499,7 +512,7 @@ std::expected<ExecutionResult, std::runtime_error> IntEqual(PassedExecutionData&
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first == arguments->second));
+  data.memory.machine_stack.emplace(arguments->first == arguments->second);
   return ExecutionResult::kNormal;
 }
 
@@ -509,7 +522,7 @@ std::expected<ExecutionResult, std::runtime_error> IntNotEqual(PassedExecutionDa
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first != arguments->second));
+  data.memory.machine_stack.emplace(arguments->first != arguments->second);
   return ExecutionResult::kNormal;
 }
 
@@ -519,7 +532,7 @@ std::expected<ExecutionResult, std::runtime_error> IntLessThan(PassedExecutionDa
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first < arguments->second));
+  data.memory.machine_stack.emplace(arguments->first < arguments->second);
   return ExecutionResult::kNormal;
 }
 
@@ -529,7 +542,7 @@ std::expected<ExecutionResult, std::runtime_error> IntLessEqual(PassedExecutionD
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first <= arguments->second));
+  data.memory.machine_stack.emplace(arguments->first <= arguments->second);
   return ExecutionResult::kNormal;
 }
 
@@ -539,7 +552,7 @@ std::expected<ExecutionResult, std::runtime_error> IntGreaterThan(PassedExecutio
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first > arguments->second));
+  data.memory.machine_stack.emplace(arguments->first > arguments->second);
   return ExecutionResult::kNormal;
 }
 
@@ -549,7 +562,7 @@ std::expected<ExecutionResult, std::runtime_error> IntGreaterEqual(PassedExecuti
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first >= arguments->second));
+  data.memory.machine_stack.emplace(arguments->first >= arguments->second);
   return ExecutionResult::kNormal;
 }
 
@@ -559,7 +572,7 @@ std::expected<ExecutionResult, std::runtime_error> FloatEqual(PassedExecutionDat
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first == arguments->second));
+  data.memory.machine_stack.emplace(arguments->first == arguments->second);
   return ExecutionResult::kNormal;
 }
 
@@ -569,7 +582,7 @@ std::expected<ExecutionResult, std::runtime_error> FloatNotEqual(PassedExecution
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first != arguments->second));
+  data.memory.machine_stack.emplace(arguments->first != arguments->second);
   return ExecutionResult::kNormal;
 }
 
@@ -579,7 +592,7 @@ std::expected<ExecutionResult, std::runtime_error> FloatLessThan(PassedExecution
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first < arguments->second));
+  data.memory.machine_stack.emplace(arguments->first < arguments->second);
   return ExecutionResult::kNormal;
 }
 
@@ -589,7 +602,7 @@ std::expected<ExecutionResult, std::runtime_error> FloatLessEqual(PassedExecutio
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first <= arguments->second));
+  data.memory.machine_stack.emplace(arguments->first <= arguments->second);
   return ExecutionResult::kNormal;
 }
 
@@ -599,7 +612,7 @@ std::expected<ExecutionResult, std::runtime_error> FloatGreaterThan(PassedExecut
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first > arguments->second));
+  data.memory.machine_stack.emplace(arguments->first > arguments->second);
   return ExecutionResult::kNormal;
 }
 
@@ -609,7 +622,7 @@ std::expected<ExecutionResult, std::runtime_error> FloatGreaterEqual(PassedExecu
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first >= arguments->second));
+  data.memory.machine_stack.emplace(arguments->first >= arguments->second);
   return ExecutionResult::kNormal;
 }
 
@@ -619,7 +632,7 @@ std::expected<ExecutionResult, std::runtime_error> ByteEqual(PassedExecutionData
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first == arguments->second));
+  data.memory.machine_stack.emplace(arguments->first == arguments->second);
   return ExecutionResult::kNormal;
 }
 
@@ -629,7 +642,7 @@ std::expected<ExecutionResult, std::runtime_error> ByteNotEqual(PassedExecutionD
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first != arguments->second));
+  data.memory.machine_stack.emplace(arguments->first != arguments->second);
   return ExecutionResult::kNormal;
 }
 
@@ -639,7 +652,7 @@ std::expected<ExecutionResult, std::runtime_error> ByteLessThan(PassedExecutionD
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first < arguments->second));
+  data.memory.machine_stack.emplace(arguments->first < arguments->second);
   return ExecutionResult::kNormal;
 }
 
@@ -649,7 +662,7 @@ std::expected<ExecutionResult, std::runtime_error> ByteLessEqual(PassedExecution
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first <= arguments->second));
+  data.memory.machine_stack.emplace(arguments->first <= arguments->second);
   return ExecutionResult::kNormal;
 }
 
@@ -659,7 +672,7 @@ std::expected<ExecutionResult, std::runtime_error> ByteGreaterThan(PassedExecuti
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first > arguments->second));
+  data.memory.machine_stack.emplace(arguments->first > arguments->second);
   return ExecutionResult::kNormal;
 }
 
@@ -669,7 +682,7 @@ std::expected<ExecutionResult, std::runtime_error> ByteGreaterEqual(PassedExecut
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first >= arguments->second));
+  data.memory.machine_stack.emplace(arguments->first >= arguments->second);
   return ExecutionResult::kNormal;
 }
 
@@ -679,7 +692,7 @@ std::expected<ExecutionResult, std::runtime_error> BoolAnd(PassedExecutionData& 
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first && arguments->second));
+  data.memory.machine_stack.emplace(arguments->first && arguments->second);
   return ExecutionResult::kNormal;
 }
 
@@ -689,7 +702,7 @@ std::expected<ExecutionResult, std::runtime_error> BoolOr(PassedExecutionData& d
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first || arguments->second));
+  data.memory.machine_stack.emplace(arguments->first || arguments->second);
   return ExecutionResult::kNormal;
 }
 
@@ -699,7 +712,7 @@ std::expected<ExecutionResult, std::runtime_error> BoolNot(PassedExecutionData& 
     return std::unexpected(argument.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(!(*argument)));
+  data.memory.machine_stack.emplace(!(*argument));
   return ExecutionResult::kNormal;
 }
 
@@ -709,7 +722,7 @@ std::expected<ExecutionResult, std::runtime_error> BoolXor(PassedExecutionData& 
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first != arguments->second));
+  data.memory.machine_stack.emplace(arguments->first != arguments->second);
   return ExecutionResult::kNormal;
 }
 
@@ -719,7 +732,7 @@ std::expected<ExecutionResult, std::runtime_error> IntAnd(PassedExecutionData& d
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first & arguments->second));
+  data.memory.machine_stack.emplace(arguments->first & arguments->second);
   return ExecutionResult::kNormal;
 }
 
@@ -729,7 +742,7 @@ std::expected<ExecutionResult, std::runtime_error> IntOr(PassedExecutionData& da
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first | arguments->second));
+  data.memory.machine_stack.emplace(arguments->first | arguments->second);
   return ExecutionResult::kNormal;
 }
 
@@ -739,7 +752,7 @@ std::expected<ExecutionResult, std::runtime_error> IntXor(PassedExecutionData& d
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first ^ arguments->second));
+  data.memory.machine_stack.emplace(arguments->first ^ arguments->second);
   return ExecutionResult::kNormal;
 }
 
@@ -749,7 +762,7 @@ std::expected<ExecutionResult, std::runtime_error> IntNot(PassedExecutionData& d
     return std::unexpected(argument.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(~(*argument)));
+  data.memory.machine_stack.emplace(~(*argument));
   return ExecutionResult::kNormal;
 }
 
@@ -759,7 +772,7 @@ std::expected<ExecutionResult, std::runtime_error> IntLeftShift(PassedExecutionD
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first << arguments->second));
+  data.memory.machine_stack.emplace(arguments->first << arguments->second);
   return ExecutionResult::kNormal;
 }
 
@@ -769,7 +782,7 @@ std::expected<ExecutionResult, std::runtime_error> IntRightShift(PassedExecution
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(arguments->first >> arguments->second));
+  data.memory.machine_stack.emplace(arguments->first >> arguments->second);
   return ExecutionResult::kNormal;
 }
 
@@ -779,7 +792,7 @@ std::expected<ExecutionResult, std::runtime_error> ByteAnd(PassedExecutionData& 
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<uint8_t>(arguments->first & arguments->second)));
+  data.memory.machine_stack.emplace(static_cast<uint8_t>(arguments->first & arguments->second));
   return ExecutionResult::kNormal;
 }
 
@@ -789,7 +802,7 @@ std::expected<ExecutionResult, std::runtime_error> ByteOr(PassedExecutionData& d
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<uint8_t>(arguments->first | arguments->second)));
+  data.memory.machine_stack.emplace(static_cast<uint8_t>(arguments->first | arguments->second));
   return ExecutionResult::kNormal;
 }
 
@@ -799,7 +812,7 @@ std::expected<ExecutionResult, std::runtime_error> ByteXor(PassedExecutionData& 
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<uint8_t>(arguments->first ^ arguments->second)));
+  data.memory.machine_stack.emplace(static_cast<uint8_t>(arguments->first ^ arguments->second));
   return ExecutionResult::kNormal;
 }
 
@@ -809,7 +822,7 @@ std::expected<ExecutionResult, std::runtime_error> ByteNot(PassedExecutionData& 
     return std::unexpected(argument.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<uint8_t>(~(*argument))));
+  data.memory.machine_stack.emplace(static_cast<uint8_t>(~(*argument)));
   return ExecutionResult::kNormal;
 }
 
@@ -819,7 +832,7 @@ std::expected<ExecutionResult, std::runtime_error> ByteLeftShift(PassedExecution
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<uint8_t>(arguments->first << arguments->second)));
+  data.memory.machine_stack.emplace(static_cast<uint8_t>(arguments->first << arguments->second));
   return ExecutionResult::kNormal;
 }
 
@@ -829,7 +842,7 @@ std::expected<ExecutionResult, std::runtime_error> ByteRightShift(PassedExecutio
     return std::unexpected(arguments.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<uint8_t>(arguments->first >> arguments->second)));
+  data.memory.machine_stack.emplace(static_cast<uint8_t>(arguments->first >> arguments->second));
   return ExecutionResult::kNormal;
 }
 
@@ -843,13 +856,22 @@ std::expected<ExecutionResult, std::runtime_error> StringConcat(PassedExecutionD
   auto* str1_ptr = runtime::GetDataPointer<std::string>(string_obj1);
   void* string_obj2 = arguments.value().second;
   auto* str2_ptr = runtime::GetDataPointer<std::string>(string_obj2);
+  auto push_result = PushString(data, "");
+  if (!push_result) {
+    return std::unexpected(push_result.error());
+  }
 
-  auto res_ptr = new std::string;
+  auto string_obj = data.memory.machine_stack.top();
+  if (!std::holds_alternative<void*>(string_obj)) {
+    return std::unexpected(std::runtime_error("StringConcat: variable on the top of the stack has incorrect type"));
+  }
+
+  auto res_ptr = runtime::GetDataPointer<std::string>(std::get<void*>(string_obj));
 
   res_ptr->append(*str1_ptr);
   res_ptr->append(*str2_ptr);
 
-  return PushString(data, *res_ptr);
+  return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> StringLength(PassedExecutionData& data) {
@@ -861,7 +883,7 @@ std::expected<ExecutionResult, std::runtime_error> StringLength(PassedExecutionD
   void* string_obj1 = argument.value();
   auto* str_ptr = runtime::GetDataPointer<std::string>(string_obj1);
 
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<int64_t>(str_ptr->length())));
+  data.memory.machine_stack.emplace(static_cast<int64_t>(str_ptr->length()));
 
   return ExecutionResult::kNormal;
 }
@@ -874,16 +896,26 @@ std::expected<ExecutionResult, std::runtime_error> StringSubstring(PassedExecuti
 
   auto arguments = TryExtractTwoArguments<int64_t, int64_t>(data, "StringSubstring");
   if (!arguments) {
-    data.memory.machine_stack.emplace(runtime::Variable(argument.value()));
+    data.memory.machine_stack.emplace(argument.value());
     return std::unexpected(arguments.error());
   }
 
   void* string_obj1 = argument.value();
   auto* str_ptr = runtime::GetDataPointer<std::string>(string_obj1);
-  auto res_ptr = new std::string;
+  auto push_result = PushString(data, "");
+  if (!push_result) {
+    return std::unexpected(push_result.error());
+  }
+
+  auto string_obj = data.memory.machine_stack.top();
+  if (!std::holds_alternative<void*>(string_obj)) {
+    return std::unexpected(std::runtime_error("StringConcat: variable on the top of the stack has incorrect type"));
+  }
+
+  auto res_ptr = runtime::GetDataPointer<std::string>(std::get<void*>(string_obj));
   res_ptr->append(str_ptr->substr(arguments.value().first, arguments.value().second));
 
-  return PushString(data, *res_ptr);
+  return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> StringCompare(PassedExecutionData& data) {
@@ -899,7 +931,7 @@ std::expected<ExecutionResult, std::runtime_error> StringCompare(PassedExecution
 
   auto res = std::strcmp(str1_ptr->c_str(), str2_ptr->c_str());
 
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<int64_t>(res)));
+  data.memory.machine_stack.emplace(static_cast<int64_t>(res));
 
   return ExecutionResult::kNormal;
 }
@@ -913,9 +945,9 @@ std::expected<ExecutionResult, std::runtime_error> StringToInt(PassedExecutionDa
   void* string_obj1 = argument.value();
   auto* str_ptr = runtime::GetDataPointer<std::string>(string_obj1);
 
-  auto res = std::stol(*str_ptr);
+  long long res = std::stoll(*str_ptr);
 
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<int64_t>(res)));
+  data.memory.machine_stack.emplace(static_cast<int64_t>(res));
 
   return ExecutionResult::kNormal;
 }
@@ -931,7 +963,7 @@ std::expected<ExecutionResult, std::runtime_error> StringToFloat(PassedExecution
 
   auto res = std::stod(*str_ptr);
 
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<double>(res)));
+  data.memory.machine_stack.emplace(static_cast<double>(res));
 
   return ExecutionResult::kNormal;
 }
@@ -960,7 +992,7 @@ std::expected<ExecutionResult, std::runtime_error> IntToFloat(PassedExecutionDat
     return std::unexpected(argument.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<double>(argument.value())));
+  data.memory.machine_stack.emplace(static_cast<double>(argument.value()));
   return ExecutionResult::kNormal;
 }
 
@@ -970,7 +1002,7 @@ std::expected<ExecutionResult, std::runtime_error> FloatToInt(PassedExecutionDat
     return std::unexpected(argument.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<int64_t>(argument.value())));
+  data.memory.machine_stack.emplace(static_cast<int64_t>(argument.value()));
   return ExecutionResult::kNormal;
 }
 
@@ -980,7 +1012,7 @@ std::expected<ExecutionResult, std::runtime_error> ByteToInt(PassedExecutionData
     return std::unexpected(argument.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<int64_t>(argument.value())));
+  data.memory.machine_stack.emplace(static_cast<int64_t>(argument.value()));
   return ExecutionResult::kNormal;
 }
 
@@ -990,7 +1022,7 @@ std::expected<ExecutionResult, std::runtime_error> CharToByte(PassedExecutionDat
     return std::unexpected(argument.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<uint8_t>(argument.value())));
+  data.memory.machine_stack.emplace(static_cast<uint8_t>(argument.value()));
   return ExecutionResult::kNormal;
 }
 
@@ -1000,7 +1032,7 @@ std::expected<ExecutionResult, std::runtime_error> ByteToChar(PassedExecutionDat
     return std::unexpected(argument.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<char>(argument.value())));
+  data.memory.machine_stack.emplace(static_cast<char>(argument.value()));
   return ExecutionResult::kNormal;
 }
 
@@ -1010,7 +1042,7 @@ std::expected<ExecutionResult, std::runtime_error> BoolToByte(PassedExecutionDat
     return std::unexpected(argument.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<uint8_t>(argument.value())));
+  data.memory.machine_stack.emplace(static_cast<uint8_t>(argument.value()));
   return ExecutionResult::kNormal;
 }
 
@@ -1109,6 +1141,7 @@ std::expected<ExecutionResult, std::runtime_error> SetField(PassedExecutionData&
   }
 
   runtime::Variable argument2 = data.memory.machine_stack.top();
+  data.memory.machine_stack.pop();
 
   auto vtable = data.virtual_table_repository.GetByIndex(
       reinterpret_cast<runtime::ObjectDescriptor*>(argument1.value())->vtable_index);
@@ -1128,9 +1161,17 @@ std::expected<ExecutionResult, std::runtime_error> SetField(PassedExecutionData&
 
 std::expected<ExecutionResult, std::runtime_error> CallConstructor(PassedExecutionData& data,
                                                                    const std::string& constructor_name) {
-  std::stringstream ctor_name_ss(constructor_name);
   std::string class_name;
-  std::getline(ctor_name_ss, class_name, '_');
+  size_t first_underscore = constructor_name.find('_');
+  size_t second_underscore = constructor_name.find('_', first_underscore + 1);
+
+  if (first_underscore != std::string::npos && second_underscore != std::string::npos &&
+      second_underscore > first_underscore + 1) {
+    class_name = constructor_name.substr(first_underscore + 1, second_underscore - first_underscore - 1);
+  } else {
+    class_name = constructor_name;
+  }
+
   auto vtable_idx = data.virtual_table_repository.GetIndexByName(class_name);
 
   if (!vtable_idx) {
@@ -1155,41 +1196,25 @@ std::expected<ExecutionResult, std::runtime_error> CallConstructor(PassedExecuti
     return std::unexpected(ctor.error());
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(obj_ptr.value()));
+  data.memory.machine_stack.emplace(obj_ptr.value());
 
   return ctor.value()->Execute(data);
 }
 
 std::expected<ExecutionResult, std::runtime_error> Unwrap(PassedExecutionData& data) {
-  auto res = Dup(data);
-  if (!res) {
-    return std::unexpected(res.error());
+  auto nullable_result = TryExtractArgument<void*>(data, "Unwrap");
+
+  if (!nullable_result) {
+    return std::unexpected(nullable_result.error());
   }
 
-  res = IsNull(data);
-  if (!res) {
-    data.memory.machine_stack.pop();
-    return std::unexpected(res.error());
-  }
+  auto wrapped = runtime::GetDataPointer<void*>(nullable_result.value());
 
-  auto is_null = TryExtractArgument<bool>(data, "Unwrap");
-  if (!is_null) {
-    return std::unexpected(is_null.error());
-  }
-
-  if (is_null.value()) {
+  if (*wrapped == nullptr) {
     return std::unexpected(std::runtime_error("Unwrap: cannot unwrap null"));
-  } else {
-    auto nullable_result = TryExtractArgument<void*>(data, "Unwrap");
-
-    if (!nullable_result) {
-      return std::unexpected(nullable_result.error());
-    }
-
-    auto result = runtime::GetDataPointer<void*>(nullable_result.value());
-
-    data.memory.machine_stack.emplace(runtime::Variable(*result));
   }
+
+  data.memory.machine_stack.emplace(*wrapped);
 
   return ExecutionResult::kNormal;
 }
@@ -1229,18 +1254,49 @@ std::expected<ExecutionResult, std::runtime_error> SetVTable(PassedExecutionData
 }
 
 std::expected<ExecutionResult, std::runtime_error> SafeCall(PassedExecutionData& data, const std::string& method) {
-  auto argument = TryExtractArgument<void*>(data, "IsNull");
-
-  if (!argument) {
-    return std::unexpected(argument.error());
+  auto nullable_obj = TryExtractArgument<void*>(data, "SafeCall");
+  if (!nullable_obj) {
+    return std::unexpected(nullable_obj.error());
   }
 
-  void* nullable_obj1 = argument.value();
-  auto* nullable_ptr = runtime::GetDataPointer<void*>(nullable_obj1);
+  void* nullable_obj_ptr = nullable_obj.value();
+  auto* nullable_data_ptr = runtime::GetDataPointer<void*>(nullable_obj_ptr);
 
-  if (*nullable_ptr != nullptr) {
-    auto vtable = data.virtual_table_repository.GetByIndex(
-        reinterpret_cast<runtime::ObjectDescriptor*>(nullable_ptr)->vtable_index);
+  if (*nullable_data_ptr == nullptr) {
+    auto function = data.function_repository.GetByName(method);
+    size_t method_arg_count = 0;
+
+    if (function) {
+      size_t arity = function.value()->GetArity();
+
+      if (arity > 0) {
+        size_t method_arg_count = arity - 1; // -1 for this pointer
+      }
+    } else {
+      // Count underscores in method name to get arity - no classname, virtual function
+      size_t underscores_count = std::ranges::count(method.begin(), method.end(), '_');
+      size_t method_arg_count = underscores_count - 2; // -1 for method name, -1 for this pointer
+    }
+
+    for (size_t i = 0; i < method_arg_count && !data.memory.machine_stack.empty(); ++i) {
+      data.memory.machine_stack.pop();
+    }
+
+    data.memory.machine_stack.emplace(nullable_obj_ptr);
+
+    return ExecutionResult::kNormal;
+  }
+
+  void* actual_obj = *nullable_data_ptr;
+  auto function = data.function_repository.GetByName(method);
+  std::expected<ExecutionResult, std::runtime_error> exec_result;
+
+  if (function) {
+    data.memory.machine_stack.emplace(actual_obj);
+    exec_result = function.value()->Execute(data);
+  } else {
+    auto vtable =
+        data.virtual_table_repository.GetByIndex(static_cast<runtime::ObjectDescriptor*>(actual_obj)->vtable_index);
 
     if (!vtable) {
       return std::unexpected(vtable.error());
@@ -1253,172 +1309,108 @@ std::expected<ExecutionResult, std::runtime_error> SafeCall(PassedExecutionData&
     }
 
     const runtime::FunctionId const_function_id = std::move(function_id.value());
-    auto function = data.function_repository.GetById(const_function_id);
+    auto vtable_function = data.function_repository.GetById(const_function_id);
 
-    if (!function) {
-      return std::unexpected(function.error());
+    if (!vtable_function) {
+      return std::unexpected(vtable_function.error());
     }
 
-    auto res_status = function.value()->Execute(data);
-
-    if (!res_status) {
-      return std::unexpected(res_status.error());
-    }
-
-    auto result = TryExtractArgument<void*>(data, "SafeCall");
-
-    if (result) {
-      auto r = PushNull(data);
-      if (!r) {
-        return std::unexpected(r.error());
-      }
-
-      auto* res_nullable_ptr = runtime::GetDataPointer<void*>(nullable_obj1);
-      *res_nullable_ptr = result.value();
-    } else {
-      void* result_ptr = nullptr;
-
-      std::string type_name;
-      if (type_name == "") {
-        auto arg = TryExtractArgument<int64_t>(data, "SafeCall");
-
-        if (arg) {
-          type_name = "Int";
-          result_ptr = &arg.value();
-        }
-      }
-
-      if (type_name == "") {
-        auto arg = TryExtractArgument<double>(data, "SafeCall");
-
-        if (arg) {
-          type_name = "Double";
-          result_ptr = &arg.value();
-        }
-      }
-
-      if (type_name == "") {
-        auto arg = TryExtractArgument<bool>(data, "SafeCall");
-
-        if (arg) {
-          type_name = "Bool";
-          result_ptr = &arg.value();
-        }
-      }
-
-      if (type_name == "") {
-        auto arg = TryExtractArgument<char>(data, "SafeCall");
-
-        if (arg) {
-          type_name = "Char";
-          result_ptr = &arg.value();
-        }
-      }
-
-      if (type_name == "") {
-        auto arg = TryExtractArgument<uint8_t>(data, "SafeCall");
-
-        if (arg) {
-          type_name = "Byte";
-          result_ptr = &arg.value();
-        }
-      }
-
-      if (type_name == "") {
-        return std::unexpected(std::runtime_error("SafeCall: unknown type of return argument"));
-      }
-      auto vtable_result = data.virtual_table_repository.GetByName(type_name);
-      if (!vtable_result.has_value()) {
-        return std::unexpected(std::runtime_error("SafeCall: File vtable not found"));
-      }
-
-      const runtime::VirtualTable* vtable = vtable_result.value();
-      auto vtable_index_result = data.virtual_table_repository.GetIndexByName(type_name);
-      if (!vtable_index_result.has_value()) {
-        return std::unexpected(vtable_index_result.error());
-      }
-
-      auto obj_result = runtime::AllocateObject(
-          *vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository);
-
-      if (!obj_result) {
-        return std::unexpected(obj_result.error());
-      }
-
-      runtime::StackFrame frame;
-      frame.local_variables.resize(2);
-
-      frame.local_variables[0] = obj_result.value();
-      frame.local_variables[1] = runtime::Variable(data.memory.machine_stack.top());
-
-      data.memory.stack_frames.emplace(std::move(frame));
-
-      std::expected<ovum::vm::execution_tree::ExecutionResult, std::runtime_error> constructor_result;
-      if (type_name == "Int") {
-        constructor_result = execution_tree::IntConstructor(data);
-      } else if (type_name == "Byte") {
-        constructor_result = execution_tree::ByteConstructor(data);
-      } else if (type_name == "Float") {
-        constructor_result = execution_tree::FloatConstructor(data);
-      } else if (type_name == "Bool") {
-        constructor_result = execution_tree::BoolConstructor(data);
-      } else if (type_name == "Char") {
-        constructor_result = execution_tree::CharConstructor(data);
-      } else {
-        constructor_result = std::unexpected(std::runtime_error("SafeCall: unknown type of return value"));
-      }
-
-      data.memory.stack_frames.pop();
-
-      if (!constructor_result) {
-        return std::unexpected(constructor_result.error());
-      }
-
-      auto result2 = TryExtractArgument<void*>(data, "SafeCall");
-
-      if (result2) {
-        auto r = PushNull(data);
-        if (!r) {
-          return std::unexpected(r.error());
-        }
-
-        auto* res_nullable_ptr = runtime::GetDataPointer<void*>(nullable_obj1);
-        *res_nullable_ptr = result2.value();
-      } else {
-        return std::unexpected(std::runtime_error("SafeCall: incorrect argument on the stack after convertation"));
-      }
-    }
-  } else {
-    // Do nothing
+    data.memory.machine_stack.emplace(actual_obj);
+    exec_result = vtable_function.value()->Execute(data);
   }
+
+  if (!exec_result) {
+    return std::unexpected(exec_result.error());
+  }
+
+  if (data.memory.machine_stack.empty()) {
+    return ExecutionResult::kNormal;
+  }
+
+  runtime::Variable return_value = data.memory.machine_stack.top();
+
+  if (std::holds_alternative<void*>(return_value)) {
+    data.memory.machine_stack.pop();
+    void* result_obj = std::get<void*>(return_value);
+    auto push_nullable_result = PushNull(data);
+
+    if (!push_nullable_result) {
+      return std::unexpected(push_nullable_result.error());
+    }
+
+    runtime::Variable nullable_result_obj = data.memory.machine_stack.top();
+
+    if (!std::holds_alternative<void*>(nullable_result_obj)) {
+      return std::unexpected(std::runtime_error("SafeCall: nullable result object has incorrect type"));
+    }
+
+    void* nullable_result = std::get<void*>(nullable_result_obj);
+    auto* nullable_result_data = runtime::GetDataPointer<void*>(nullable_result);
+    *nullable_result_data = result_obj;
+
+    return ExecutionResult::kNormal;
+  }
+
+  std::string constructor_name;
+  runtime::Variable fundamental_value = return_value;
+
+  if (std::holds_alternative<int64_t>(fundamental_value)) {
+    constructor_name = "_Int_int";
+  } else if (std::holds_alternative<double>(fundamental_value)) {
+    constructor_name = "_Float_float";
+  } else if (std::holds_alternative<bool>(fundamental_value)) {
+    constructor_name = "_Bool_bool";
+  } else if (std::holds_alternative<char>(fundamental_value)) {
+    constructor_name = "_Char_char";
+  } else if (std::holds_alternative<uint8_t>(fundamental_value)) {
+    constructor_name = "_Byte_byte";
+  } else {
+    return std::unexpected(std::runtime_error("SafeCall: unknown return type"));
+  }
+
+  auto constructor_result = CallConstructor(data, constructor_name);
+
+  if (!constructor_result) {
+    return std::unexpected(constructor_result.error());
+  }
+
+  auto constructed_obj = TryExtractArgument<void*>(data, "SafeCall");
+
+  if (!constructed_obj) {
+    return std::unexpected(std::runtime_error("SafeCall: failed to extract constructed object"));
+  }
+
+  auto push_nullable_result = PushNull(data);
+
+  if (!push_nullable_result) {
+    return std::unexpected(push_nullable_result.error());
+  }
+
+  runtime::Variable nullable_result_obj = data.memory.machine_stack.top();
+
+  if (!std::holds_alternative<void*>(nullable_result_obj)) {
+    return std::unexpected(std::runtime_error("SafeCall: nullable result object has incorrect type"));
+  }
+
+  void* nullable_result = std::get<void*>(nullable_result_obj);
+  auto* nullable_result_data = runtime::GetDataPointer<void*>(nullable_result);
+  *nullable_result_data = constructed_obj.value();
 
   return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> NullCoalesce(PassedExecutionData& data) {
-  auto res = Dup(data);
-  if (!res) {
-    return std::unexpected(res.error());
+  auto tested_result = TryExtractArgument<void*>(data, "NullCoalesce");
+
+  if (!tested_result) {
+    return std::unexpected(tested_result.error());
   }
 
-  res = IsNull(data);
-  if (!res) {
-    data.memory.machine_stack.pop();
-    return std::unexpected(res.error());
-  }
+  auto* tested_result_data = runtime::GetDataPointer<void*>(tested_result.value());
 
-  auto is_null = TryExtractArgument<bool>(data, "NullCoalesce");
-  if (!is_null) {
-    return std::unexpected(is_null.error());
-  }
-
-  if (is_null.value()) {
+  if (*tested_result_data != nullptr) {
     data.memory.machine_stack.pop();
-  } else {
-    auto result = data.memory.machine_stack.top();
-    data.memory.machine_stack.pop();
-    data.memory.machine_stack.pop();
-    data.memory.machine_stack.emplace(result);
+    data.memory.machine_stack.emplace(tested_result.value());
   }
 
   return ExecutionResult::kNormal;
@@ -1434,13 +1426,13 @@ std::expected<ExecutionResult, std::runtime_error> IsNull(PassedExecutionData& d
   void* nullable_obj1 = argument.value();
   auto* nullable_ptr = runtime::GetDataPointer<void*>(nullable_obj1);
 
-  data.memory.machine_stack.emplace(runtime::Variable(*nullable_ptr == nullptr));
+  data.memory.machine_stack.emplace(*nullable_ptr == nullptr);
 
   return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> Print(PassedExecutionData& data) {
-  auto argument = TryExtractArgument<void*>(data, "StringLength");
+  auto argument = TryExtractArgument<void*>(data, "Print");
   if (!argument) {
     return std::unexpected(argument.error());
   }
@@ -1454,7 +1446,7 @@ std::expected<ExecutionResult, std::runtime_error> Print(PassedExecutionData& da
 }
 
 std::expected<ExecutionResult, std::runtime_error> PrintLine(PassedExecutionData& data) {
-  auto argument = TryExtractArgument<void*>(data, "StringLength");
+  auto argument = TryExtractArgument<void*>(data, "PrintLine");
   if (!argument) {
     return std::unexpected(argument.error());
   }
@@ -1462,7 +1454,7 @@ std::expected<ExecutionResult, std::runtime_error> PrintLine(PassedExecutionData
   void* string_obj1 = argument.value();
   auto* str_ptr = runtime::GetDataPointer<std::string>(string_obj1);
 
-  std::cout << *str_ptr << std::endl;
+  std::cout << *str_ptr << '\n';
 
   return ExecutionResult::kNormal;
 }
@@ -1476,7 +1468,7 @@ std::expected<ExecutionResult, std::runtime_error> ReadLine(PassedExecutionData&
 }
 
 std::expected<ExecutionResult, std::runtime_error> ReadChar(PassedExecutionData& data) {
-  char c;
+  char c = '\0';
 
   std::cin >> c;
 
@@ -1484,7 +1476,7 @@ std::expected<ExecutionResult, std::runtime_error> ReadChar(PassedExecutionData&
 }
 
 std::expected<ExecutionResult, std::runtime_error> ReadInt(PassedExecutionData& data) {
-  int64_t i;
+  int64_t i = 0;
 
   std::cin >> i;
 
@@ -1492,7 +1484,7 @@ std::expected<ExecutionResult, std::runtime_error> ReadInt(PassedExecutionData& 
 }
 
 std::expected<ExecutionResult, std::runtime_error> ReadFloat(PassedExecutionData& data) {
-  double d;
+  double d = 0.0;
 
   std::cin >> d;
 
@@ -1503,7 +1495,7 @@ std::expected<ExecutionResult, std::runtime_error> UnixTime(PassedExecutionData&
   auto now = std::chrono::system_clock::now();
   auto timestamp = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
 
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<int64_t>(timestamp)));
+  data.memory.machine_stack.emplace(static_cast<int64_t>(timestamp));
 
   return ExecutionResult::kNormal;
 }
@@ -1512,7 +1504,7 @@ std::expected<ExecutionResult, std::runtime_error> UnixTimeMs(PassedExecutionDat
   auto now = std::chrono::system_clock::now();
   auto timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
 
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<int64_t>(timestamp)));
+  data.memory.machine_stack.emplace(static_cast<int64_t>(timestamp));
 
   return ExecutionResult::kNormal;
 }
@@ -1521,7 +1513,7 @@ std::expected<ExecutionResult, std::runtime_error> UnixTimeNs(PassedExecutionDat
   auto now = std::chrono::system_clock::now();
   auto timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
 
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<int64_t>(timestamp)));
+  data.memory.machine_stack.emplace(static_cast<int64_t>(timestamp));
 
   return ExecutionResult::kNormal;
 }
@@ -1530,7 +1522,7 @@ std::expected<ExecutionResult, std::runtime_error> NanoTime(PassedExecutionData&
   auto now = std::chrono::steady_clock::now();
   auto timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
 
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<int64_t>(timestamp)));
+  data.memory.machine_stack.emplace(static_cast<int64_t>(timestamp));
 
   return ExecutionResult::kNormal;
 }
@@ -1579,7 +1571,7 @@ std::expected<ExecutionResult, std::runtime_error> FormatDateTime(PassedExecutio
 
     new (string_data) std::string(std::move(result_str));
 
-    data.memory.machine_stack.emplace(runtime::Variable(string_obj));
+    data.memory.machine_stack.emplace(string_obj);
     return ExecutionResult::kNormal;
   } catch (const std::exception& e) {
     return std::unexpected(std::runtime_error(std::string("FormatDateTime: ") + e.what()));
@@ -1633,105 +1625,11 @@ std::expected<ExecutionResult, std::runtime_error> ParseDateTime(PassedExecution
     auto* int_data = runtime::GetDataPointer<int64_t>(int_obj);
     *int_data = static_cast<int64_t>(timestamp);
 
-    data.memory.machine_stack.emplace(runtime::Variable(int_obj));
+    data.memory.machine_stack.emplace(int_obj);
     return ExecutionResult::kNormal;
   } catch (const std::exception& e) {
     return std::unexpected(std::runtime_error(std::string("ParseDateTime: ") + e.what()));
   }
-}
-
-std::expected<ExecutionResult, std::runtime_error> OpenFile(PassedExecutionData& data) {
-  auto arguments = TryExtractTwoArguments<void*, void*>(data, "FormatDateTime");
-
-  if (!arguments) {
-    return std::unexpected(arguments.error());
-  }
-
-  auto mode_var = arguments.value().first;
-  auto filename_var = arguments.value().second;
-
-  auto vtable_result = data.virtual_table_repository.GetByName("File");
-  if (!vtable_result.has_value()) {
-    return std::unexpected(std::runtime_error("OpenFile: File vtable not found"));
-  }
-
-  const runtime::VirtualTable* file_vtable = vtable_result.value();
-  auto vtable_index_result = data.virtual_table_repository.GetIndexByName("File");
-  if (!vtable_index_result.has_value()) {
-    return std::unexpected(vtable_index_result.error());
-  }
-
-  auto file_obj_result = runtime::AllocateObject(
-      *file_vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository);
-  if (!file_obj_result.has_value()) {
-    return std::unexpected(file_obj_result.error());
-  }
-
-  void* file_obj = file_obj_result.value();
-
-  {
-    runtime::StackFrame frame;
-    frame.local_variables.resize(1);
-    frame.local_variables[0] = file_obj;
-
-    data.memory.stack_frames.emplace(std::move(frame));
-    auto ctor_result = ovum::vm::execution_tree::FileConstructor(data);
-    data.memory.stack_frames.pop();
-
-    if (!ctor_result) {
-      return std::unexpected(ctor_result.error());
-    }
-  }
-
-  runtime::StackFrame frame;
-  frame.local_variables.resize(3);
-
-  frame.local_variables[0] = file_obj;
-  frame.local_variables[1] = filename_var;
-  frame.local_variables[2] = mode_var;
-
-  data.memory.stack_frames.emplace(std::move(frame));
-
-  auto result = ovum::vm::execution_tree::FileOpen(data);
-
-  data.memory.stack_frames.pop();
-
-  if (!result) {
-    runtime::StackFrame dtor_frame;
-    dtor_frame.local_variables.resize(1);
-    dtor_frame.local_variables[0] = file_obj;
-
-    data.memory.stack_frames.emplace(std::move(dtor_frame));
-    auto dtor_res = ovum::vm::execution_tree::FileDestructor(data);
-    if (!dtor_res) {
-      return std::unexpected(dtor_res.error());
-    }
-    data.memory.stack_frames.pop();
-
-    return std::unexpected(result.error());
-  }
-
-  data.memory.machine_stack.emplace(runtime::Variable(file_obj));
-  return ExecutionResult::kNormal;
-}
-
-std::expected<ExecutionResult, std::runtime_error> CloseFile(PassedExecutionData& data) {
-  auto file_ptr = TryExtractArgument<void*>(data, "CloseFile");
-  if (!file_ptr) {
-    return std::unexpected(file_ptr.error());
-  }
-
-  runtime::StackFrame frame;
-  frame.local_variables.resize(1);
-  frame.local_variables[0] = file_ptr.value();
-
-  data.memory.stack_frames.emplace(std::move(frame));
-
-  auto result = ovum::vm::execution_tree::FileClose(data);
-
-  data.memory.stack_frames.pop();
-
-  return result;
 }
 
 std::expected<ExecutionResult, std::runtime_error> FileExists(PassedExecutionData& data) {
@@ -1744,7 +1642,7 @@ std::expected<ExecutionResult, std::runtime_error> FileExists(PassedExecutionDat
 
   try {
     bool exists = std::filesystem::exists(*filename);
-    data.memory.machine_stack.emplace(runtime::Variable(exists));
+    data.memory.machine_stack.emplace(exists);
     return ExecutionResult::kNormal;
   } catch (const std::exception& e) {
     return std::unexpected(std::runtime_error(std::string("FileExists: ") + e.what()));
@@ -1761,7 +1659,7 @@ std::expected<ExecutionResult, std::runtime_error> DirectoryExists(PassedExecuti
 
   try {
     bool exists = std::filesystem::is_directory(*dirname);
-    data.memory.machine_stack.emplace(runtime::Variable(exists));
+    data.memory.machine_stack.emplace(exists);
     return ExecutionResult::kNormal;
   } catch (const std::exception& e) {
     return std::unexpected(std::runtime_error(std::string("DirectoryExists: ") + e.what()));
@@ -1778,7 +1676,7 @@ std::expected<ExecutionResult, std::runtime_error> CreateDirectory(PassedExecuti
 
   try {
     bool created = std::filesystem::create_directory(*dirname);
-    data.memory.machine_stack.emplace(runtime::Variable(created));
+    data.memory.machine_stack.emplace(created);
     return ExecutionResult::kNormal;
   } catch (const std::exception& e) {
     return std::unexpected(std::runtime_error(std::string("CreateDirectory: ") + e.what()));
@@ -1795,7 +1693,7 @@ std::expected<ExecutionResult, std::runtime_error> DeleteFile(PassedExecutionDat
 
   try {
     bool deleted = std::filesystem::remove(*filename);
-    data.memory.machine_stack.emplace(runtime::Variable(deleted));
+    data.memory.machine_stack.emplace(deleted);
     return ExecutionResult::kNormal;
   } catch (const std::exception& e) {
     return std::unexpected(std::runtime_error(std::string("DeleteFile: ") + e.what()));
@@ -1812,7 +1710,7 @@ std::expected<ExecutionResult, std::runtime_error> DeleteDirectory(PassedExecuti
 
   try {
     bool deleted = std::filesystem::remove_all(*dirname) > 0;
-    data.memory.machine_stack.emplace(runtime::Variable(deleted));
+    data.memory.machine_stack.emplace(deleted);
     return ExecutionResult::kNormal;
   } catch (const std::exception& e) {
     return std::unexpected(std::runtime_error(std::string("DeleteDirectory: ") + e.what()));
@@ -1831,10 +1729,10 @@ std::expected<ExecutionResult, std::runtime_error> MoveFile(PassedExecutionData&
 
   try {
     std::filesystem::rename(*src_ptr, *dest_ptr);
-    data.memory.machine_stack.emplace(runtime::Variable(true));
+    data.memory.machine_stack.emplace(true);
     return ExecutionResult::kNormal;
   } catch (const std::exception& e) {
-    data.memory.machine_stack.emplace(runtime::Variable(false));
+    data.memory.machine_stack.emplace(false);
     return ExecutionResult::kNormal;
   }
 }
@@ -1851,10 +1749,10 @@ std::expected<ExecutionResult, std::runtime_error> CopyFile(PassedExecutionData&
 
   try {
     std::filesystem::copy(*src_ptr, *dest_ptr);
-    data.memory.machine_stack.emplace(runtime::Variable(true));
+    data.memory.machine_stack.emplace(true);
     return ExecutionResult::kNormal;
   } catch (const std::exception& e) {
-    data.memory.machine_stack.emplace(runtime::Variable(false));
+    data.memory.machine_stack.emplace(false);
     return ExecutionResult::kNormal;
   }
 }
@@ -1916,7 +1814,7 @@ std::expected<ExecutionResult, std::runtime_error> ListDirectory(PassedExecution
       vec_data->push_back(string_obj);
     }
 
-    data.memory.machine_stack.emplace(runtime::Variable(string_array_obj));
+    data.memory.machine_stack.emplace(string_array_obj);
     return ExecutionResult::kNormal;
   } catch (const std::exception& e) {
     return std::unexpected(std::runtime_error(std::string("ListDirectory: ") + e.what()));
@@ -1942,10 +1840,10 @@ std::expected<ExecutionResult, std::runtime_error> ChangeDirectory(PassedExecuti
 
   try {
     std::filesystem::current_path(*dirname);
-    data.memory.machine_stack.emplace(runtime::Variable(true));
+    data.memory.machine_stack.emplace(true);
     return ExecutionResult::kNormal;
   } catch (const std::exception& e) {
-    data.memory.machine_stack.emplace(runtime::Variable(false));
+    data.memory.machine_stack.emplace(false);
     return ExecutionResult::kNormal;
   }
 }
@@ -1990,29 +1888,53 @@ std::expected<ExecutionResult, std::runtime_error> GetProcessId(PassedExecutionD
 #else
   auto pid = static_cast<int64_t>(getpid());
 #endif
-  data.memory.machine_stack.emplace(runtime::Variable(pid));
+  data.memory.machine_stack.emplace(pid);
   return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> GetEnvironmentVar(PassedExecutionData& data) {
-  auto name_ptr = TryExtractArgument<void*>(data, "GetEnvironmentVar");
+  auto name_ptr = TryExtractArgument<void*>(data, "GetEnvironmentVariable");
   if (!name_ptr) {
     return std::unexpected(name_ptr.error());
   }
 
   auto name = runtime::GetDataPointer<std::string>(name_ptr.value());
 
-  const char* value = std::getenv(name->c_str());
-  if (value) {
-    return PushString(data, std::string(value));
+  const char* value = std::getenv(name->c_str()); // NOLINT
+  if (!value) {
+    return PushNull(data);
   } else {
-    data.memory.machine_stack.emplace(runtime::Variable(static_cast<void*>(nullptr)));
+    auto null_result = PushNull(data);
+    if (!null_result) {
+      return std::unexpected(null_result.error());
+    }
+
+    auto string_result = PushString(data, std::string(value));
+    if (!string_result) {
+      return std::unexpected(string_result.error());
+    }
+
+    auto string_ptr = TryExtractArgument<void*>(data, "GetEnvironmentVariable");
+    if (!string_ptr) {
+      return std::unexpected(string_ptr.error());
+    }
+
+    runtime::Variable nulable_obj = data.memory.machine_stack.top();
+    if (!std::holds_alternative<void*>(nulable_obj)) {
+      return std::unexpected(
+          std::runtime_error("GetEnvironmentVariable: variable on the top of the stack has incorrect type"));
+    }
+
+    void* nullable_ptr = std::get<void*>(nulable_obj);
+    auto* nullable_value_ptr = runtime::GetDataPointer<void*>(nullable_ptr);
+    *nullable_value_ptr = string_ptr.value();
+
     return ExecutionResult::kNormal;
   }
 }
 
 std::expected<ExecutionResult, std::runtime_error> SetEnvironmentVar(PassedExecutionData& data) {
-  auto arguments = TryExtractTwoArguments<void*, void*>(data, "SetEnvironmentVar");
+  auto arguments = TryExtractTwoArguments<void*, void*>(data, "SetEnvironmentVariable");
 
   if (!arguments) {
     return std::unexpected(arguments.error());
@@ -2027,18 +1949,18 @@ std::expected<ExecutionResult, std::runtime_error> SetEnvironmentVar(PassedExecu
   bool success = setenv(name_ptr->c_str(), value_ptr->c_str(), 1) == 0;
 #endif
 
-  data.memory.machine_stack.emplace(runtime::Variable(success));
+  data.memory.machine_stack.emplace(success);
   return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> Random(PassedExecutionData& data) {
   auto value = runtime_random_engine();
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<int64_t>(value)));
+  data.memory.machine_stack.emplace(static_cast<int64_t>(value));
   return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> RandomRange(PassedExecutionData& data) {
-  auto arguments = TryExtractTwoArguments<int64_t, int64_t>(data, "MoveFile");
+  auto arguments = TryExtractTwoArguments<int64_t, int64_t>(data, "RandomRange");
 
   if (!arguments) {
     return std::unexpected(arguments.error());
@@ -2054,19 +1976,19 @@ std::expected<ExecutionResult, std::runtime_error> RandomRange(PassedExecutionDa
   std::uniform_int_distribution<int64_t> distribution(min, max);
   auto value = distribution(runtime_random_engine);
 
-  data.memory.machine_stack.emplace(runtime::Variable(value));
+  data.memory.machine_stack.emplace(value);
   return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> RandomFloat(PassedExecutionData& data) {
   std::uniform_real_distribution<double> distribution(0.0, 1.0);
   auto value = distribution(runtime_random_engine);
-  data.memory.machine_stack.emplace(runtime::Variable(value));
+  data.memory.machine_stack.emplace(value);
   return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> RandomFloatRange(PassedExecutionData& data) {
-  auto arguments = TryExtractTwoArguments<int64_t, int64_t>(data, "MoveFile");
+  auto arguments = TryExtractTwoArguments<double, double>(data, "RandomFloatRange");
 
   if (!arguments) {
     return std::unexpected(arguments.error());
@@ -2082,7 +2004,7 @@ std::expected<ExecutionResult, std::runtime_error> RandomFloatRange(PassedExecut
   std::uniform_real_distribution<double> distribution(min, max);
   auto value = distribution(runtime_random_engine);
 
-  data.memory.machine_stack.emplace(runtime::Variable(value));
+  data.memory.machine_stack.emplace(value);
   return ExecutionResult::kNormal;
 }
 
@@ -2112,7 +2034,7 @@ std::expected<ExecutionResult, std::runtime_error> GetMemoryUsage(PassedExecutio
 
   // TODO counter for repositoties
 
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<int64_t>(memory_usage)));
+  data.memory.machine_stack.emplace(static_cast<int64_t>(memory_usage));
   return ExecutionResult::kNormal;
 }
 
@@ -2130,7 +2052,7 @@ std::expected<ExecutionResult, std::runtime_error> ForceGarbageCollection(Passed
 
 std::expected<ExecutionResult, std::runtime_error> GetProcessorCount(PassedExecutionData& data) {
   auto count = static_cast<int64_t>(std::thread::hardware_concurrency());
-  data.memory.machine_stack.emplace(runtime::Variable(count));
+  data.memory.machine_stack.emplace(count);
   return ExecutionResult::kNormal;
 }
 
@@ -2178,9 +2100,9 @@ std::expected<ExecutionResult, std::runtime_error> GetArchitecture(PassedExecuti
 }
 
 std::expected<ExecutionResult, std::runtime_error> GetUserName(PassedExecutionData& data) {
-  const char* username = std::getenv("USERNAME");
+  const char* username = std::getenv("USERNAME"); // NOLINT
   if (!username) {
-    username = std::getenv("USER");
+    username = std::getenv("USER"); // NOLINT
   }
   if (!username) {
     username = "Unknown";
@@ -2189,9 +2111,9 @@ std::expected<ExecutionResult, std::runtime_error> GetUserName(PassedExecutionDa
 }
 
 std::expected<ExecutionResult, std::runtime_error> GetHomeDirectory(PassedExecutionData& data) {
-  const char* homedir = std::getenv("HOME");
+  const char* homedir = std::getenv("HOME"); // NOLINT
   if (!homedir) {
-    homedir = std::getenv("USERPROFILE");
+    homedir = std::getenv("USERPROFILE"); // NOLINT
   }
   if (!homedir) {
     homedir = ".";
@@ -2200,65 +2122,31 @@ std::expected<ExecutionResult, std::runtime_error> GetHomeDirectory(PassedExecut
 }
 
 std::expected<ExecutionResult, std::runtime_error> TypeOf(PassedExecutionData& data) {
+  runtime::Variable var = data.memory.machine_stack.top();
+  data.memory.machine_stack.pop();
   std::string type_name;
-  if (type_name == "") {
-    auto arg = TryExtractArgument<int64_t>(data, "TypeOf");
-
-    if (arg) {
-      type_name = "Int";
-    }
-  }
-
-  if (type_name == "") {
-    auto arg = TryExtractArgument<double>(data, "TypeOf");
-
-    if (arg) {
-      type_name = "Double";
-    }
-  }
-
-  if (type_name == "") {
-    auto arg = TryExtractArgument<bool>(data, "TypeOf");
-
-    if (arg) {
-      type_name = "Bool";
-    }
-  }
-
-  if (type_name == "") {
-    auto arg = TryExtractArgument<char>(data, "TypeOf");
-
-    if (arg) {
-      type_name = "Char";
-    }
-  }
-
-  if (type_name == "") {
-    auto arg = TryExtractArgument<uint8_t>(data, "TypeOf");
-
-    if (arg) {
-      type_name = "Byte";
-    }
-  }
-
-  if (type_name == "") {
-    auto arg = TryExtractArgument<void*>(data, "TypeOf");
-
-    if (arg) {
-      if (arg.value() == nullptr) {
-        type_name = "Null";
-      } else {
-        auto vtable = data.virtual_table_repository.GetByIndex(
-            static_cast<ovum::vm::runtime::ObjectDescriptor*>(arg.value())->vtable_index);
-
-        if (!vtable) {
-          return std::unexpected(vtable.error());
-        }
-
-        type_name = vtable.value()->GetName();
-      }
+  if (std::holds_alternative<int64_t>(var)) {
+    type_name = "int";
+  } else if (std::holds_alternative<double>(var)) {
+    type_name = "float";
+  } else if (std::holds_alternative<bool>(var)) {
+    type_name = "bool";
+  } else if (std::holds_alternative<char>(var)) {
+    type_name = "char";
+  } else if (std::holds_alternative<uint8_t>(var)) {
+    type_name = "byte";
+  } else if (std::holds_alternative<void*>(var)) {
+    if (std::get<void*>(var) == nullptr) {
+      type_name = "Null";
     } else {
-      return std::unexpected(arg.error());
+      auto vtable = data.virtual_table_repository.GetByIndex(
+          static_cast<ovum::vm::runtime::ObjectDescriptor*>(std::get<void*>(var))->vtable_index);
+
+      if (!vtable) {
+        return std::unexpected(vtable.error());
+      }
+
+      type_name = vtable.value()->GetName();
     }
   }
 
@@ -2267,40 +2155,49 @@ std::expected<ExecutionResult, std::runtime_error> TypeOf(PassedExecutionData& d
 
 std::expected<ExecutionResult, std::runtime_error> IsType(PassedExecutionData& data, const std::string& type) {
   bool is_type = false;
+  runtime::Variable var = data.memory.machine_stack.top();
+  data.memory.machine_stack.pop();
 
-  if (type == "Int") {
-    is_type = TryExtractArgument<int64_t>(data, "IsType").has_value();
-  } else if (type == "Float") {
-    is_type = TryExtractArgument<double>(data, "IsType").has_value();
-  } else if (type == "Bool") {
-    is_type = TryExtractArgument<double>(data, "IsType").has_value();
-  } else if (type == "Char") {
-    is_type = TryExtractArgument<char>(data, "IsType").has_value();
-  } else if (type == "Byte") {
-    is_type = TryExtractArgument<uint8_t>(data, "IsType").has_value();
-  } else if (type == "Null") {
-    auto arg = TryExtractArgument<void*>(data, "IsType");
-    if (arg) {
-      is_type = arg.value() == nullptr;
-    }
-  } else {
-    auto argument = TryExtractArgument<void*>(data, "IsType");
-
-    if (!argument) {
-      return std::unexpected(argument.error());
-    }
-
+  if (std::holds_alternative<int64_t>(var)) {
+    is_type = type == "int";
+  } else if (std::holds_alternative<double>(var)) {
+    is_type = type == "float";
+  } else if (std::holds_alternative<bool>(var)) {
+    is_type = type == "bool";
+  } else if (std::holds_alternative<char>(var)) {
+    is_type = type == "char";
+  } else if (std::holds_alternative<uint8_t>(var)) {
+    is_type = type == "byte";
+  } else if (std::holds_alternative<void*>(var)) {
     auto vtable = data.virtual_table_repository.GetByIndex(
-        static_cast<ovum::vm::runtime::ObjectDescriptor*>(argument.value())->vtable_index);
+        static_cast<ovum::vm::runtime::ObjectDescriptor*>(std::get<void*>(var))->vtable_index);
 
     if (!vtable) {
       return std::unexpected(vtable.error());
     }
 
-    is_type = vtable.value()->IsType(type);
+    if (vtable.value()->GetName() != "Nullable") {
+      is_type = vtable.value()->GetName() == type;
+    } else {
+      void* wrapped_var_ptr = std::get<void*>(var);
+      auto* wrapped_var_data_ptr = runtime::GetDataPointer<void*>(wrapped_var_ptr);
+
+      if (*wrapped_var_data_ptr == nullptr) {
+        is_type = type == "Null";
+      } else {
+        auto wrapped_var_vtable = data.virtual_table_repository.GetByIndex(
+            static_cast<ovum::vm::runtime::ObjectDescriptor*>(*wrapped_var_data_ptr)->vtable_index);
+
+        if (!wrapped_var_vtable) {
+          return std::unexpected(wrapped_var_vtable.error());
+        }
+
+        is_type = wrapped_var_vtable.value()->GetName() == type;
+      }
+    }
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(is_type));
+  data.memory.machine_stack.emplace(is_type);
 
   return ExecutionResult::kNormal;
 }
@@ -2308,15 +2205,15 @@ std::expected<ExecutionResult, std::runtime_error> IsType(PassedExecutionData& d
 std::expected<ExecutionResult, std::runtime_error> SizeOf(PassedExecutionData& data, const std::string& type) {
   size_t size = 0;
 
-  if (type == "Int") {
+  if (type == "int") {
     size = sizeof(int64_t);
-  } else if (type == "Float") {
+  } else if (type == "float") {
     size = sizeof(double);
-  } else if (type == "Bool") {
+  } else if (type == "bool") {
     size = sizeof(bool);
-  } else if (type == "Byte") {
+  } else if (type == "byte") {
     size = sizeof(uint8_t);
-  } else if (type == "Char") {
+  } else if (type == "char") {
     size = sizeof(char);
   } else {
     auto vtable = data.virtual_table_repository.GetByName(type);
@@ -2328,7 +2225,7 @@ std::expected<ExecutionResult, std::runtime_error> SizeOf(PassedExecutionData& d
     size = vtable.value()->GetSize();
   }
 
-  data.memory.machine_stack.emplace(runtime::Variable(static_cast<int64_t>(size)));
+  data.memory.machine_stack.emplace(static_cast<int64_t>(size));
   return ExecutionResult::kNormal;
 }
 
