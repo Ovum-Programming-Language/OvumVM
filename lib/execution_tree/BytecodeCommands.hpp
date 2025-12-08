@@ -185,10 +185,10 @@ std::expected<ExecutionResult, std::runtime_error> GetArchitecture(PassedExecuti
 std::expected<ExecutionResult, std::runtime_error> GetUserName(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> GetHomeDirectory(PassedExecutionData& data);
 
-std::expected<ExecutionResult, std::runtime_error> GetLastError(PassedExecutionData& data);
-std::expected<ExecutionResult, std::runtime_error> ClearError(PassedExecutionData& data);
+//std::expected<ExecutionResult, std::runtime_error> GetLastError(PassedExecutionData& data);
+//std::expected<ExecutionResult, std::runtime_error> ClearError(PassedExecutionData& data);
 
-std::expected<ExecutionResult, std::runtime_error> Interop(PassedExecutionData& data);
+//std::expected<ExecutionResult, std::runtime_error> Interop(PassedExecutionData& data);
 
 std::expected<ExecutionResult, std::runtime_error> TypeOf(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> IsType(PassedExecutionData& data, const std::string& type);

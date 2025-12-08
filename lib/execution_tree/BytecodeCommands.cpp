@@ -1155,7 +1155,172 @@ std::expected<ExecutionResult, std::runtime_error> SetVTable(PassedExecutionData
   return ExecutionResult::kNormal;
 }
 
-std::expected<ExecutionResult, std::runtime_error> SafeCall(PassedExecutionData& data, const std::string& method);
+std::expected<ExecutionResult, std::runtime_error> SafeCall(PassedExecutionData& data, const std::string& method) {
+  auto argument = TryExtractArgument<void*>(data, "IsNull");
+
+  if (!argument) {
+    return std::unexpected(argument.error());
+  }
+  
+  void* nullable_obj1 = argument.value();
+  auto* nullable_ptr = runtime::GetDataPointer<void*>(nullable_obj1);
+
+  if (*nullable_ptr != nullptr) {
+    auto vtable = data.virtual_table_repository.GetByIndex(reinterpret_cast<runtime::ObjectDescriptor*>(nullable_ptr)->vtable_index);
+
+    if (!vtable) {
+      return std::unexpected(vtable.error());
+    }
+
+    auto function_id = vtable.value()->GetRealFunctionId(method);
+
+    if (!function_id) {
+      return std::unexpected(function_id.error());
+    }
+
+    const runtime::FunctionId const_function_id = std::move(function_id.value());
+    auto function = data.function_repository.GetById(const_function_id);
+
+    if (!function) {
+      return std::unexpected(function.error());
+    }
+
+    auto res_status = function.value()->Execute(data);
+
+    if (!res_status) {
+      return std::unexpected(res_status.error());
+    }
+
+    auto result = TryExtractArgument<void*>(data, "SafeCall");
+
+    if (result) {
+      auto r = PushNull(data);
+      if (!r) {
+        return std::unexpected(r.error());
+      }
+
+      auto* res_nullable_ptr = runtime::GetDataPointer<void*>(nullable_obj1);
+      *res_nullable_ptr = result.value();
+    } else {
+      void* result_ptr = nullptr;
+
+      std::string type_name;
+      if (type_name == "") {
+        auto arg = TryExtractArgument<int64_t>(data, "SafeCall");
+
+        if (arg) {
+          type_name = "Int";
+          result_ptr = &arg.value();
+        }
+      }
+    
+      if (type_name == "") {
+        auto arg = TryExtractArgument<double>(data, "SafeCall");
+
+        if (arg) {
+          type_name = "Double";
+          result_ptr = &arg.value();
+        }
+      }
+
+      if (type_name == "") {
+        auto arg = TryExtractArgument<bool>(data, "SafeCall");
+
+        if (arg) {
+          type_name = "Bool";
+          result_ptr = &arg.value();
+        }
+      }
+
+      if (type_name == "") {
+        auto arg = TryExtractArgument<char>(data, "SafeCall");
+
+        if (arg) {
+          type_name = "Char";
+          result_ptr = &arg.value();
+        }
+      }
+
+      if (type_name == "") {
+        auto arg = TryExtractArgument<uint8_t>(data, "SafeCall");
+
+        if (arg) {
+          type_name = "Byte";
+          result_ptr = &arg.value();
+        }
+      }
+
+      if (type_name == "") {
+        return std::unexpected(std::runtime_error("SafeCall: unknown type of return argument"));
+      }
+      auto vtable_result = data.virtual_table_repository.GetByName(type_name);
+      if (!vtable_result.has_value()) {
+        return std::unexpected(std::runtime_error("SafeCall: File vtable not found"));
+      }
+    
+      const runtime::VirtualTable* vtable = vtable_result.value();
+      auto vtable_index_result = data.virtual_table_repository.GetIndexByName(type_name);
+      if (!vtable_index_result.has_value()) {
+        return std::unexpected(vtable_index_result.error());
+      }
+
+      auto obj_result = runtime::AllocateObject(
+        *vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository);
+
+      if (!obj_result) {
+        return std::unexpected(obj_result.error());
+      }
+          
+      runtime::StackFrame frame;
+      frame.local_variables.resize(2);
+
+      frame.local_variables[0] = obj_result.value();
+      frame.local_variables[1] = runtime::Variable(data.memory.machine_stack.top());
+
+      data.memory.stack_frames.push(std::move(frame));
+
+      std::expected<ovum::vm::execution_tree::ExecutionResult, std::runtime_error> constructor_result;
+      if (type_name == "Int") {
+        constructor_result = execution_tree::IntConstructor(data);
+      } else if (type_name == "Byte") {
+        constructor_result = execution_tree::ByteConstructor(data);
+      } else if (type_name == "Float") {
+        constructor_result = execution_tree::FloatConstructor(data);
+      } else if (type_name == "Bool") {
+        constructor_result = execution_tree::BoolConstructor(data);
+      } else if (type_name == "Char") {
+        constructor_result = execution_tree::CharConstructor(data);
+      } else {
+        constructor_result = std::unexpected(std::runtime_error("SafeCall: unknown type of return value"));
+      }
+
+      data.memory.stack_frames.pop();
+
+      if (!constructor_result) {
+        return std::unexpected(constructor_result.error());
+      }
+
+      auto result2 = TryExtractArgument<void*>(data, "SafeCall");
+
+      if (result2) {
+        auto r = PushNull(data);
+        if (!r) {
+          return std::unexpected(r.error());
+        }
+
+        auto* res_nullable_ptr = runtime::GetDataPointer<void*>(nullable_obj1);
+        *res_nullable_ptr = result2.value();
+      } else {
+        return std::unexpected(std::runtime_error("SafeCall: incorrect argument on the stack after convertation"));
+      }
+    }
+  } else {
+    // Do nothing
+  }
+
+  return ExecutionResult::kNormal;
+}
+
 std::expected<ExecutionResult, std::runtime_error> NullCoalesce(PassedExecutionData& data);
 
 std::expected<ExecutionResult, std::runtime_error> IsNull(PassedExecutionData& data) {
