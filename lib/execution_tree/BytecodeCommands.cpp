@@ -1321,7 +1321,34 @@ std::expected<ExecutionResult, std::runtime_error> SafeCall(PassedExecutionData&
   return ExecutionResult::kNormal;
 }
 
-std::expected<ExecutionResult, std::runtime_error> NullCoalesce(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> NullCoalesce(PassedExecutionData& data) {
+  auto res = Dup(data);
+  if (!res) {
+    return std::unexpected(res.error());
+  }
+
+  res = IsNull(data);
+  if (!res) {
+    data.memory.machine_stack.pop();
+    return std::unexpected(res.error());
+  }
+
+  auto is_null = TryExtractArgument<bool>(data, "NullCoalesce");
+  if (!is_null) {
+    return std::unexpected(is_null.error());
+  }
+
+  if (is_null.value()) {
+    data.memory.machine_stack.pop();
+  } else {
+    auto result = data.memory.machine_stack.top();
+    data.memory.machine_stack.pop();
+    data.memory.machine_stack.pop();
+    data.memory.machine_stack.push(result);
+  }
+  
+  return ExecutionResult::kNormal;
+}
 
 std::expected<ExecutionResult, std::runtime_error> IsNull(PassedExecutionData& data) {
   auto argument = TryExtractArgument<void*>(data, "IsNull");
