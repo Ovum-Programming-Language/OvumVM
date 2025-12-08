@@ -14,7 +14,7 @@
 #include "lib/runtime/ObjectDescriptor.hpp"
 
 #ifdef _WIN32
-#include  <windows.h>
+#include <windows.h>
 #else
 #include <unistd.h>
 #endif
@@ -1702,7 +1702,10 @@ std::expected<ExecutionResult, std::runtime_error> OpenFile(PassedExecutionData&
     dtor_frame.local_variables[0] = file_obj;
 
     data.memory.stack_frames.emplace(std::move(dtor_frame));
-    ovum::vm::execution_tree::FileDestructor(data);
+    auto dtor_res = ovum::vm::execution_tree::FileDestructor(data);
+    if (!dtor_res) {
+      return std::unexpected(dtor_res.error());
+    }
     data.memory.stack_frames.pop();
 
     return std::unexpected(result.error());
@@ -1991,8 +1994,8 @@ std::expected<ExecutionResult, std::runtime_error> GetProcessId(PassedExecutionD
   return ExecutionResult::kNormal;
 }
 
-std::expected<ExecutionResult, std::runtime_error> GetEnvironmentVariable(PassedExecutionData& data) {
-  auto name_ptr = TryExtractArgument<void*>(data, "GetEnvironmentVariable");
+std::expected<ExecutionResult, std::runtime_error> GetEnvironmentVar(PassedExecutionData& data) {
+  auto name_ptr = TryExtractArgument<void*>(data, "GetEnvironmentVar");
   if (!name_ptr) {
     return std::unexpected(name_ptr.error());
   }
@@ -2008,8 +2011,8 @@ std::expected<ExecutionResult, std::runtime_error> GetEnvironmentVariable(Passed
   }
 }
 
-std::expected<ExecutionResult, std::runtime_error> SetEnvironmentVariable(PassedExecutionData& data) {
-  auto arguments = TryExtractTwoArguments<void*, void*>(data, "MoveFile");
+std::expected<ExecutionResult, std::runtime_error> SetEnvironmentVar(PassedExecutionData& data) {
+  auto arguments = TryExtractTwoArguments<void*, void*>(data, "SetEnvironmentVar");
 
   if (!arguments) {
     return std::unexpected(arguments.error());

@@ -163,8 +163,8 @@ std::expected<ExecutionResult, std::runtime_error> SleepMs(PassedExecutionData& 
 std::expected<ExecutionResult, std::runtime_error> SleepNs(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> Exit(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> GetProcessId(PassedExecutionData& data);
-std::expected<ExecutionResult, std::runtime_error> GetEnvironmentVariable(PassedExecutionData& data);
-std::expected<ExecutionResult, std::runtime_error> SetEnvironmentVariable(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> GetEnvironmentVar(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> SetEnvironmentVar(PassedExecutionData& data);
 
 std::expected<ExecutionResult, std::runtime_error> Random(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> RandomRange(PassedExecutionData& data);
