@@ -1667,7 +1667,7 @@ std::expected<ExecutionResult, std::runtime_error> DirectoryExists(PassedExecuti
   }
 }
 
-std::expected<ExecutionResult, std::runtime_error> CreateDirectory(PassedExecutionData& data) {
+std::expected<ExecutionResult, std::runtime_error> CreateDir(PassedExecutionData& data) {
   auto dirname_ptr = TryExtractArgument<void*>(data, "CreateDirectory");
   if (!dirname_ptr) {
     return std::unexpected(dirname_ptr.error());
@@ -1684,7 +1684,7 @@ std::expected<ExecutionResult, std::runtime_error> CreateDirectory(PassedExecuti
   }
 }
 
-std::expected<ExecutionResult, std::runtime_error> DeleteFile(PassedExecutionData& data) {
+std::expected<ExecutionResult, std::runtime_error> DeleteFileByName(PassedExecutionData& data) {
   auto filename_ptr = TryExtractArgument<void*>(data, "DeleteFile");
   if (!filename_ptr) {
     return std::unexpected(filename_ptr.error());
@@ -1701,7 +1701,7 @@ std::expected<ExecutionResult, std::runtime_error> DeleteFile(PassedExecutionDat
   }
 }
 
-std::expected<ExecutionResult, std::runtime_error> DeleteDirectory(PassedExecutionData& data) {
+std::expected<ExecutionResult, std::runtime_error> DeleteDir(PassedExecutionData& data) {
   auto dirname_ptr = TryExtractArgument<void*>(data, "DeleteDirectory");
   if (!dirname_ptr) {
     return std::unexpected(dirname_ptr.error());
@@ -1718,7 +1718,7 @@ std::expected<ExecutionResult, std::runtime_error> DeleteDirectory(PassedExecuti
   }
 }
 
-std::expected<ExecutionResult, std::runtime_error> MoveFile(PassedExecutionData& data) {
+std::expected<ExecutionResult, std::runtime_error> MoveFileByName(PassedExecutionData& data) {
   auto arguments = TryExtractTwoArguments<void*, void*>(data, "MoveFile");
 
   if (!arguments) {
@@ -1738,7 +1738,7 @@ std::expected<ExecutionResult, std::runtime_error> MoveFile(PassedExecutionData&
   }
 }
 
-std::expected<ExecutionResult, std::runtime_error> CopyFile(PassedExecutionData& data) {
+std::expected<ExecutionResult, std::runtime_error> CopyFileByName(PassedExecutionData& data) {
   auto arguments = TryExtractTwoArguments<void*, void*>(data, "CopyFile");
 
   if (!arguments) {
@@ -1758,7 +1758,7 @@ std::expected<ExecutionResult, std::runtime_error> CopyFile(PassedExecutionData&
   }
 }
 
-std::expected<ExecutionResult, std::runtime_error> ListDirectory(PassedExecutionData& data) {
+std::expected<ExecutionResult, std::runtime_error> ListDir(PassedExecutionData& data) {
   auto dirname_ptr = TryExtractArgument<void*>(data, "ListDirectory");
   if (!dirname_ptr) {
     return std::unexpected(dirname_ptr.error());
@@ -1822,7 +1822,7 @@ std::expected<ExecutionResult, std::runtime_error> ListDirectory(PassedExecution
   }
 }
 
-std::expected<ExecutionResult, std::runtime_error> GetCurrentDirectory(PassedExecutionData& data) {
+std::expected<ExecutionResult, std::runtime_error> GetCurrentDir(PassedExecutionData& data) {
   try {
     auto current_dir = std::filesystem::current_path().string();
     return PushString(data, current_dir);
@@ -1831,7 +1831,7 @@ std::expected<ExecutionResult, std::runtime_error> GetCurrentDirectory(PassedExe
   }
 }
 
-std::expected<ExecutionResult, std::runtime_error> ChangeDirectory(PassedExecutionData& data) {
+std::expected<ExecutionResult, std::runtime_error> ChangeDir(PassedExecutionData& data) {
   auto dirname_ptr = TryExtractArgument<void*>(data, "ChangeDirectory");
   if (!dirname_ptr) {
     return std::unexpected(dirname_ptr.error());
@@ -2101,7 +2101,7 @@ std::expected<ExecutionResult, std::runtime_error> GetArchitecture(PassedExecuti
 #endif
 }
 
-std::expected<ExecutionResult, std::runtime_error> GetUserName(PassedExecutionData& data) {
+std::expected<ExecutionResult, std::runtime_error> GetUsername(PassedExecutionData& data) {
   const char* username = std::getenv("USERNAME"); // NOLINT
   if (!username) {
     username = std::getenv("USER"); // NOLINT
@@ -2112,7 +2112,7 @@ std::expected<ExecutionResult, std::runtime_error> GetUserName(PassedExecutionDa
   return PushString(data, std::string(username));
 }
 
-std::expected<ExecutionResult, std::runtime_error> GetHomeDirectory(PassedExecutionData& data) {
+std::expected<ExecutionResult, std::runtime_error> GetHomeDir(PassedExecutionData& data) {
   const char* homedir = std::getenv("HOME"); // NOLINT
   if (!homedir) {
     homedir = std::getenv("USERPROFILE"); // NOLINT

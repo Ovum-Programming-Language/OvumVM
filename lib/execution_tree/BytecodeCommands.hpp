@@ -142,14 +142,14 @@ std::expected<ExecutionResult, std::runtime_error> ParseDateTime(PassedExecution
 
 std::expected<ExecutionResult, std::runtime_error> FileExists(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> DirectoryExists(PassedExecutionData& data);
-std::expected<ExecutionResult, std::runtime_error> CreateDirectory(PassedExecutionData& data);
-std::expected<ExecutionResult, std::runtime_error> DeleteFile(PassedExecutionData& data);
-std::expected<ExecutionResult, std::runtime_error> DeleteDirectory(PassedExecutionData& data);
-std::expected<ExecutionResult, std::runtime_error> MoveFile(PassedExecutionData& data);
-std::expected<ExecutionResult, std::runtime_error> CopyFile(PassedExecutionData& data);
-std::expected<ExecutionResult, std::runtime_error> ListDirectory(PassedExecutionData& data);
-std::expected<ExecutionResult, std::runtime_error> GetCurrentDirectory(PassedExecutionData& data);
-std::expected<ExecutionResult, std::runtime_error> ChangeDirectory(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> CreateDir(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> DeleteFileByName(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> DeleteDir(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> MoveFileByName(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> CopyFileByName(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> ListDir(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> GetCurrentDir(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> ChangeDir(PassedExecutionData& data);
 
 std::expected<ExecutionResult, std::runtime_error> SleepMs(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> SleepNs(PassedExecutionData& data);
@@ -172,8 +172,8 @@ std::expected<ExecutionResult, std::runtime_error> GetProcessorCount(PassedExecu
 std::expected<ExecutionResult, std::runtime_error> GetOsName(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> GetOsVersion(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> GetArchitecture(PassedExecutionData& data);
-std::expected<ExecutionResult, std::runtime_error> GetUserName(PassedExecutionData& data);
-std::expected<ExecutionResult, std::runtime_error> GetHomeDirectory(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> GetUsername(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> GetHomeDir(PassedExecutionData& data);
 
 std::expected<ExecutionResult, std::runtime_error> TypeOf(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> IsType(PassedExecutionData& data, const std::string& type);

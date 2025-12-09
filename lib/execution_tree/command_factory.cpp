@@ -31,7 +31,7 @@ std::unique_ptr<IExecutable> CreateCommandWithArg(Func func, Arg arg) {
 
 // Hashmaps for command lookup
 const std::unordered_map<std::string, SimpleCommandFunc>& GetSimpleCommands() {
-  static const std::unordered_map<std::string, SimpleCommandFunc> map = {
+  static const std::unordered_map<std::string, SimpleCommandFunc> kMap = {
       // Stack operations
       {"Pop", bytecode::Pop},
       {"Dup", bytecode::Dup},
@@ -152,14 +152,14 @@ const std::unordered_map<std::string, SimpleCommandFunc>& GetSimpleCommands() {
       // File system operations
       {"FileExists", bytecode::FileExists},
       {"DirectoryExists", bytecode::DirectoryExists},
-      {"CreateDirectory", bytecode::CreateDirectory},
-      {"DeleteFile", bytecode::DeleteFile},
-      {"DeleteDirectory", bytecode::DeleteDirectory},
-      {"MoveFile", bytecode::MoveFile},
-      {"CopyFile", bytecode::CopyFile},
-      {"ListDirectory", bytecode::ListDirectory},
-      {"GetCurrentDirectory", bytecode::GetCurrentDirectory},
-      {"ChangeDirectory", bytecode::ChangeDirectory},
+      {"CreateDirectory", bytecode::CreateDir},
+      {"DeleteFile", bytecode::DeleteFileByName},
+      {"DeleteDirectory", bytecode::DeleteDir},
+      {"MoveFile", bytecode::MoveFileByName},
+      {"CopyFile", bytecode::CopyFileByName},
+      {"ListDirectory", bytecode::ListDir},
+      {"GetCurrentDirectory", bytecode::GetCurrentDir},
+      {"ChangeDirectory", bytecode::ChangeDir},
 
       // System operations
       {"SleepMs", bytecode::SleepMs},
@@ -186,17 +186,17 @@ const std::unordered_map<std::string, SimpleCommandFunc>& GetSimpleCommands() {
       {"GetOsName", bytecode::GetOsName},
       {"GetOsVersion", bytecode::GetOsVersion},
       {"GetArchitecture", bytecode::GetArchitecture},
-      {"GetUserName", bytecode::GetUserName},
-      {"GetHomeDirectory", bytecode::GetHomeDirectory},
+      {"GetUserName", bytecode::GetUsername},
+      {"GetHomeDirectory", bytecode::GetHomeDir},
 
       // Type operations
       {"TypeOf", bytecode::TypeOf},
   };
-  return map;
+  return kMap;
 }
 
 const std::unordered_map<std::string, StringCommandFunc>& GetStringCommands() {
-  static const std::unordered_map<std::string, StringCommandFunc> map = {
+  static const std::unordered_map<std::string, StringCommandFunc> kMap = {
       {"PushString", bytecode::PushString},
       {"Call", bytecode::Call},
       {"CallVirtual", bytecode::CallVirtual},
@@ -207,11 +207,11 @@ const std::unordered_map<std::string, StringCommandFunc>& GetStringCommands() {
       {"IsType", bytecode::IsType},
       {"SizeOf", bytecode::SizeOf},
   };
-  return map;
+  return kMap;
 }
 
 const std::unordered_map<std::string, IntegerCommandFunc>& GetIntegerCommands() {
-  static const std::unordered_map<std::string, IntegerCommandFunc> map = {
+  static const std::unordered_map<std::string, IntegerCommandFunc> kMap = {
       {"PushInt", bytecode::PushInt},
       {"Rotate", bytecode::Rotate},
       {"LoadLocal",
@@ -227,61 +227,59 @@ const std::unordered_map<std::string, IntegerCommandFunc>& GetIntegerCommands() 
       {"SetField",
        [](PassedExecutionData& data, int64_t value) { return bytecode::SetField(data, static_cast<size_t>(value)); }},
   };
-  return map;
+  return kMap;
 }
 
 const std::unordered_map<std::string, FloatCommandFunc>& GetFloatCommands() {
-  static const std::unordered_map<std::string, FloatCommandFunc> map = {
+  static const std::unordered_map<std::string, FloatCommandFunc> kMap = {
       {"PushFloat", bytecode::PushFloat},
   };
-  return map;
+  return kMap;
 }
 
 const std::unordered_map<std::string, BooleanCommandFunc>& GetBooleanCommands() {
-  static const std::unordered_map<std::string, BooleanCommandFunc> map = {
+  static const std::unordered_map<std::string, BooleanCommandFunc> kMap = {
       {"PushBool", bytecode::PushBool},
   };
-  return map;
+  return kMap;
 }
 
 // Special commands that need type conversion
 const std::unordered_map<std::string, IntegerCommandFunc>& GetCharCommands() {
-  static const std::unordered_map<std::string, IntegerCommandFunc> map = {
+  static const std::unordered_map<std::string, IntegerCommandFunc> kMap = {
       {"PushChar",
        [](PassedExecutionData& data, int64_t value) { return bytecode::PushChar(data, static_cast<char>(value)); }},
   };
-  return map;
+  return kMap;
 }
 
 const std::unordered_map<std::string, IntegerCommandFunc>& GetByteCommands() {
-  static const std::unordered_map<std::string, IntegerCommandFunc> map = {
+  static const std::unordered_map<std::string, IntegerCommandFunc> kMap = {
       {"PushByte",
        [](PassedExecutionData& data, int64_t value) { return bytecode::PushByte(data, static_cast<uint8_t>(value)); }},
   };
-  return map;
+  return kMap;
 }
 
 } // namespace
 
 std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateSimpleCommandByName(const std::string& name) {
   const auto& map = GetSimpleCommands();
-  auto it = map.find(name);
-  if (it == map.end()) {
+  try {
+    return std::make_unique<Command<SimpleCommandFunc>>(map.at(name));
+  } catch (const std::out_of_range&) {
     return std::unexpected(std::out_of_range("Command not found: " + name));
   }
-
-  return std::make_unique<Command<SimpleCommandFunc>>(it->second);
 }
 
 std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateStringCommandByName(const std::string& name,
                                                                                          const std::string& value) {
   const auto& map = GetStringCommands();
-  auto it = map.find(name);
-  if (it == map.end()) {
+  try {
+    return CreateCommandWithArg(map.at(name), value);
+  } catch (const std::out_of_range&) {
     return std::unexpected(std::out_of_range("Command not found: " + name));
   }
-
-  return CreateCommandWithArg(it->second, value);
 }
 
 std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateIntegerCommandByName(const std::string& name,
@@ -289,27 +287,30 @@ std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateIntegerComm
   // Check in regular integer commands first
   {
     const auto& map = GetIntegerCommands();
-    auto it = map.find(name);
-    if (it != map.end()) {
-      return CreateCommandWithArg(it->second, value);
+    try {
+      return CreateCommandWithArg(map.at(name), value);
+    } catch (const std::out_of_range&) {
+      // Continue to next map
     }
   }
 
   // Check in char commands
   {
     const auto& map = GetCharCommands();
-    auto it = map.find(name);
-    if (it != map.end()) {
-      return CreateCommandWithArg(it->second, value);
+    try {
+      return CreateCommandWithArg(map.at(name), value);
+    } catch (const std::out_of_range&) {
+      // Continue to next map
     }
   }
 
   // Check in byte commands
   {
     const auto& map = GetByteCommands();
-    auto it = map.find(name);
-    if (it != map.end()) {
-      return CreateCommandWithArg(it->second, value);
+    try {
+      return CreateCommandWithArg(map.at(name), value);
+    } catch (const std::out_of_range&) {
+      // Continue to next map
     }
   }
 
@@ -319,23 +320,21 @@ std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateIntegerComm
 std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateFloatCommandByName(const std::string& name,
                                                                                         const double value) {
   const auto& map = GetFloatCommands();
-  auto it = map.find(name);
-  if (it == map.end()) {
+  try {
+    return CreateCommandWithArg(map.at(name), value);
+  } catch (const std::out_of_range&) {
     return std::unexpected(std::out_of_range("Command not found: " + name));
   }
-
-  return CreateCommandWithArg(it->second, value);
 }
 
 std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateBooleanCommandByName(const std::string& name,
                                                                                           const bool value) {
   const auto& map = GetBooleanCommands();
-  auto it = map.find(name);
-  if (it == map.end()) {
+  try {
+    return CreateCommandWithArg(map.at(name), value);
+  } catch (const std::out_of_range&) {
     return std::unexpected(std::out_of_range("Command not found: " + name));
   }
-
-  return CreateCommandWithArg(it->second, value);
 }
 
 } // namespace ovum::vm::execution_tree
