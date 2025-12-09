@@ -24,7 +24,7 @@ using BooleanCommandFunc =
 
 // Helper function to create a command with captured argument
 template<typename Func, typename Arg>
-std::unique_ptr<IExecutable> CreateCommandWithArg(Func func, Arg arg) {
+std::unique_ptr<IExecutable> CreateCommandWithArg(const Func& func, const Arg& arg) {
   auto wrapped_func = [func, arg](PassedExecutionData& data) { return func(data, arg); };
   return std::make_unique<Command<decltype(wrapped_func)>>(std::move(wrapped_func));
 }
@@ -284,42 +284,31 @@ std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateStringComma
 
 std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateIntegerCommandByName(const std::string& name,
                                                                                           const int64_t value) {
-  // Check in regular integer commands first
-  {
-    const auto& map = GetIntegerCommands();
-    try {
-      return CreateCommandWithArg(map.at(name), value);
-    } catch (const std::out_of_range&) {
-      // Continue to next map
-    }
-  }
+  const auto& map = GetIntegerCommands();
 
-  // Check in char commands
-  {
+  try {
+    return CreateCommandWithArg(map.at(name), value);
+  } catch (const std::out_of_range&) {
     const auto& map = GetCharCommands();
+
     try {
-      return CreateCommandWithArg(map.at(name), value);
+      return CreateCommandWithArg(map.at(name), static_cast<char>(value));
     } catch (const std::out_of_range&) {
-      // Continue to next map
+      const auto& map = GetByteCommands();
+
+      try {
+        return CreateCommandWithArg(map.at(name), static_cast<uint8_t>(value));
+      } catch (const std::out_of_range&) {
+        return std::unexpected(std::out_of_range("Command not found: " + name));
+      }
     }
   }
-
-  // Check in byte commands
-  {
-    const auto& map = GetByteCommands();
-    try {
-      return CreateCommandWithArg(map.at(name), value);
-    } catch (const std::out_of_range&) {
-      // Continue to next map
-    }
-  }
-
-  return std::unexpected(std::out_of_range("Command not found: " + name));
 }
 
 std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateFloatCommandByName(const std::string& name,
                                                                                         const double value) {
   const auto& map = GetFloatCommands();
+
   try {
     return CreateCommandWithArg(map.at(name), value);
   } catch (const std::out_of_range&) {
@@ -330,6 +319,7 @@ std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateFloatComman
 std::expected<std::unique_ptr<IExecutable>, std::out_of_range> CreateBooleanCommandByName(const std::string& name,
                                                                                           const bool value) {
   const auto& map = GetBooleanCommands();
+
   try {
     return CreateCommandWithArg(map.at(name), value);
   } catch (const std::out_of_range&) {
