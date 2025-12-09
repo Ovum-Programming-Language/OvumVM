@@ -16,6 +16,13 @@
 
 namespace ovum::vm::execution_tree {
 
+// Helper to check if two objects have the same type (same vtable_index)
+inline bool AreSameType(void* obj1_ptr, void* obj2_ptr) {
+  const auto* desc1 = reinterpret_cast<const runtime::ObjectDescriptor*>(obj1_ptr);
+  const auto* desc2 = reinterpret_cast<const runtime::ObjectDescriptor*>(obj2_ptr);
+  return desc1->vtable_index == desc2->vtable_index;
+}
+
 // Template helper for fundamental type constructors (object already allocated, just initialize)
 // Arguments: object (this) is first, value is second
 template<typename T>
@@ -75,6 +82,13 @@ std::expected<ExecutionResult, std::runtime_error> FundamentalTypeEquals(PassedE
 
   void* obj1_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
   void* obj2_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
+
+  // Check if types match - if not, return false
+  if (!AreSameType(obj1_ptr, obj2_ptr)) {
+    data.memory.machine_stack.emplace(false);
+    return ExecutionResult::kNormal;
+  }
+
   const T* value1 = runtime::GetDataPointer<const T>(obj1_ptr);
   const T* value2 = runtime::GetDataPointer<const T>(obj2_ptr);
   bool equals = (*value1 == *value2);
@@ -94,6 +108,12 @@ std::expected<ExecutionResult, std::runtime_error> FundamentalTypeIsLess(PassedE
 
   void* obj1_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
   void* obj2_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
+
+  // Check if types match - if not, return false
+  if (!AreSameType(obj1_ptr, obj2_ptr)) {
+    data.memory.machine_stack.emplace(false);
+    return ExecutionResult::kNormal;
+  }
 
   const T* value1 = runtime::GetDataPointer<const T>(obj1_ptr);
   const T* value2 = runtime::GetDataPointer<const T>(obj2_ptr);
@@ -253,6 +273,13 @@ std::expected<ExecutionResult, std::runtime_error> ArrayEquals(PassedExecutionDa
 
   void* obj1_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
   void* obj2_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
+
+  // Check if types match - if not, return false
+  if (!AreSameType(obj1_ptr, obj2_ptr)) {
+    data.memory.machine_stack.emplace(false);
+    return ExecutionResult::kNormal;
+  }
+
   const auto* vec1 = runtime::GetDataPointer<const std::vector<T>>(obj1_ptr);
   const auto* vec2 = runtime::GetDataPointer<const std::vector<T>>(obj2_ptr);
   bool equals = (*vec1 == *vec2);
@@ -272,6 +299,13 @@ std::expected<ExecutionResult, std::runtime_error> ArrayIsLess(PassedExecutionDa
 
   void* obj1_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
   void* obj2_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
+
+  // Check if types match - if not, return false
+  if (!AreSameType(obj1_ptr, obj2_ptr)) {
+    data.memory.machine_stack.emplace(false);
+    return ExecutionResult::kNormal;
+  }
+
   const auto* vec1 = runtime::GetDataPointer<const std::vector<T>>(obj1_ptr);
   const auto* vec2 = runtime::GetDataPointer<const std::vector<T>>(obj2_ptr);
   bool is_less = (*vec1 < *vec2);
@@ -514,6 +548,119 @@ std::expected<ExecutionResult, std::runtime_error> ArrayInsertAt<void*>(PassedEx
   return ExecutionResult::kNormal;
 }
 
+// Template helper for array SetAt
+// Arguments: object is first, index is second, value is third
+// Uses circular indexing: index wraps around array size
+template<typename T>
+std::expected<ExecutionResult, std::runtime_error> ArraySetAt(PassedExecutionData& data) {
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<int64_t>(data.memory.stack_frames.top().local_variables[1]) ||
+      !std::holds_alternative<T>(data.memory.stack_frames.top().local_variables[2])) {
+    return std::unexpected(std::runtime_error("ArraySetAt: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  int64_t index = std::get<int64_t>(data.memory.stack_frames.top().local_variables[1]);
+  T value = std::get<T>(data.memory.stack_frames.top().local_variables[2]);
+  auto* vec = runtime::GetDataPointer<std::vector<T>>(obj_ptr);
+
+  if (vec->empty()) {
+    return std::unexpected(std::runtime_error("ArraySetAt: cannot set in empty array"));
+  }
+
+  // Circular indexing: wrap index to valid range
+  size_t size = vec->size();
+  size_t circular_index = ((static_cast<int64_t>(index % static_cast<int64_t>(size)) + static_cast<int64_t>(size)) %
+                           static_cast<int64_t>(size));
+
+  (*vec)[circular_index] = value;
+
+  return ExecutionResult::kNormal;
+}
+
+// Specialization for ObjectArray/StringArray/PointerArray (value is void*)
+template<>
+std::expected<ExecutionResult, std::runtime_error> ArraySetAt<void*>(PassedExecutionData& data) {
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<int64_t>(data.memory.stack_frames.top().local_variables[1]) ||
+      !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[2])) {
+    return std::unexpected(std::runtime_error("ArraySetAt: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  int64_t index = std::get<int64_t>(data.memory.stack_frames.top().local_variables[1]);
+  void* value = std::get<void*>(data.memory.stack_frames.top().local_variables[2]);
+  auto* vec = runtime::GetDataPointer<std::vector<void*>>(obj_ptr);
+
+  if (vec->empty()) {
+    return std::unexpected(std::runtime_error("ArraySetAt: cannot set in empty array"));
+  }
+
+  // Circular indexing: wrap index to valid range
+  size_t size = vec->size();
+  size_t circular_index = ((static_cast<int64_t>(index % static_cast<int64_t>(size)) + static_cast<int64_t>(size)) %
+                           static_cast<int64_t>(size));
+
+  (*vec)[circular_index] = value;
+  return ExecutionResult::kNormal;
+}
+
+// Template helper for array GetAt
+// Arguments: object is first, index is second
+// Uses circular indexing: index wraps around array size
+template<typename T>
+std::expected<ExecutionResult, std::runtime_error> ArrayGetAt(PassedExecutionData& data) {
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<int64_t>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("ArrayGetAt: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  int64_t index = std::get<int64_t>(data.memory.stack_frames.top().local_variables[1]);
+  const auto* vec = runtime::GetDataPointer<const std::vector<T>>(obj_ptr);
+
+  if (vec->empty()) {
+    return std::unexpected(std::runtime_error("ArrayGetAt: cannot get from empty array"));
+  }
+
+  // Circular indexing: wrap index to valid range
+  size_t size = vec->size();
+  size_t circular_index = ((static_cast<int64_t>(index % static_cast<int64_t>(size)) + static_cast<int64_t>(size)) %
+                           static_cast<int64_t>(size));
+
+  T value = (*vec)[circular_index];
+  data.memory.machine_stack.emplace(value);
+
+  return ExecutionResult::kNormal;
+}
+
+// Specialization for ObjectArray/StringArray/PointerArray (returns void*)
+template<>
+std::expected<ExecutionResult, std::runtime_error> ArrayGetAt<void*>(PassedExecutionData& data) {
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<int64_t>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("ArrayGetAt: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  int64_t index = std::get<int64_t>(data.memory.stack_frames.top().local_variables[1]);
+  const auto* vec = runtime::GetDataPointer<const std::vector<void*>>(obj_ptr);
+
+  if (vec->empty()) {
+    return std::unexpected(std::runtime_error("ArrayGetAt: cannot get from empty array"));
+  }
+
+  // Circular indexing: wrap index to valid range
+  size_t size = vec->size();
+  size_t circular_index = ((static_cast<int64_t>(index % static_cast<int64_t>(size)) + static_cast<int64_t>(size)) %
+                           static_cast<int64_t>(size));
+
+  void* value = (*vec)[circular_index];
+  data.memory.machine_stack.emplace(value);
+
+  return ExecutionResult::kNormal;
+}
+
 } // namespace ovum::vm::execution_tree
 
 namespace ovum::vm::execution_tree {
@@ -673,10 +820,32 @@ std::expected<ExecutionResult, std::runtime_error> BoolIsLess(PassedExecutionDat
 
   void* obj1_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
   void* obj2_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
+
+  // Check if types match - if not, return false
+  if (!AreSameType(obj1_ptr, obj2_ptr)) {
+    data.memory.machine_stack.emplace(false);
+    return ExecutionResult::kNormal;
+  }
+
   const bool* value1 = runtime::GetDataPointer<const bool>(obj1_ptr);
   const bool* value2 = runtime::GetDataPointer<const bool>(obj2_ptr);
   bool is_less = (!*value1 && *value2); // false < true
   data.memory.machine_stack.emplace(is_less);
+
+  return ExecutionResult::kNormal;
+}
+
+std::expected<ExecutionResult, std::runtime_error> NullableConstructor(PassedExecutionData& data) {
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("Nullable::Constructor: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  void* value_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
+  auto* nullable_data = runtime::GetDataPointer<void*>(obj_ptr);
+  *nullable_data = value_ptr;
+  data.memory.machine_stack.emplace(obj_ptr);
 
   return ExecutionResult::kNormal;
 }
@@ -835,6 +1004,14 @@ std::expected<ExecutionResult, std::runtime_error> IntArrayInsertAt(PassedExecut
   return ArrayInsertAt<int64_t>(data);
 }
 
+std::expected<ExecutionResult, std::runtime_error> IntArraySetAt(PassedExecutionData& data) {
+  return ArraySetAt<int64_t>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> IntArrayGetAt(PassedExecutionData& data) {
+  return ArrayGetAt<int64_t>(data);
+}
+
 std::expected<ExecutionResult, std::runtime_error> FloatArrayLength(PassedExecutionData& data) {
   return ArrayLength<double>(data);
 }
@@ -869,6 +1046,14 @@ std::expected<ExecutionResult, std::runtime_error> FloatArrayRemoveAt(PassedExec
 
 std::expected<ExecutionResult, std::runtime_error> FloatArrayInsertAt(PassedExecutionData& data) {
   return ArrayInsertAt<double>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> FloatArraySetAt(PassedExecutionData& data) {
+  return ArraySetAt<double>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> FloatArrayGetAt(PassedExecutionData& data) {
+  return ArrayGetAt<double>(data);
 }
 
 std::expected<ExecutionResult, std::runtime_error> CharArrayLength(PassedExecutionData& data) {
@@ -907,6 +1092,14 @@ std::expected<ExecutionResult, std::runtime_error> CharArrayInsertAt(PassedExecu
   return ArrayInsertAt<char>(data);
 }
 
+std::expected<ExecutionResult, std::runtime_error> CharArraySetAt(PassedExecutionData& data) {
+  return ArraySetAt<char>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> CharArrayGetAt(PassedExecutionData& data) {
+  return ArrayGetAt<char>(data);
+}
+
 std::expected<ExecutionResult, std::runtime_error> ByteArrayLength(PassedExecutionData& data) {
   return ArrayLength<uint8_t>(data);
 }
@@ -941,6 +1134,14 @@ std::expected<ExecutionResult, std::runtime_error> ByteArrayRemoveAt(PassedExecu
 
 std::expected<ExecutionResult, std::runtime_error> ByteArrayInsertAt(PassedExecutionData& data) {
   return ArrayInsertAt<uint8_t>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> ByteArraySetAt(PassedExecutionData& data) {
+  return ArraySetAt<uint8_t>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> ByteArrayGetAt(PassedExecutionData& data) {
+  return ArrayGetAt<uint8_t>(data);
 }
 
 std::expected<ExecutionResult, std::runtime_error> BoolArrayLength(PassedExecutionData& data) {
@@ -979,6 +1180,14 @@ std::expected<ExecutionResult, std::runtime_error> BoolArrayInsertAt(PassedExecu
   return ArrayInsertAt<bool>(data);
 }
 
+std::expected<ExecutionResult, std::runtime_error> BoolArraySetAt(PassedExecutionData& data) {
+  return ArraySetAt<bool>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> BoolArrayGetAt(PassedExecutionData& data) {
+  return ArrayGetAt<bool>(data);
+}
+
 std::expected<ExecutionResult, std::runtime_error> ObjectArrayLength(PassedExecutionData& data) {
   return ArrayLength<void*>(data);
 }
@@ -1015,6 +1224,14 @@ std::expected<ExecutionResult, std::runtime_error> ObjectArrayInsertAt(PassedExe
   return ArrayInsertAt<void*>(data);
 }
 
+std::expected<ExecutionResult, std::runtime_error> ObjectArraySetAt(PassedExecutionData& data) {
+  return ArraySetAt<void*>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> ObjectArrayGetAt(PassedExecutionData& data) {
+  return ArrayGetAt<void*>(data);
+}
+
 std::expected<ExecutionResult, std::runtime_error> StringArrayLength(PassedExecutionData& data) {
   return ObjectArrayLength(data);
 }
@@ -1049,6 +1266,14 @@ std::expected<ExecutionResult, std::runtime_error> StringArrayRemoveAt(PassedExe
 
 std::expected<ExecutionResult, std::runtime_error> StringArrayInsertAt(PassedExecutionData& data) {
   return ObjectArrayInsertAt(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> StringArraySetAt(PassedExecutionData& data) {
+  return ObjectArraySetAt(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> StringArrayGetAt(PassedExecutionData& data) {
+  return ObjectArrayGetAt(data);
 }
 
 std::expected<ExecutionResult, std::runtime_error> PointerGetHash(PassedExecutionData& data) {
@@ -1091,6 +1316,14 @@ std::expected<ExecutionResult, std::runtime_error> PointerArrayRemoveAt(PassedEx
 
 std::expected<ExecutionResult, std::runtime_error> PointerArrayInsertAt(PassedExecutionData& data) {
   return ObjectArrayInsertAt(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> PointerArraySetAt(PassedExecutionData& data) {
+  return ObjectArraySetAt(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> PointerArrayGetAt(PassedExecutionData& data) {
+  return ObjectArrayGetAt(data);
 }
 
 // File methods

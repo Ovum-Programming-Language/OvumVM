@@ -1,7 +1,5 @@
 #include "Function.hpp"
 
-#include <algorithm>
-
 namespace ovum::vm::execution_tree {
 
 Function::Function(runtime::FunctionId id, size_t arity, std::unique_ptr<IExecutable> body) :
@@ -22,8 +20,6 @@ std::expected<ExecutionResult, std::runtime_error> Function::Execute(PassedExecu
     local_frame.local_variables.emplace_back(execution_data.memory.machine_stack.top());
     execution_data.memory.machine_stack.pop();
   }
-
-  std::ranges::reverse(local_frame.local_variables);
 
   execution_data.memory.stack_frames.push(std::move(local_frame));
 
