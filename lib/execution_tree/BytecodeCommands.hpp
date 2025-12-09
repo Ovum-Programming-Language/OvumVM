@@ -21,15 +21,12 @@ std::expected<ExecutionResult, std::runtime_error> PushNull(PassedExecutionData&
 std::expected<ExecutionResult, std::runtime_error> Pop(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> Dup(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> Swap(PassedExecutionData& data);
-std::expected<ExecutionResult, std::runtime_error> Rotate(PassedExecutionData& data, uint64_t n);
+std::expected<ExecutionResult, std::runtime_error> Rotate(PassedExecutionData& data, int64_t n);
 
 std::expected<ExecutionResult, std::runtime_error> LoadLocal(PassedExecutionData& data, size_t index);
 std::expected<ExecutionResult, std::runtime_error> SetLocal(PassedExecutionData& data, size_t index);
 std::expected<ExecutionResult, std::runtime_error> LoadStatic(PassedExecutionData& data, size_t index);
 std::expected<ExecutionResult, std::runtime_error> SetStatic(PassedExecutionData& data, size_t index);
-
-std::expected<ExecutionResult, std::runtime_error> ArrayGet(PassedExecutionData& data);
-std::expected<ExecutionResult, std::runtime_error> ArraySet(PassedExecutionData& data);
 
 std::expected<ExecutionResult, std::runtime_error> IntAdd(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> IntSubtract(PassedExecutionData& data);

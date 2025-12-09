@@ -32,7 +32,7 @@ template<typename ArgumentType>
 std::expected<ArgumentType, std::runtime_error> TryExtractArgument(PassedExecutionData& data,
                                                                    const std::string& function_name) {
   if (data.memory.machine_stack.empty()) {
-    return std::unexpected(std::runtime_error(function_name + ": not enought arguments on the stack"));
+    return std::unexpected(std::runtime_error(function_name + ": not enough arguments on the stack"));
   }
 
   runtime::Variable var_argument = data.memory.machine_stack.top();
@@ -165,7 +165,7 @@ std::expected<ExecutionResult, std::runtime_error> Dup(PassedExecutionData& data
 
 std::expected<ExecutionResult, std::runtime_error> Swap(PassedExecutionData& data) {
   if (data.memory.machine_stack.empty()) {
-    return std::unexpected(std::runtime_error("Swap: not enought arguments on the stack"));
+    return std::unexpected(std::runtime_error("Swap: not enough arguments on the stack"));
   }
 
   runtime::Variable var_argument1 = data.memory.machine_stack.top();
@@ -173,7 +173,7 @@ std::expected<ExecutionResult, std::runtime_error> Swap(PassedExecutionData& dat
 
   if (data.memory.machine_stack.empty()) {
     data.memory.machine_stack.emplace(var_argument1);
-    return std::unexpected(std::runtime_error("Swap: not enought arguments on the stack"));
+    return std::unexpected(std::runtime_error("Swap: not enough arguments on the stack"));
   }
 
   runtime::Variable var_argument2 = data.memory.machine_stack.top();
@@ -1138,7 +1138,7 @@ std::expected<ExecutionResult, std::runtime_error> SetField(PassedExecutionData&
   }
 
   if (data.memory.machine_stack.empty()) {
-    return std::unexpected(std::runtime_error("SetField: not enought arguments on the stack"));
+    return std::unexpected(std::runtime_error("SetField: not enough arguments on the stack"));
   }
 
   runtime::Variable argument2 = data.memory.machine_stack.top();
@@ -1739,7 +1739,7 @@ std::expected<ExecutionResult, std::runtime_error> MoveFile(PassedExecutionData&
 }
 
 std::expected<ExecutionResult, std::runtime_error> CopyFile(PassedExecutionData& data) {
-  auto arguments = TryExtractTwoArguments<void*, void*>(data, "MoveFile");
+  auto arguments = TryExtractTwoArguments<void*, void*>(data, "CopyFile");
 
   if (!arguments) {
     return std::unexpected(arguments.error());
@@ -1920,13 +1920,13 @@ std::expected<ExecutionResult, std::runtime_error> GetEnvironmentVar(PassedExecu
       return std::unexpected(string_ptr.error());
     }
 
-    runtime::Variable nulable_obj = data.memory.machine_stack.top();
-    if (!std::holds_alternative<void*>(nulable_obj)) {
+    runtime::Variable nullable_obj = data.memory.machine_stack.top();
+    if (!std::holds_alternative<void*>(nullable_obj)) {
       return std::unexpected(
           std::runtime_error("GetEnvironmentVariable: variable on the top of the stack has incorrect type"));
     }
 
-    void* nullable_ptr = std::get<void*>(nulable_obj);
+    void* nullable_ptr = std::get<void*>(nullable_obj);
     auto* nullable_value_ptr = runtime::GetDataPointer<void*>(nullable_ptr);
     *nullable_value_ptr = string_ptr.value();
 
@@ -2029,11 +2029,12 @@ std::expected<ExecutionResult, std::runtime_error> GetMemoryUsage(PassedExecutio
 
   auto stack_copy = data.memory.stack_frames;
   // Local variables in all stack frames
-  for (;; stack_copy.pop()) {
-    memory_usage += data.memory.stack_frames.top().local_variables.size() * sizeof(runtime::Variable);
+  while (!stack_copy.empty()) {
+    memory_usage += stack_copy.top().local_variables.size() * sizeof(runtime::Variable);
+    stack_copy.pop();
   }
 
-  // TODO counter for repositoties
+  // TODO counter for repositories
 
   data.memory.machine_stack.emplace(static_cast<int64_t>(memory_usage));
   return ExecutionResult::kNormal;
