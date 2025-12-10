@@ -33,7 +33,8 @@ std::expected<void*, std::runtime_error> CreateStringArrayFromArgs(execution_tre
 
   auto default_string_obj_result = runtime::AllocateObject(*string_vtable,
                                                            static_cast<uint32_t>(string_vtable_index_result.value()),
-                                                           execution_data.memory.object_repository);
+                                                           execution_data.memory.object_repository,
+                                                           execution_data.allocator);
 
   if (!default_string_obj_result.has_value()) {
     return std::unexpected(default_string_obj_result.error());
@@ -71,7 +72,8 @@ std::expected<void*, std::runtime_error> CreateStringArrayFromArgs(execution_tre
   for (size_t i = 0; i < args.size(); ++i) {
     auto string_obj_result = runtime::AllocateObject(*string_vtable,
                                                      static_cast<uint32_t>(string_vtable_index_result.value()),
-                                                     execution_data.memory.object_repository);
+                                                     execution_data.memory.object_repository,
+                                                     execution_data.allocator);
 
     if (!string_obj_result.has_value()) {
       return std::unexpected(string_obj_result.error());

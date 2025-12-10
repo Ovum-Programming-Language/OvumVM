@@ -107,8 +107,10 @@ std::expected<ExecutionResult, std::runtime_error> PushString(PassedExecutionDat
     return std::unexpected(vtable_index_result.error());
   }
 
-  auto string_obj_result = runtime::AllocateObject(
-      *string_vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository);
+  auto string_obj_result = runtime::AllocateObject(*string_vtable,
+                                                   static_cast<uint32_t>(vtable_index_result.value()),
+                                                   data.memory.object_repository,
+                                                   data.allocator);
 
   if (!string_obj_result.has_value()) {
     return std::unexpected(string_obj_result.error());
@@ -137,7 +139,7 @@ std::expected<ExecutionResult, std::runtime_error> PushNull(PassedExecutionData&
   }
 
   auto null_obj_result = runtime::AllocateObject(
-      *null_vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository);
+      *null_vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository, data.allocator);
 
   if (!null_obj_result.has_value()) {
     return std::unexpected(null_obj_result.error());
@@ -1199,7 +1201,8 @@ std::expected<ExecutionResult, std::runtime_error> CallConstructor(PassedExecuti
     return std::unexpected(vtable.error());
   }
 
-  auto obj_ptr = runtime::AllocateObject(*vtable.value(), vtable_idx.value(), data.memory.object_repository);
+  auto obj_ptr =
+      runtime::AllocateObject(*vtable.value(), vtable_idx.value(), data.memory.object_repository, data.allocator);
 
   if (!obj_ptr) {
     return std::unexpected(obj_ptr.error());
@@ -1589,8 +1592,10 @@ std::expected<ExecutionResult, std::runtime_error> FormatDateTime(PassedExecutio
       return std::unexpected(vtable_index_result.error());
     }
 
-    auto string_obj_result = runtime::AllocateObject(
-        *string_vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository);
+    auto string_obj_result = runtime::AllocateObject(*string_vtable,
+                                                     static_cast<uint32_t>(vtable_index_result.value()),
+                                                     data.memory.object_repository,
+                                                     data.allocator);
     if (!string_obj_result.has_value()) {
       return std::unexpected(string_obj_result.error());
     }
@@ -1645,7 +1650,7 @@ std::expected<ExecutionResult, std::runtime_error> ParseDateTime(PassedExecution
     }
 
     auto int_obj_result = runtime::AllocateObject(
-        *int_vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository);
+        *int_vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository, data.allocator);
     if (!int_obj_result.has_value()) {
       return std::unexpected(int_obj_result.error());
     }
@@ -1806,8 +1811,10 @@ std::expected<ExecutionResult, std::runtime_error> ListDir(PassedExecutionData& 
       return std::unexpected(vtable_index_result.error());
     }
 
-    auto string_array_obj_result = runtime::AllocateObject(
-        *string_array_vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository);
+    auto string_array_obj_result = runtime::AllocateObject(*string_array_vtable,
+                                                           static_cast<uint32_t>(vtable_index_result.value()),
+                                                           data.memory.object_repository,
+                                                           data.allocator);
     if (!string_array_obj_result.has_value()) {
       return std::unexpected(string_array_obj_result.error());
     }
@@ -1830,8 +1837,10 @@ std::expected<ExecutionResult, std::runtime_error> ListDir(PassedExecutionData& 
         return std::unexpected(string_vtable_index_result.error());
       }
 
-      auto string_obj_result = runtime::AllocateObject(
-          *string_vtable, static_cast<uint32_t>(string_vtable_index_result.value()), data.memory.object_repository);
+      auto string_obj_result = runtime::AllocateObject(*string_vtable,
+                                                       static_cast<uint32_t>(string_vtable_index_result.value()),
+                                                       data.memory.object_repository,
+                                                       data.allocator);
       if (!string_obj_result.has_value()) {
         return std::unexpected(string_obj_result.error());
       }

@@ -78,14 +78,18 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
   std::string sample = ReadFileContent(file_path, err);
 
   if (sample.empty()) {
-    err << "Failed to read file: " << file_path << "\n";
-    return 1;
+    err << "File is empty: " << file_path << "\n";
+    return 2;
   }
 
   ovum::bytecode::lexer::BytecodeLexer lx(sample);
   ovum::vm::execution_tree::FunctionRepository func_repo;
   ovum::vm::runtime::VirtualTableRepository vtable_repo;
   ovum::vm::runtime::RuntimeMemory memory;
+  ovum::vm::execution_tree::PassedExecutionData execution_data{.memory = memory,
+                                                               .virtual_table_repository = vtable_repo,
+                                                               .function_repository = func_repo,
+                                                               .allocator = std::allocator<char>()};
   int32_t return_code = 0;
 
   try {
@@ -123,8 +127,6 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
       throw result.error();
     }
 
-    ovum::vm::execution_tree::PassedExecutionData execution_data{
-        .memory = memory, .virtual_table_repository = vtable_repo, .function_repository = func_repo};
     ovum::vm::executor::Executor executor(execution_data);
     auto execution_result = executor.RunProgram(result.value(), program_args);
 
@@ -143,8 +145,6 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
     err << "Exception: " << e.what() << "\n";
     return_code = 4;
   }
-
-  std::allocator<char> allocator;
 
   for (size_t i = 0; i < memory.object_repository.GetCount(); ++i) {
     auto object_result = memory.object_repository.GetByIndex(i);
@@ -167,7 +167,7 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
 
     size_t object_size = vtable_result.value()->GetSize();
 
-    allocator.deallocate(reinterpret_cast<char*>(object), object_size);
+    execution_data.allocator.deallocate(reinterpret_cast<char*>(object), object_size);
   }
 
   return return_code;
