@@ -1740,8 +1740,8 @@ std::expected<ExecutionResult, std::runtime_error> ByteArrayFromObject(PassedExe
   // Get the vtable from the repository
   auto vtable_result = data.virtual_table_repository.GetByIndex(vtable_index);
   if (!vtable_result.has_value()) {
-    return std::unexpected(std::runtime_error("ByteArray::FromObject: vtable not found for index " +
-                                              std::to_string(vtable_index)));
+    return std::unexpected(
+        std::runtime_error("ByteArray::FromObject: vtable not found for index " + std::to_string(vtable_index)));
   }
 
   const runtime::VirtualTable* vtable = vtable_result.value();
@@ -2126,4 +2126,3 @@ std::expected<ExecutionResult, std::runtime_error> FileDestructor(PassedExecutio
 }
 
 } // namespace ovum::vm::execution_tree
-
