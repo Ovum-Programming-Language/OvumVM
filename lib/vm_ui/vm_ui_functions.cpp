@@ -1,6 +1,12 @@
 #include "vm_ui_functions.hpp"
 
+#include <cstddef>
+#include <filesystem>
+#include <fstream>
 #include <memory>
+#include <sstream>
+
+#include <argparser/ArgParser.hpp>
 
 #include "lib/bytecode_lexer/BytecodeLexer.hpp"
 #include "lib/bytecode_parser/BytecodeParser.hpp"
@@ -18,15 +24,64 @@
 #include <jit/JitExecutorFactory.hpp>
 #endif
 
-constexpr size_t kJitBoundary = 100000;
+constexpr size_t kDefaultJitBoundary = 100000;
+
+std::string ReadFileContent(const std::string& file_path, std::ostream& err) {
+  std::ifstream file(file_path);
+  if (!file.is_open()) {
+    err << "Failed to open file: " << file_path << "\n";
+    return "";
+  }
+
+  std::stringstream buffer;
+  buffer << file.rdbuf();
+  return buffer.str();
+}
 
 int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out, std::istream& in, std::ostream& err) {
-  if (args.size() < 2) {
-    err << "Insufficient arguments\n";
+  size_t separator_index = args.size();
+  for (size_t i = 1; i < args.size(); ++i) {
+    if (args[i] == "--") {
+      separator_index = i;
+      break;
+    }
+  }
+
+  std::vector<std::string> parser_args(args.begin(), args.begin() + static_cast<ptrdiff_t>(separator_index));
+  std::vector<std::string> program_args;
+
+  if (separator_index < args.size()) {
+    program_args.assign(args.begin() + static_cast<ptrdiff_t>(separator_index + 1), args.end());
+  }
+
+  auto is_file = [](std::string& arg) { return std::filesystem::exists(arg); };
+  ArgumentParser::ArgParser arg_parser("ovum-vm", PassArgumentTypes());
+  arg_parser.AddCompositeArgument('f', "file", "Path to the bytecode file").AddIsGood(is_file).AddValidate(is_file);
+  arg_parser.AddUnsignedLongLongArgument('j', "jit-boundary", "JIT compilation boundary").Default(kDefaultJitBoundary);
+  arg_parser.AddHelp('h', "help", "Show this help message");
+
+  bool parse_result = arg_parser.Parse(parser_args, {err, true});
+  if (!parse_result) {
+    err << arg_parser.HelpDescription() << "\n";
     return 1;
   }
 
-  const std::string& sample = args[1];
+  if (arg_parser.Help()) {
+    err << arg_parser.HelpDescription() << "\n";
+    return 0;
+  }
+
+  std::string file_path;
+  file_path = arg_parser.GetCompositeValue("file");
+
+  size_t jit_boundary = arg_parser.GetUnsignedLongLongValue("jit-boundary");
+  std::string sample = ReadFileContent(file_path, err);
+
+  if (sample.empty()) {
+    err << "Failed to read file: " << file_path << "\n";
+    return 1;
+  }
+
   ovum::bytecode::lexer::BytecodeLexer lx(sample);
   ovum::vm::execution_tree::FunctionRepository func_repo;
   ovum::vm::runtime::VirtualTableRepository vtable_repo;
@@ -47,7 +102,7 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
 #endif
 
     ovum::bytecode::parser::CommandFactory command_factory = ovum::bytecode::parser::CommandFactory();
-    ovum::bytecode::parser::BytecodeParser parser(std::move(jit_factory), kJitBoundary, command_factory);
+    ovum::bytecode::parser::BytecodeParser bytecode_parser(std::move(jit_factory), jit_boundary, command_factory);
 
     auto vtable_result = ovum::vm::runtime::RegisterBuiltinVirtualTables(vtable_repo);
     if (!vtable_result) {
@@ -61,7 +116,7 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
     }
 
     auto tokens = toks.value();
-    auto result = parser.Parse(tokens, func_repo, vtable_repo, memory);
+    auto result = bytecode_parser.Parse(tokens, func_repo, vtable_repo, memory);
 
     if (!result) {
       throw result.error();
@@ -70,7 +125,7 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
     ovum::vm::execution_tree::PassedExecutionData execution_data{
         .memory = memory, .virtual_table_repository = vtable_repo, .function_repository = func_repo};
     ovum::vm::executor::Executor executor(execution_data);
-    auto execution_result = executor.RunProgram(result.value());
+    auto execution_result = executor.RunProgram(result.value(), program_args);
 
     if (!execution_result) {
       throw std::runtime_error("Execution failed: " + std::string(execution_result.error().what()));

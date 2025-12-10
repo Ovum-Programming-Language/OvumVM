@@ -21,3 +21,13 @@ FetchContent_Declare(
 )
 
 FetchContent_MakeAvailable(ovumcommon)
+
+
+# ArgParser
+FetchContent_Declare(
+        argparser
+        GIT_REPOSITORY https://github.com/bialger/ArgParser.git
+        GIT_TAG master
+)
+
+FetchContent_MakeAvailable(argparser)
