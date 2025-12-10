@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "IFunctionExecutable.hpp"
 #include "lib/runtime/FunctionId.hpp"
 
 namespace ovum::vm::execution_tree {

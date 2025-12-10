@@ -2,6 +2,7 @@
 
 #include "lib/execution_tree/FunctionRepository.hpp"
 #include "lib/execution_tree/IFunctionExecutable.hpp"
+#include "lib/runtime/StackFrame.hpp"
 
 namespace ovum::vm::executor {
 
@@ -16,8 +17,13 @@ std::expected<execution_tree::ExecutionResult, std::runtime_error> Executor::Run
     return std::unexpected(std::runtime_error("Excution failed: init-static block is null"));
   }
 
+  runtime::StackFrame init_frame{};
+  execution_data_.memory.stack_frames.push(std::move(init_frame));
+
   const std::expected<execution_tree::ExecutionResult, std::runtime_error> block_result =
       init_static->Execute(execution_data_);
+
+  execution_data_.memory.stack_frames.pop();
 
   if (!block_result.has_value()) {
     return block_result;
