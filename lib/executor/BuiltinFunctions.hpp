@@ -204,11 +204,8 @@ std::expected<ExecutionResult, std::runtime_error> ByteArrayInsertAt(PassedExecu
 std::expected<ExecutionResult, std::runtime_error> ByteArraySetAt(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> ByteArrayGetAt(PassedExecutionData& data);
 
-// ByteArray view casting constructors (from other array types)
-std::expected<ExecutionResult, std::runtime_error> ByteArrayFromIntArray(PassedExecutionData& data);
-std::expected<ExecutionResult, std::runtime_error> ByteArrayFromFloatArray(PassedExecutionData& data);
-std::expected<ExecutionResult, std::runtime_error> ByteArrayFromCharArray(PassedExecutionData& data);
-std::expected<ExecutionResult, std::runtime_error> ByteArrayFromBoolArray(PassedExecutionData& data);
+// ByteArray constructor from Object (creates a view)
+std::expected<ExecutionResult, std::runtime_error> ByteArrayFromObject(PassedExecutionData& data);
 
 std::expected<ExecutionResult, std::runtime_error> BoolArrayConstructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> BoolArrayCopyConstructor(PassedExecutionData& data);

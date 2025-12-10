@@ -1214,33 +1214,9 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
     }
   }
 
-  // ByteArray view casting constructors
+  // ByteArray constructor from Object (creates a view)
   {
-    auto function = CreateMethodFunction("_ByteArray_IntArray", 2, ByteArrayFromIntArray);
-    auto result = repository.Add(std::move(function));
-    if (!result.has_value()) {
-      return std::unexpected(result.error());
-    }
-  }
-
-  {
-    auto function = CreateMethodFunction("_ByteArray_FloatArray", 2, ByteArrayFromFloatArray);
-    auto result = repository.Add(std::move(function));
-    if (!result.has_value()) {
-      return std::unexpected(result.error());
-    }
-  }
-
-  {
-    auto function = CreateMethodFunction("_ByteArray_CharArray", 2, ByteArrayFromCharArray);
-    auto result = repository.Add(std::move(function));
-    if (!result.has_value()) {
-      return std::unexpected(result.error());
-    }
-  }
-
-  {
-    auto function = CreateMethodFunction("_ByteArray_BoolArray", 2, ByteArrayFromBoolArray);
+    auto function = CreateMethodFunction("_ByteArray_Object", 2, ByteArrayFromObject);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
