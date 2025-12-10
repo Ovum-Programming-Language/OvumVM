@@ -1110,6 +1110,8 @@ std::expected<ExecutionResult, std::runtime_error> CallVirtual(PassedExecutionDa
     return std::unexpected(function.error());
   }
 
+  data.memory.machine_stack.emplace(argument.value());
+
   return function.value()->Execute(data);
 }
 
@@ -1215,19 +1217,33 @@ std::expected<ExecutionResult, std::runtime_error> CallConstructor(PassedExecuti
 }
 
 std::expected<ExecutionResult, std::runtime_error> Unwrap(PassedExecutionData& data) {
-  auto nullable_result = TryExtractArgument<void*>(data, "Unwrap");
+  auto wrapper_result = TryExtractArgument<void*>(data, "Unwrap");
 
-  if (!nullable_result) {
-    return std::unexpected(nullable_result.error());
+  if (!wrapper_result) {
+    return std::unexpected(wrapper_result.error());
   }
 
-  auto wrapped = runtime::GetDataPointer<void*>(nullable_result.value());
+  auto object_descriptor_ptr = reinterpret_cast<runtime::ObjectDescriptor*>(wrapper_result.value());
+  auto vtable_idx = object_descriptor_ptr->vtable_index;
+  auto vtable = data.virtual_table_repository.GetByIndex(vtable_idx);
 
-  if (*wrapped == nullptr) {
+  if (!vtable) {
+    return std::unexpected(vtable.error());
+  }
+
+  auto wrapped_result = vtable.value()->GetVariableByIndex(wrapper_result.value(), 0);
+
+  if (!wrapped_result) {
+    return std::unexpected(wrapped_result.error());
+  }
+
+  runtime::Variable wrapped = wrapped_result.value();
+
+  if (std::holds_alternative<void*>(wrapped) && std::get<void*>(wrapped) == nullptr) {
     return std::unexpected(std::runtime_error("Unwrap: cannot unwrap null"));
   }
 
-  data.memory.machine_stack.emplace(*wrapped);
+  data.memory.machine_stack.emplace(wrapped);
 
   return ExecutionResult::kNormal;
 }

@@ -7,6 +7,7 @@
 #include "lib/execution_tree/IFunctionExecutable.hpp"
 #include "lib/executor/BuiltinFunctions.hpp"
 #include "lib/runtime/StackFrame.hpp"
+#include "lib/runtime/Variable.hpp"
 #include "lib/runtime/VirtualTableRepository.hpp"
 
 namespace ovum::vm::executor {
@@ -95,7 +96,7 @@ std::expected<void*, std::runtime_error> CreateStringArrayFromArgs(execution_tre
 }
 } // namespace
 
-std::expected<execution_tree::ExecutionResult, std::runtime_error> Executor::RunProgram(
+std::expected<int64_t, std::runtime_error> Executor::RunProgram(
     const std::unique_ptr<execution_tree::Block>& init_static, const std::vector<std::string>& args) {
   if (!init_static) {
     return std::unexpected(std::runtime_error("Excution failed: init-static block is null"));
@@ -110,7 +111,7 @@ std::expected<execution_tree::ExecutionResult, std::runtime_error> Executor::Run
   execution_data_.memory.stack_frames.pop();
 
   if (!block_result.has_value()) {
-    return block_result;
+    return std::unexpected(block_result.error());
   }
 
   const std::expected<execution_tree::IFunctionExecutable*, std::runtime_error> main_function =
@@ -129,7 +130,24 @@ std::expected<execution_tree::ExecutionResult, std::runtime_error> Executor::Run
 
   execution_data_.memory.machine_stack.emplace(string_array_result.value());
 
-  return main_function.value()->Execute(execution_data_);
+  auto main_exec_result = main_function.value()->Execute(execution_data_);
+
+  if (!main_exec_result.has_value()) {
+    return std::unexpected(main_exec_result.error());
+  }
+
+  if (execution_data_.memory.machine_stack.empty()) {
+    return std::unexpected(std::runtime_error("Execution failed: main function did not return a value"));
+  }
+
+  runtime::Variable return_value = execution_data_.memory.machine_stack.top();
+  execution_data_.memory.machine_stack.pop();
+
+  if (!std::holds_alternative<int64_t>(return_value)) {
+    return std::unexpected(std::runtime_error("Execution failed: main function did not return an int64_t"));
+  }
+
+  return std::get<int64_t>(return_value);
 }
 
 } // namespace ovum::vm::executor

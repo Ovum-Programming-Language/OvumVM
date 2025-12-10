@@ -3,6 +3,7 @@
 
 #include <expected>
 #include <stdexcept>
+#include <string>
 #include <utility>
 
 #include "ExecutionConcepts.hpp"
@@ -25,7 +26,16 @@ public:
 
     ++execution_data.memory.stack_frames.top().action_count;
 
-    return func_(execution_data);
+    auto result = func_(execution_data);
+
+    if (!result.has_value()) {
+      std::string error_message = result.error().what();
+      error_message += "\nAt function ";
+      error_message += execution_data.memory.stack_frames.top().function_name;
+      return std::unexpected(std::runtime_error(error_message));
+    }
+
+    return result.value();
   }
 
 private:

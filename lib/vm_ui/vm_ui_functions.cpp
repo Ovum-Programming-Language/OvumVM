@@ -1,3 +1,5 @@
+#include "vm_ui_functions.hpp"
+
 #include <memory>
 
 #include "lib/bytecode_lexer/BytecodeLexer.hpp"
@@ -11,7 +13,6 @@
 #include "lib/runtime/ObjectDescriptor.hpp"
 #include "lib/runtime/RuntimeMemory.hpp"
 #include "lib/runtime/VirtualTableRepository.hpp"
-#include "vm_ui_functions.hpp"
 
 #ifdef JIT_PROVIDED
 #include <jit/JitExecutorFactory.hpp>
@@ -75,6 +76,7 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
       throw std::runtime_error("Execution failed: " + std::string(execution_result.error().what()));
     }
 
+    return static_cast<int32_t>(execution_result.value());
   } catch (const ovum::bytecode::lexer::BytecodeLexerError& e) {
     err << "Lexer error: " << e.what() << "\n";
     return 1;
@@ -95,7 +97,7 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
       throw std::runtime_error("Failed to get object: " + std::string(object_result.error().what()));
     }
 
-    auto object = object_result.value();
+    ovum::vm::runtime::ObjectDescriptor* object = object_result.value();
     uint32_t vtable_index = object->vtable_index;
     auto vtable_result = vtable_repo.GetByIndex(vtable_index);
 
