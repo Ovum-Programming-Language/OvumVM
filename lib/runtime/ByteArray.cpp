@@ -21,9 +21,9 @@ ByteArray::ByteArray(void* data, size_t capacity) :
 }
 
 ByteArray::ByteArray(const ByteArray& other) : size_(other.size_), capacity_(other.capacity_) {
-  if (other.size_ > 0) {
+  if (other.capacity_ > 0) {
     AllocateMemory(other.capacity_);
-    std::memcpy(data_, other.data_, other.size_);
+    std::memcpy(data_, other.data_, other.capacity_);
   }
 }
 
@@ -40,7 +40,7 @@ ByteArray& ByteArray::operator=(const ByteArray& other) {
     return *this;
   }
 
-  if (other.size_ > capacity_) {
+  if (other.size_ > capacity_ || is_view_) {
     DeallocateMemory();
     AllocateMemory(other.capacity_);
   }
