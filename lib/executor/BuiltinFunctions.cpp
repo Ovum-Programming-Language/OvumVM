@@ -24,6 +24,27 @@ inline bool AreSameType(void* obj1_ptr, void* obj2_ptr) {
   return desc1->vtable_index == desc2->vtable_index;
 }
 
+// Helper to compute circular index for array operations
+// For insert operations (allow_append=true), handles empty arrays and allows index == size for append
+// For other operations (allow_append=false), requires non-empty array and wraps index to valid range
+inline size_t ComputeCircularIndex(int64_t index, size_t size, bool allow_append) {
+  // Empty array: any index becomes 0 (append)
+  if (size == 0 && allow_append) {
+    return 0;
+  }
+
+  // Wrap index: for size 5, index 6→1, 11→1, -1→4
+  auto size_i64 = static_cast<int64_t>(size);
+  index = ((index % size_i64) + size_i64) % size_i64;
+
+  // Check if index equals size by modulo operation (append case)
+  if (index == 0 && allow_append) {
+    index = size_i64; // Append
+  }
+
+  return static_cast<size_t>(index);
+}
+
 // Template helper for fundamental type constructors (object already allocated, just initialize)
 // Arguments: object (this) is first, value is second
 template<typename T>
@@ -1209,8 +1230,7 @@ std::expected<ExecutionResult, std::runtime_error> ByteArrayRemoveAt(PassedExecu
 
   // Circular indexing: wrap index to valid range
   size_t size = byte_array->Size();
-  size_t circular_index = ((static_cast<int64_t>(index % static_cast<int64_t>(size)) + static_cast<int64_t>(size)) %
-                           static_cast<int64_t>(size));
+  size_t circular_index = ComputeCircularIndex(index, size, false);
 
   byte_array->Remove(circular_index);
 
@@ -1232,21 +1252,7 @@ std::expected<ExecutionResult, std::runtime_error> ByteArrayInsertAt(PassedExecu
   // Circular indexing: wrap index to valid range
   // For insert, we allow index == size (append), so we handle it specially
   size_t size = byte_array->Size();
-  size_t circular_index = 0;
-
-  if (size == 0) {
-    // Empty array: any index becomes 0 (append)
-    circular_index = 0;
-  } else {
-    // Check if index equals size (append case)
-    if (index == static_cast<int64_t>(size)) {
-      circular_index = size; // Append
-    } else {
-      // Wrap index: for size 5, index 6→1, 11→1, -1→4
-      circular_index = ((static_cast<int64_t>(index % static_cast<int64_t>(size)) + static_cast<int64_t>(size)) %
-                        static_cast<int64_t>(size));
-    }
-  }
+  size_t circular_index = ComputeCircularIndex(index, size, true);
 
   byte_array->Insert(circular_index, value);
 
@@ -1271,8 +1277,7 @@ std::expected<ExecutionResult, std::runtime_error> ByteArraySetAt(PassedExecutio
 
   // Circular indexing: wrap index to valid range
   size_t size = byte_array->Size();
-  size_t circular_index = ((static_cast<int64_t>(index % static_cast<int64_t>(size)) + static_cast<int64_t>(size)) %
-                           static_cast<int64_t>(size));
+  size_t circular_index = ComputeCircularIndex(index, size, false);
 
   (*byte_array)[circular_index] = value;
 
@@ -1295,8 +1300,7 @@ std::expected<ExecutionResult, std::runtime_error> ByteArrayGetAt(PassedExecutio
 
   // Circular indexing: wrap index to valid range
   size_t size = byte_array->Size();
-  size_t circular_index = ((static_cast<int64_t>(index % static_cast<int64_t>(size)) + static_cast<int64_t>(size)) %
-                           static_cast<int64_t>(size));
+  size_t circular_index = ComputeCircularIndex(index, size, false);
 
   uint8_t value = (*byte_array)[circular_index];
   data.memory.machine_stack.emplace(value);

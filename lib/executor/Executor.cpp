@@ -99,7 +99,7 @@ std::expected<void*, std::runtime_error> CreateStringArrayFromArgs(execution_tre
 std::expected<int64_t, std::runtime_error> Executor::RunProgram(
     const std::unique_ptr<execution_tree::Block>& init_static, const std::vector<std::string>& args) {
   if (!init_static) {
-    return std::unexpected(std::runtime_error("Excution failed: init-static block is null"));
+    return std::unexpected(std::runtime_error("Execution failed: init-static block is null"));
   }
 
   runtime::StackFrame init_frame{};
