@@ -220,6 +220,14 @@ std::expected<ExecutionResult, std::runtime_error> LoadLocal(PassedExecutionData
 }
 
 std::expected<ExecutionResult, std::runtime_error> SetLocal(PassedExecutionData& data, size_t index) {
+  if (data.memory.stack_frames.empty()) {
+    return std::unexpected(std::runtime_error("SetLocal: stack_frames is empty"));
+  }
+
+  if (index >= data.memory.stack_frames.top().local_variables.size()) {
+    data.memory.stack_frames.top().local_variables.resize(index + 1);
+  }
+
   data.memory.stack_frames.top().local_variables[index] = data.memory.machine_stack.top();
   data.memory.machine_stack.pop();
 
@@ -233,6 +241,10 @@ std::expected<ExecutionResult, std::runtime_error> LoadStatic(PassedExecutionDat
 }
 
 std::expected<ExecutionResult, std::runtime_error> SetStatic(PassedExecutionData& data, size_t index) {
+  if (index >= data.memory.global_variables.size()) {
+    data.memory.global_variables.resize(index + 1);
+  }
+
   data.memory.global_variables[index] = data.memory.machine_stack.top();
   data.memory.machine_stack.pop();
 

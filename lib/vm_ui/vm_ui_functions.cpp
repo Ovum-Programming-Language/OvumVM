@@ -1,3 +1,5 @@
+#include <memory>
+
 #include "lib/bytecode_lexer/BytecodeLexer.hpp"
 #include "lib/bytecode_parser/BytecodeParser.hpp"
 #include "lib/bytecode_parser/scenarios/CommandFactory.hpp"
@@ -6,6 +8,7 @@
 #include "lib/executor/Executor.hpp"
 #include "lib/executor/IJitExecutorFactory.hpp"
 #include "lib/executor/builtin_factory.hpp"
+#include "lib/runtime/ObjectDescriptor.hpp"
 #include "lib/runtime/RuntimeMemory.hpp"
 #include "lib/runtime/VirtualTableRepository.hpp"
 #include "vm_ui_functions.hpp"
@@ -24,6 +27,9 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
 
   const std::string& sample = args[1];
   ovum::bytecode::lexer::BytecodeLexer lx(sample);
+  ovum::vm::execution_tree::FunctionRepository func_repo;
+  ovum::vm::runtime::VirtualTableRepository vtable_repo;
+  ovum::vm::runtime::RuntimeMemory memory;
 
   try {
     auto toks = lx.Tokenize();
@@ -41,9 +47,6 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
 
     ovum::bytecode::parser::CommandFactory command_factory = ovum::bytecode::parser::CommandFactory();
     ovum::bytecode::parser::BytecodeParser parser(std::move(jit_factory), kJitBoundary, command_factory);
-    ovum::vm::execution_tree::FunctionRepository func_repo;
-    ovum::vm::runtime::VirtualTableRepository vtable_repo;
-    ovum::vm::runtime::RuntimeMemory memory;
 
     auto vtable_result = ovum::vm::runtime::RegisterBuiltinVirtualTables(vtable_repo);
     if (!vtable_result) {
@@ -81,6 +84,29 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
   } catch (const std::exception& e) {
     err << "Exception: " << e.what() << "\n";
     return 1;
+  }
+
+  std::allocator<char> allocator;
+
+  for (size_t i = 0; i < memory.object_repository.GetCount(); ++i) {
+    auto object_result = memory.object_repository.GetByIndex(i);
+
+    if (!object_result.has_value()) {
+      throw std::runtime_error("Failed to get object: " + std::string(object_result.error().what()));
+    }
+
+    auto object = object_result.value();
+    uint32_t vtable_index = object->vtable_index;
+    auto vtable_result = vtable_repo.GetByIndex(vtable_index);
+
+    if (!vtable_result.has_value()) {
+      throw std::runtime_error("Failed to get vtable for index " + std::to_string(vtable_index) + ": " +
+                               std::string(vtable_result.error().what()));
+    }
+
+    size_t object_size = vtable_result.value()->GetSize();
+
+    allocator.deallocate(reinterpret_cast<char*>(object), object_size);
   }
 
   return 0;

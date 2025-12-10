@@ -5,6 +5,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 #include "lib/execution_tree/Block.hpp"
 #include "lib/execution_tree/ExecutionResult.hpp"
@@ -17,7 +18,7 @@ public:
   explicit Executor(execution_tree::PassedExecutionData& execution_data);
 
   [[nodiscard]] std::expected<execution_tree::ExecutionResult, std::runtime_error> RunProgram(
-      const std::unique_ptr<execution_tree::Block>& init_static);
+      const std::unique_ptr<execution_tree::Block>& init_static, const std::vector<std::string>& args = {});
 
 private:
   static const std::string kMainFunctionName;
