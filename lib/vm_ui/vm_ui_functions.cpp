@@ -86,6 +86,7 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
   ovum::vm::execution_tree::FunctionRepository func_repo;
   ovum::vm::runtime::VirtualTableRepository vtable_repo;
   ovum::vm::runtime::RuntimeMemory memory;
+  int32_t return_code = 0;
 
   try {
     auto toks = lx.Tokenize();
@@ -131,16 +132,16 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
       throw std::runtime_error("Execution failed: " + std::string(execution_result.error().what()));
     }
 
-    return static_cast<int32_t>(execution_result.value());
+    return_code = static_cast<int32_t>(execution_result.value());
   } catch (const ovum::bytecode::lexer::BytecodeLexerError& e) {
     err << "Lexer error: " << e.what() << "\n";
-    return 1;
+    return_code = 2;
   } catch (const ovum::bytecode::parser::BytecodeParserError& e) {
     err << "Parser error: " << e.what() << "\n";
-    return 1;
+    return_code = 3;
   } catch (const std::exception& e) {
     err << "Exception: " << e.what() << "\n";
-    return 1;
+    return_code = 4;
   }
 
   std::allocator<char> allocator;
@@ -149,7 +150,9 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
     auto object_result = memory.object_repository.GetByIndex(i);
 
     if (!object_result.has_value()) {
-      throw std::runtime_error("Failed to get object: " + std::string(object_result.error().what()));
+      err << "Failed to get object: " << object_result.error().what() << "\n";
+      return_code = 4;
+      continue;
     }
 
     ovum::vm::runtime::ObjectDescriptor* object = object_result.value();
@@ -157,8 +160,9 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
     auto vtable_result = vtable_repo.GetByIndex(vtable_index);
 
     if (!vtable_result.has_value()) {
-      throw std::runtime_error("Failed to get vtable for index " + std::to_string(vtable_index) + ": " +
-                               std::string(vtable_result.error().what()));
+      err << "Failed to get vtable for index " << vtable_index << ": " << vtable_result.error().what() << "\n";
+      return_code = 4;
+      continue;
     }
 
     size_t object_size = vtable_result.value()->GetSize();
@@ -166,5 +170,5 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
     allocator.deallocate(reinterpret_cast<char*>(object), object_size);
   }
 
-  return 0;
+  return return_code;
 }
