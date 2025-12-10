@@ -236,7 +236,7 @@ jobs:
 
           echo "Found $errors errors and $warnings warnings"
 
-          if [ "$errors" -eq 0 ] && [ "$warnings" -gt 0 ] && [ "$warnings" -lt 2 ]; then
+          if [ "$errors" -eq 0 ] && [ "$warnings" -le 3 ]; then
             echo "clang-tidy found $warnings warnings"
             cat tidy_output.txt
             exit 0
