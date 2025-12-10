@@ -23,7 +23,7 @@ ByteArray::ByteArray(void* data, size_t capacity) :
 ByteArray::ByteArray(const ByteArray& other) : size_(other.size_), capacity_(other.capacity_) {
   if (other.capacity_ > 0) {
     AllocateMemory(other.capacity_);
-    std::memcpy(data_, other.data_, other.capacity_);
+    std::memcpy(data_, other.data_, other.size_);
   }
 }
 

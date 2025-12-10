@@ -60,7 +60,7 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
   arg_parser.AddUnsignedLongLongArgument('j', "jit-boundary", "JIT compilation boundary").Default(kDefaultJitBoundary);
   arg_parser.AddHelp('h', "help", "Show this help message");
 
-  bool parse_result = arg_parser.Parse(parser_args, {err, true});
+  bool parse_result = arg_parser.Parse(parser_args, {.out_stream = err, .print_messages = true});
   if (!parse_result) {
     err << arg_parser.HelpDescription() << "\n";
     return 1;
@@ -116,7 +116,7 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
       throw std::runtime_error("Failed to register builtin functions: " + std::string(func_result.error().what()));
     }
 
-    auto tokens = toks.value();
+    const std::vector<ovum::TokenPtr>& tokens = toks.value();
     auto result = bytecode_parser.Parse(tokens, func_repo, vtable_repo, memory);
 
     if (!result) {
