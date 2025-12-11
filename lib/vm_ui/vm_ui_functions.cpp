@@ -165,8 +165,35 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
       continue;
     }
 
-    size_t object_size = vtable_result.value()->GetSize();
+    auto destructor_id_result = vtable_result.value()->GetRealFunctionId("_destructor_<M>");
 
+    if (!destructor_id_result.has_value()) {
+      err << "Failed to get destructor for index " << vtable_index << ": " << destructor_id_result.error().what()
+          << "\n";
+      return_code = 4;
+      continue;
+    }
+
+    auto destructor_function = execution_data.function_repository.GetById(destructor_id_result.value());
+
+    if (!destructor_function.has_value()) {
+      err << "Failed to get destructor function for index " << vtable_index << ": "
+          << destructor_function.error().what() << "\n";
+      return_code = 4;
+      continue;
+    }
+
+    execution_data.memory.machine_stack.emplace(object);
+    auto destructor_exec_result = destructor_function.value()->Execute(execution_data);
+
+    if (!destructor_exec_result.has_value()) {
+      err << "Failed to execute destructor for index " << vtable_index << ": " << destructor_exec_result.error().what()
+          << "\n";
+      return_code = 4;
+      continue;
+    }
+
+    size_t object_size = vtable_result.value()->GetSize();
     execution_data.allocator.deallocate(reinterpret_cast<char*>(object), object_size);
   }
 
