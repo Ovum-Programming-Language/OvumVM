@@ -3,6 +3,7 @@ add_library(executor STATIC
         PlaceholderJitExecutorFactory.cpp
         BuiltinFunctions.cpp
         builtin_factory.cpp
+        Executor.cpp
 )
 
 target_include_directories(executor PUBLIC ${PROJECT_SOURCE_DIR})

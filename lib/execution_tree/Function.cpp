@@ -14,6 +14,7 @@ std::expected<ExecutionResult, std::runtime_error> Function::Execute(PassedExecu
   }
 
   runtime::StackFrame local_frame{};
+  local_frame.function_name = id_;
   local_frame.local_variables.reserve(arity_);
 
   for (size_t i = 0; i < arity_; ++i) {

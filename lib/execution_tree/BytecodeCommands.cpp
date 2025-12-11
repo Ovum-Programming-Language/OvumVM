@@ -107,8 +107,10 @@ std::expected<ExecutionResult, std::runtime_error> PushString(PassedExecutionDat
     return std::unexpected(vtable_index_result.error());
   }
 
-  auto string_obj_result = runtime::AllocateObject(
-      *string_vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository);
+  auto string_obj_result = runtime::AllocateObject(*string_vtable,
+                                                   static_cast<uint32_t>(vtable_index_result.value()),
+                                                   data.memory.object_repository,
+                                                   data.allocator);
 
   if (!string_obj_result.has_value()) {
     return std::unexpected(string_obj_result.error());
@@ -137,7 +139,7 @@ std::expected<ExecutionResult, std::runtime_error> PushNull(PassedExecutionData&
   }
 
   auto null_obj_result = runtime::AllocateObject(
-      *null_vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository);
+      *null_vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository, data.allocator);
 
   if (!null_obj_result.has_value()) {
     return std::unexpected(null_obj_result.error());
@@ -220,6 +222,14 @@ std::expected<ExecutionResult, std::runtime_error> LoadLocal(PassedExecutionData
 }
 
 std::expected<ExecutionResult, std::runtime_error> SetLocal(PassedExecutionData& data, size_t index) {
+  if (data.memory.stack_frames.empty()) {
+    return std::unexpected(std::runtime_error("SetLocal: stack_frames is empty"));
+  }
+
+  if (index >= data.memory.stack_frames.top().local_variables.size()) {
+    data.memory.stack_frames.top().local_variables.resize(index + 1);
+  }
+
   data.memory.stack_frames.top().local_variables[index] = data.memory.machine_stack.top();
   data.memory.machine_stack.pop();
 
@@ -233,6 +243,10 @@ std::expected<ExecutionResult, std::runtime_error> LoadStatic(PassedExecutionDat
 }
 
 std::expected<ExecutionResult, std::runtime_error> SetStatic(PassedExecutionData& data, size_t index) {
+  if (index >= data.memory.global_variables.size()) {
+    data.memory.global_variables.resize(index + 1);
+  }
+
   data.memory.global_variables[index] = data.memory.machine_stack.top();
   data.memory.machine_stack.pop();
 
@@ -1098,6 +1112,8 @@ std::expected<ExecutionResult, std::runtime_error> CallVirtual(PassedExecutionDa
     return std::unexpected(function.error());
   }
 
+  data.memory.machine_stack.emplace(argument.value());
+
   return function.value()->Execute(data);
 }
 
@@ -1185,7 +1201,8 @@ std::expected<ExecutionResult, std::runtime_error> CallConstructor(PassedExecuti
     return std::unexpected(vtable.error());
   }
 
-  auto obj_ptr = runtime::AllocateObject(*vtable.value(), vtable_idx.value(), data.memory.object_repository);
+  auto obj_ptr =
+      runtime::AllocateObject(*vtable.value(), vtable_idx.value(), data.memory.object_repository, data.allocator);
 
   if (!obj_ptr) {
     return std::unexpected(obj_ptr.error());
@@ -1203,19 +1220,33 @@ std::expected<ExecutionResult, std::runtime_error> CallConstructor(PassedExecuti
 }
 
 std::expected<ExecutionResult, std::runtime_error> Unwrap(PassedExecutionData& data) {
-  auto nullable_result = TryExtractArgument<void*>(data, "Unwrap");
+  auto wrapper_result = TryExtractArgument<void*>(data, "Unwrap");
 
-  if (!nullable_result) {
-    return std::unexpected(nullable_result.error());
+  if (!wrapper_result) {
+    return std::unexpected(wrapper_result.error());
   }
 
-  auto wrapped = runtime::GetDataPointer<void*>(nullable_result.value());
+  auto object_descriptor_ptr = reinterpret_cast<runtime::ObjectDescriptor*>(wrapper_result.value());
+  auto vtable_idx = object_descriptor_ptr->vtable_index;
+  auto vtable = data.virtual_table_repository.GetByIndex(vtable_idx);
 
-  if (*wrapped == nullptr) {
+  if (!vtable) {
+    return std::unexpected(vtable.error());
+  }
+
+  auto wrapped_result = vtable.value()->GetVariableByIndex(wrapper_result.value(), 0);
+
+  if (!wrapped_result) {
+    return std::unexpected(wrapped_result.error());
+  }
+
+  runtime::Variable wrapped = wrapped_result.value();
+
+  if (std::holds_alternative<void*>(wrapped) && std::get<void*>(wrapped) == nullptr) {
     return std::unexpected(std::runtime_error("Unwrap: cannot unwrap null"));
   }
 
-  data.memory.machine_stack.emplace(*wrapped);
+  data.memory.machine_stack.emplace(wrapped);
 
   return ExecutionResult::kNormal;
 }
@@ -1561,8 +1592,10 @@ std::expected<ExecutionResult, std::runtime_error> FormatDateTime(PassedExecutio
       return std::unexpected(vtable_index_result.error());
     }
 
-    auto string_obj_result = runtime::AllocateObject(
-        *string_vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository);
+    auto string_obj_result = runtime::AllocateObject(*string_vtable,
+                                                     static_cast<uint32_t>(vtable_index_result.value()),
+                                                     data.memory.object_repository,
+                                                     data.allocator);
     if (!string_obj_result.has_value()) {
       return std::unexpected(string_obj_result.error());
     }
@@ -1617,7 +1650,7 @@ std::expected<ExecutionResult, std::runtime_error> ParseDateTime(PassedExecution
     }
 
     auto int_obj_result = runtime::AllocateObject(
-        *int_vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository);
+        *int_vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository, data.allocator);
     if (!int_obj_result.has_value()) {
       return std::unexpected(int_obj_result.error());
     }
@@ -1778,8 +1811,10 @@ std::expected<ExecutionResult, std::runtime_error> ListDir(PassedExecutionData& 
       return std::unexpected(vtable_index_result.error());
     }
 
-    auto string_array_obj_result = runtime::AllocateObject(
-        *string_array_vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository);
+    auto string_array_obj_result = runtime::AllocateObject(*string_array_vtable,
+                                                           static_cast<uint32_t>(vtable_index_result.value()),
+                                                           data.memory.object_repository,
+                                                           data.allocator);
     if (!string_array_obj_result.has_value()) {
       return std::unexpected(string_array_obj_result.error());
     }
@@ -1802,8 +1837,10 @@ std::expected<ExecutionResult, std::runtime_error> ListDir(PassedExecutionData& 
         return std::unexpected(string_vtable_index_result.error());
       }
 
-      auto string_obj_result = runtime::AllocateObject(
-          *string_vtable, static_cast<uint32_t>(string_vtable_index_result.value()), data.memory.object_repository);
+      auto string_obj_result = runtime::AllocateObject(*string_vtable,
+                                                       static_cast<uint32_t>(string_vtable_index_result.value()),
+                                                       data.memory.object_repository,
+                                                       data.allocator);
       if (!string_obj_result.has_value()) {
         return std::unexpected(string_obj_result.error());
       }

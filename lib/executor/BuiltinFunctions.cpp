@@ -11,6 +11,7 @@
 
 #include "lib/execution_tree/ExecutionResult.hpp"
 #include "lib/execution_tree/PassedExecutionData.hpp"
+#include "lib/runtime/ByteArray.hpp"
 #include "lib/runtime/Variable.hpp"
 #include "lib/runtime/VirtualTable.hpp"
 
@@ -21,6 +22,27 @@ inline bool AreSameType(void* obj1_ptr, void* obj2_ptr) {
   const auto* desc1 = reinterpret_cast<const runtime::ObjectDescriptor*>(obj1_ptr);
   const auto* desc2 = reinterpret_cast<const runtime::ObjectDescriptor*>(obj2_ptr);
   return desc1->vtable_index == desc2->vtable_index;
+}
+
+// Helper to compute circular index for array operations
+// For insert operations (allow_append=true), handles empty arrays and allows index == size for append
+// For other operations (allow_append=false), requires non-empty array and wraps index to valid range
+inline size_t ComputeCircularIndex(int64_t index, size_t size, bool allow_append) {
+  // Empty array: any index becomes 0 (append)
+  if (size == 0 && allow_append) {
+    return 0;
+  }
+
+  // Wrap index: for size 5, index 6→1, 11→1, -1→4
+  auto size_i64 = static_cast<int64_t>(size);
+  index = ((index % size_i64) + size_i64) % size_i64;
+
+  // Check if index equals size by modulo operation (append case)
+  if (index == 0 && allow_append) {
+    index = size_i64; // Append
+  }
+
+  return static_cast<size_t>(index);
 }
 
 // Template helper for fundamental type constructors (object already allocated, just initialize)
@@ -150,8 +172,10 @@ std::expected<ExecutionResult, std::runtime_error> FundamentalTypeToString(Passe
     return std::unexpected(vtable_index_result.error());
   }
 
-  auto string_obj_result = runtime::AllocateObject(
-      *string_vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository);
+  auto string_obj_result = runtime::AllocateObject(*string_vtable,
+                                                   static_cast<uint32_t>(vtable_index_result.value()),
+                                                   data.memory.object_repository,
+                                                   data.allocator);
 
   if (!string_obj_result.has_value()) {
     return std::unexpected(string_obj_result.error());
@@ -914,16 +938,19 @@ std::expected<ExecutionResult, std::runtime_error> StringToUtf8Bytes(PassedExecu
     return std::unexpected(vtable_index_result.error());
   }
 
-  auto byte_array_obj_result = runtime::AllocateObject(
-      *byte_array_vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository);
+  auto byte_array_obj_result = runtime::AllocateObject(*byte_array_vtable,
+                                                       static_cast<uint32_t>(vtable_index_result.value()),
+                                                       data.memory.object_repository,
+                                                       data.allocator);
 
   if (!byte_array_obj_result.has_value()) {
     return std::unexpected(byte_array_obj_result.error());
   }
 
   void* byte_array_obj = byte_array_obj_result.value();
-  auto* vec_data = runtime::GetDataPointer<std::vector<uint8_t>>(byte_array_obj);
-  new (vec_data) std::vector<uint8_t>(str->begin(), str->end());
+  auto* byte_array_data = runtime::GetDataPointer<runtime::ByteArray>(byte_array_obj);
+  new (byte_array_data) runtime::ByteArray(str->size());
+  std::memcpy(byte_array_data->Data(), str->data(), str->size());
   data.memory.machine_stack.emplace(byte_array_obj);
 
   return ExecutionResult::kNormal;
@@ -1101,47 +1128,188 @@ std::expected<ExecutionResult, std::runtime_error> CharArrayGetAt(PassedExecutio
 }
 
 std::expected<ExecutionResult, std::runtime_error> ByteArrayLength(PassedExecutionData& data) {
-  return ArrayLength<uint8_t>(data);
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0])) {
+    return std::unexpected(std::runtime_error("ByteArrayLength: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  const auto* byte_array = runtime::GetDataPointer<const runtime::ByteArray>(obj_ptr);
+  auto length = static_cast<int64_t>(byte_array->Size());
+  data.memory.machine_stack.emplace(length);
+
+  return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> ByteArrayGetHash(PassedExecutionData& data) {
-  return ArrayGetHash<uint8_t>(data);
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0])) {
+    return std::unexpected(std::runtime_error("ByteArrayGetHash: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  const auto* byte_array = runtime::GetDataPointer<const runtime::ByteArray>(obj_ptr);
+  auto hash = static_cast<int64_t>(byte_array->GetHash());
+  data.memory.machine_stack.emplace(hash);
+
+  return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> ByteArrayClear(PassedExecutionData& data) {
-  return ArrayClear<uint8_t>(data);
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0])) {
+    return std::unexpected(std::runtime_error("ByteArrayClear: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  auto* byte_array = runtime::GetDataPointer<runtime::ByteArray>(obj_ptr);
+  byte_array->Clear();
+
+  return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> ByteArrayShrinkToFit(PassedExecutionData& data) {
-  return ArrayShrinkToFit<uint8_t>(data);
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0])) {
+    return std::unexpected(std::runtime_error("ByteArrayShrinkToFit: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  auto* byte_array = runtime::GetDataPointer<runtime::ByteArray>(obj_ptr);
+  byte_array->ShrinkToFit();
+
+  return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> ByteArrayReserve(PassedExecutionData& data) {
-  return ArrayReserve<uint8_t>(data);
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<int64_t>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("ByteArrayReserve: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  int64_t capacity = std::get<int64_t>(data.memory.stack_frames.top().local_variables[1]);
+  auto* byte_array = runtime::GetDataPointer<runtime::ByteArray>(obj_ptr);
+  byte_array->Reserve(static_cast<size_t>(capacity));
+
+  return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> ByteArrayCapacity(PassedExecutionData& data) {
-  return ArrayCapacity<uint8_t>(data);
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0])) {
+    return std::unexpected(std::runtime_error("ByteArrayCapacity: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  const auto* byte_array = runtime::GetDataPointer<const runtime::ByteArray>(obj_ptr);
+  auto capacity = static_cast<int64_t>(byte_array->Capacity());
+  data.memory.machine_stack.emplace(capacity);
+
+  return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> ByteArrayAdd(PassedExecutionData& data) {
-  return ArrayAdd<uint8_t>(data);
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<uint8_t>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("ByteArrayAdd: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  uint8_t value = std::get<uint8_t>(data.memory.stack_frames.top().local_variables[1]);
+  auto* byte_array = runtime::GetDataPointer<runtime::ByteArray>(obj_ptr);
+  byte_array->Insert(byte_array->Size(), value);
+
+  return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> ByteArrayRemoveAt(PassedExecutionData& data) {
-  return ArrayRemoveAt<uint8_t>(data);
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<int64_t>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("ByteArrayRemoveAt: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  int64_t index = std::get<int64_t>(data.memory.stack_frames.top().local_variables[1]);
+  auto* byte_array = runtime::GetDataPointer<runtime::ByteArray>(obj_ptr);
+
+  if (byte_array->Size() == 0) {
+    return std::unexpected(std::runtime_error("ByteArrayRemoveAt: cannot remove from empty array"));
+  }
+
+  // Circular indexing: wrap index to valid range
+  size_t size = byte_array->Size();
+  size_t circular_index = ComputeCircularIndex(index, size, false);
+
+  byte_array->Remove(circular_index);
+
+  return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> ByteArrayInsertAt(PassedExecutionData& data) {
-  return ArrayInsertAt<uint8_t>(data);
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<int64_t>(data.memory.stack_frames.top().local_variables[1]) ||
+      !std::holds_alternative<uint8_t>(data.memory.stack_frames.top().local_variables[2])) {
+    return std::unexpected(std::runtime_error("ByteArrayInsertAt: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  int64_t index = std::get<int64_t>(data.memory.stack_frames.top().local_variables[1]);
+  uint8_t value = std::get<uint8_t>(data.memory.stack_frames.top().local_variables[2]);
+  auto* byte_array = runtime::GetDataPointer<runtime::ByteArray>(obj_ptr);
+
+  // Circular indexing: wrap index to valid range
+  // For insert, we allow index == size (append), so we handle it specially
+  size_t size = byte_array->Size();
+  size_t circular_index = ComputeCircularIndex(index, size, true);
+
+  byte_array->Insert(circular_index, value);
+
+  return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> ByteArraySetAt(PassedExecutionData& data) {
-  return ArraySetAt<uint8_t>(data);
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<int64_t>(data.memory.stack_frames.top().local_variables[1]) ||
+      !std::holds_alternative<uint8_t>(data.memory.stack_frames.top().local_variables[2])) {
+    return std::unexpected(std::runtime_error("ByteArraySetAt: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  int64_t index = std::get<int64_t>(data.memory.stack_frames.top().local_variables[1]);
+  uint8_t value = std::get<uint8_t>(data.memory.stack_frames.top().local_variables[2]);
+  auto* byte_array = runtime::GetDataPointer<runtime::ByteArray>(obj_ptr);
+
+  if (byte_array->Size() == 0) {
+    return std::unexpected(std::runtime_error("ByteArraySetAt: cannot set in empty array"));
+  }
+
+  // Circular indexing: wrap index to valid range
+  size_t size = byte_array->Size();
+  size_t circular_index = ComputeCircularIndex(index, size, false);
+
+  (*byte_array)[circular_index] = value;
+
+  return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> ByteArrayGetAt(PassedExecutionData& data) {
-  return ArrayGetAt<uint8_t>(data);
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<int64_t>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("ByteArrayGetAt: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  int64_t index = std::get<int64_t>(data.memory.stack_frames.top().local_variables[1]);
+  const auto* byte_array = runtime::GetDataPointer<const runtime::ByteArray>(obj_ptr);
+
+  if (byte_array->Size() == 0) {
+    return std::unexpected(std::runtime_error("ByteArrayGetAt: cannot get from empty array"));
+  }
+
+  // Circular indexing: wrap index to valid range
+  size_t size = byte_array->Size();
+  size_t circular_index = ComputeCircularIndex(index, size, false);
+
+  uint8_t value = (*byte_array)[circular_index];
+  data.memory.machine_stack.emplace(value);
+
+  return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> BoolArrayLength(PassedExecutionData& data) {
@@ -1468,108 +1636,129 @@ std::expected<ExecutionResult, std::runtime_error> CharArrayIsLess(PassedExecuti
 
 // ByteArray methods
 std::expected<ExecutionResult, std::runtime_error> ByteArrayConstructor(PassedExecutionData& data) {
-  return ArrayConstructor<uint8_t>(data);
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<int64_t>(data.memory.stack_frames.top().local_variables[1]) ||
+      !std::holds_alternative<uint8_t>(data.memory.stack_frames.top().local_variables[2])) {
+    return std::unexpected(std::runtime_error("ByteArrayConstructor: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  int64_t size = std::get<int64_t>(data.memory.stack_frames.top().local_variables[1]);
+  uint8_t default_value = std::get<uint8_t>(data.memory.stack_frames.top().local_variables[2]);
+  auto* byte_array_data = runtime::GetDataPointer<runtime::ByteArray>(obj_ptr);
+  new (byte_array_data) runtime::ByteArray(static_cast<size_t>(size));
+  if (size > 0) {
+    std::memset(byte_array_data->Data(), default_value, static_cast<size_t>(size));
+  }
+  data.memory.machine_stack.emplace(obj_ptr);
+
+  return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> ByteArrayCopyConstructor(PassedExecutionData& data) {
-  return ArrayCopyConstructor<uint8_t>(data);
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("ByteArrayCopyConstructor: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  void* source_obj = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
+  const auto* source_byte_array = runtime::GetDataPointer<const runtime::ByteArray>(source_obj);
+  auto* byte_array_data = runtime::GetDataPointer<runtime::ByteArray>(obj_ptr);
+  new (byte_array_data) runtime::ByteArray(*source_byte_array);
+  data.memory.machine_stack.emplace(obj_ptr);
+
+  return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> ByteArrayDestructor(PassedExecutionData& data) {
-  return ArrayDestructor<uint8_t>(data);
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0])) {
+    return std::unexpected(std::runtime_error("ByteArrayDestructor: invalid argument types"));
+  }
+
+  using byte_array_type = runtime::ByteArray;
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  auto* byte_array_data = runtime::GetDataPointer<runtime::ByteArray>(obj_ptr);
+  byte_array_data->~byte_array_type();
+
+  return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> ByteArrayEquals(PassedExecutionData& data) {
-  return ArrayEquals<uint8_t>(data);
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("ByteArrayEquals: invalid argument types"));
+  }
+
+  void* obj1_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  void* obj2_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
+
+  // Check if types match - if not, return false
+  if (!AreSameType(obj1_ptr, obj2_ptr)) {
+    data.memory.machine_stack.emplace(false);
+    return ExecutionResult::kNormal;
+  }
+
+  const auto* byte_array1 = runtime::GetDataPointer<const runtime::ByteArray>(obj1_ptr);
+  const auto* byte_array2 = runtime::GetDataPointer<const runtime::ByteArray>(obj2_ptr);
+  bool equals = (*byte_array1 == *byte_array2);
+  data.memory.machine_stack.emplace(equals);
+
+  return ExecutionResult::kNormal;
 }
 
 std::expected<ExecutionResult, std::runtime_error> ByteArrayIsLess(PassedExecutionData& data) {
-  return ArrayIsLess<uint8_t>(data);
-}
-
-// ByteArray view casting constructors (from other array types)
-// These create ByteArray by interpreting the raw bytes of other array types
-// Arguments: object (this) is first, source is second
-std::expected<ExecutionResult, std::runtime_error> ByteArrayFromIntArray(PassedExecutionData& data) {
   if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
       !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[1])) {
-    return std::unexpected(std::runtime_error("ByteArray::FromIntArray: invalid argument types"));
+    return std::unexpected(std::runtime_error("ByteArrayIsLess: invalid argument types"));
   }
 
-  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
-  void* source_obj = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
-  const auto* source_vec = runtime::GetDataPointer<const std::vector<int64_t>>(source_obj);
-  auto* vec_data = runtime::GetDataPointer<std::vector<uint8_t>>(obj_ptr);
+  void* obj1_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  void* obj2_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
 
-  // Convert int64_t array to byte array by interpreting raw bytes
-  size_t byte_count = source_vec->size() * sizeof(int64_t);
-  new (vec_data) std::vector<uint8_t>(byte_count);
-  std::memcpy(vec_data->data(), source_vec->data(), byte_count);
-  data.memory.machine_stack.emplace(obj_ptr);
+  // Check if types match - if not, return false
+  if (!AreSameType(obj1_ptr, obj2_ptr)) {
+    data.memory.machine_stack.emplace(false);
+    return ExecutionResult::kNormal;
+  }
+
+  const auto* byte_array1 = runtime::GetDataPointer<const runtime::ByteArray>(obj1_ptr);
+  const auto* byte_array2 = runtime::GetDataPointer<const runtime::ByteArray>(obj2_ptr);
+  bool is_less = (*byte_array1 < *byte_array2);
+  data.memory.machine_stack.emplace(is_less);
 
   return ExecutionResult::kNormal;
 }
 
-// Arguments: object (this) is first, source is second
-std::expected<ExecutionResult, std::runtime_error> ByteArrayFromFloatArray(PassedExecutionData& data) {
+// ByteArray constructor from Object (creates a view)
+// Arguments: object (this) is first, source object is second
+std::expected<ExecutionResult, std::runtime_error> ByteArrayFromObject(PassedExecutionData& data) {
   if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
       !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[1])) {
-    return std::unexpected(std::runtime_error("ByteArray::FromFloatArray: invalid argument types"));
+    return std::unexpected(std::runtime_error("ByteArray::FromObject: invalid argument types"));
   }
 
   void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
   void* source_obj = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
-  const auto* source_vec = runtime::GetDataPointer<const std::vector<double>>(source_obj);
-  auto* vec_data = runtime::GetDataPointer<std::vector<uint8_t>>(obj_ptr);
 
-  // Convert double array to byte array by interpreting raw bytes
-  size_t byte_count = source_vec->size() * sizeof(double);
-  new (vec_data) std::vector<uint8_t>(byte_count);
-  std::memcpy(vec_data->data(), source_vec->data(), byte_count);
-  data.memory.machine_stack.emplace(obj_ptr);
+  // Get ObjectDescriptor from the source object
+  const auto* descriptor = reinterpret_cast<const runtime::ObjectDescriptor*>(source_obj);
+  uint32_t vtable_index = descriptor->vtable_index;
 
-  return ExecutionResult::kNormal;
-}
-
-// Arguments: object (this) is first, source is second
-std::expected<ExecutionResult, std::runtime_error> ByteArrayFromCharArray(PassedExecutionData& data) {
-  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
-      !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[1])) {
-    return std::unexpected(std::runtime_error("ByteArray::FromCharArray: invalid argument types"));
+  // Get the vtable from the repository
+  auto vtable_result = data.virtual_table_repository.GetByIndex(vtable_index);
+  if (!vtable_result.has_value()) {
+    return std::unexpected(
+        std::runtime_error("ByteArray::FromObject: vtable not found for index " + std::to_string(vtable_index)));
   }
 
-  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
-  void* source_obj = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
-  const auto* source_vec = runtime::GetDataPointer<const std::vector<char>>(source_obj);
-  auto* vec_data = runtime::GetDataPointer<std::vector<uint8_t>>(obj_ptr);
+  const runtime::VirtualTable* vtable = vtable_result.value();
+  size_t object_size = vtable->GetSize();
 
-  // Convert char array to byte array (direct copy, char and uint8_t are compatible)
-  new (vec_data) std::vector<uint8_t>(source_vec->begin(), source_vec->end());
-  data.memory.machine_stack.emplace(obj_ptr);
+  auto* byte_array_data = runtime::GetDataPointer<runtime::ByteArray>(obj_ptr);
 
-  return ExecutionResult::kNormal;
-}
-
-// Arguments: object (this) is first, source is second
-std::expected<ExecutionResult, std::runtime_error> ByteArrayFromBoolArray(PassedExecutionData& data) {
-  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
-      !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[1])) {
-    return std::unexpected(std::runtime_error("ByteArray::FromBoolArray: invalid argument types"));
-  }
-
-  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
-  void* source_obj = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
-  const auto* source_vec = runtime::GetDataPointer<const std::vector<bool>>(source_obj);
-  auto* vec_data = runtime::GetDataPointer<std::vector<uint8_t>>(obj_ptr);
-
-  // Convert bool array to byte array (bool is stored as bits in vector<bool>, so we convert each to uint8_t)
-  new (vec_data) std::vector<uint8_t>();
-  vec_data->reserve(source_vec->size());
-
-  for (bool val : *source_vec) {
-    vec_data->push_back(val ? static_cast<uint8_t>(1) : static_cast<uint8_t>(0));
-  }
-
+  // Create a view of the entire source object (including ObjectDescriptor)
+  new (byte_array_data) runtime::ByteArray(source_obj, object_size);
   data.memory.machine_stack.emplace(obj_ptr);
 
   return ExecutionResult::kNormal;
@@ -1729,16 +1918,19 @@ std::expected<ExecutionResult, std::runtime_error> FileRead(PassedExecutionData&
     return std::unexpected(vtable_index_result.error());
   }
 
-  auto byte_array_obj_result = runtime::AllocateObject(
-      *byte_array_vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository);
+  auto byte_array_obj_result = runtime::AllocateObject(*byte_array_vtable,
+                                                       static_cast<uint32_t>(vtable_index_result.value()),
+                                                       data.memory.object_repository,
+                                                       data.allocator);
 
   if (!byte_array_obj_result.has_value()) {
     return std::unexpected(byte_array_obj_result.error());
   }
 
   void* byte_array_obj = byte_array_obj_result.value();
-  auto* vec_data = runtime::GetDataPointer<std::vector<uint8_t>>(byte_array_obj);
-  new (vec_data) std::vector<uint8_t>(std::move(buffer));
+  auto* byte_array_data = runtime::GetDataPointer<runtime::ByteArray>(byte_array_obj);
+  new (byte_array_data) runtime::ByteArray(buffer.size());
+  std::memcpy(byte_array_data->Data(), buffer.data(), buffer.size());
   data.memory.machine_stack.emplace(byte_array_obj);
 
   return ExecutionResult::kNormal;
@@ -1754,20 +1946,20 @@ std::expected<ExecutionResult, std::runtime_error> FileWrite(PassedExecutionData
   void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
   void* byte_array_obj = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
   auto* file = runtime::GetDataPointer<std::fstream>(obj_ptr);
-  auto* data_vec = runtime::GetDataPointer<std::vector<uint8_t>>(byte_array_obj);
+  const auto* byte_array = runtime::GetDataPointer<const runtime::ByteArray>(byte_array_obj);
 
   if (!file->is_open()) {
     return std::unexpected(std::runtime_error("File::Write: file is not open"));
   }
 
   // Write bytes
-  file->write(reinterpret_cast<const char*>(data_vec->data()), static_cast<std::streamsize>(data_vec->size()));
+  file->write(reinterpret_cast<const char*>(byte_array->Data()), static_cast<std::streamsize>(byte_array->Size()));
 
   if (file->fail()) {
     return std::unexpected(std::runtime_error("File::Write: write failed"));
   }
 
-  auto bytes_written = static_cast<int64_t>(data_vec->size());
+  auto bytes_written = static_cast<int64_t>(byte_array->Size());
   data.memory.machine_stack.emplace(bytes_written);
 
   return ExecutionResult::kNormal;
@@ -1808,8 +2000,10 @@ std::expected<ExecutionResult, std::runtime_error> FileReadLine(PassedExecutionD
     return std::unexpected(vtable_index_result.error());
   }
 
-  auto string_obj_result = runtime::AllocateObject(
-      *string_vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository);
+  auto string_obj_result = runtime::AllocateObject(*string_vtable,
+                                                   static_cast<uint32_t>(vtable_index_result.value()),
+                                                   data.memory.object_repository,
+                                                   data.allocator);
 
   if (!string_obj_result.has_value()) {
     return std::unexpected(string_obj_result.error());

@@ -7,19 +7,5 @@
 int main(int32_t argc, char** argv) {
   std::vector<std::string> args = std::vector<std::string>(argv, argv + argc);
 
-  const std::string sample = R"(
-function:1 _Global_Main_StringArray {
-
-    while {
-        IntLessEqual
-    } then {
-        PrintLine
-        IntAdd
-    }
-
-    Return
-}
-  )";
-
-  return StartVmConsoleUI({"ovumc", sample}, std::cout, std::cin, std::cerr);
+  return StartVmConsoleUI(args, std::cout, std::cin, std::cerr);
 }

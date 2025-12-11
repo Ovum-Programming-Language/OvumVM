@@ -23,5 +23,22 @@ TEST_F(ProjectIntegrationTestSuite, NegitiveOutputTest1) {
   std::istringstream in;
   std::ostringstream err;
   StartVmConsoleUI(SplitString("test"), out, in, err);
-  ASSERT_EQ(err.str(), "Insufficient arguments\n");
+  ASSERT_EQ(err.str(),
+            "Not enough values were passed to argument --file.\n"
+            "ovum-vm\nShow this help message\n\nOPTIONS:\n"
+            "-f,  --file=<CompositeString>:  Path to the bytecode file\n"
+            "-j,  --jit-boundary=<unsigned long long>:  JIT compilation boundary [default = 100000]\n\n"
+            "-h,  --help:  Display this help and exit\n\n");
+}
+
+TEST_F(ProjectIntegrationTestSuite, HelpTest) {
+  std::ostringstream out;
+  std::istringstream in;
+  std::ostringstream err;
+  StartVmConsoleUI(SplitString("test --help"), out, in, err);
+  ASSERT_EQ(err.str(),
+            "ovum-vm\nShow this help message\n\nOPTIONS:\n"
+            "-f,  --file=<CompositeString>:  Path to the bytecode file\n"
+            "-j,  --jit-boundary=<unsigned long long>:  JIT compilation boundary [default = 100000]\n\n"
+            "-h,  --help:  Display this help and exit\n\n");
 }

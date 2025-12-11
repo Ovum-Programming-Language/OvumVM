@@ -9,6 +9,7 @@ target_link_libraries(vm_ui PUBLIC
         execution_tree
         runtime
         executor
+        argparser
 )
 
 target_include_directories(vm_ui PUBLIC ${PROJECT_SOURCE_DIR})
