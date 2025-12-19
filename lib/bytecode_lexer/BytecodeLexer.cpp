@@ -79,6 +79,7 @@ std::array<std::unique_ptr<Handler>, kDefaultBytecodeTokenReserve> BytecodeLexer
   for (unsigned char digit = '0'; digit <= '9'; ++digit) {
     table.at(digit) = std::make_unique<NumberHandler>();
   }
+  table.at(static_cast<unsigned char>('-')) = std::make_unique<NumberHandler>();
 
   table.at(static_cast<unsigned char>('"')) = std::make_unique<StringHandler>();
 

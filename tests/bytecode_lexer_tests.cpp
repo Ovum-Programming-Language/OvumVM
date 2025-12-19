@@ -242,8 +242,18 @@ TEST_F(BytecodeLexerTestSuite, NumberHandlerLargeInteger) {
   AssertTokenCount(tokens, 2); // int literal + EOF
 }
 
+TEST_F(BytecodeLexerTestSuite, NumberHandlerNegativeInteger) {
+  auto tokens = TokenizeSuccessfully("-1");
+  AssertTokenCount(tokens, 2); // int literal + EOF
+}
+
 TEST_F(BytecodeLexerTestSuite, NumberHandlerFloatWithDecimalPoint) {
   auto tokens = TokenizeSuccessfully("3.14");
+  AssertTokenCount(tokens, 2); // float literal + EOF
+}
+
+TEST_F(BytecodeLexerTestSuite, NumberHandlerNegativeFloat) {
+  auto tokens = TokenizeSuccessfully("-1.0");
   AssertTokenCount(tokens, 2); // float literal + EOF
 }
 
