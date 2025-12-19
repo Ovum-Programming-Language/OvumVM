@@ -1472,7 +1472,7 @@ std::expected<ExecutionResult, std::runtime_error> Print(PassedExecutionData& da
   void* string_obj1 = argument.value();
   auto* str_ptr = runtime::GetDataPointer<std::string>(string_obj1);
 
-  std::cout << *str_ptr;
+  data.output_stream << *str_ptr;
 
   return ExecutionResult::kNormal;
 }
@@ -1486,7 +1486,7 @@ std::expected<ExecutionResult, std::runtime_error> PrintLine(PassedExecutionData
   void* string_obj1 = argument.value();
   auto* str_ptr = runtime::GetDataPointer<std::string>(string_obj1);
 
-  std::cout << *str_ptr << '\n';
+  data.output_stream << *str_ptr << '\n';
 
   return ExecutionResult::kNormal;
 }
@@ -1494,7 +1494,7 @@ std::expected<ExecutionResult, std::runtime_error> PrintLine(PassedExecutionData
 std::expected<ExecutionResult, std::runtime_error> ReadLine(PassedExecutionData& data) {
   std::string res;
 
-  std::getline(std::cin, res);
+  std::getline(data.input_stream, res);
 
   return PushString(data, res);
 }
@@ -1502,7 +1502,7 @@ std::expected<ExecutionResult, std::runtime_error> ReadLine(PassedExecutionData&
 std::expected<ExecutionResult, std::runtime_error> ReadChar(PassedExecutionData& data) {
   char c = '\0';
 
-  std::cin >> c;
+  data.input_stream >> c;
 
   return PushChar(data, c);
 }
@@ -1510,7 +1510,7 @@ std::expected<ExecutionResult, std::runtime_error> ReadChar(PassedExecutionData&
 std::expected<ExecutionResult, std::runtime_error> ReadInt(PassedExecutionData& data) {
   int64_t i = 0;
 
-  std::cin >> i;
+  data.input_stream >> i;
 
   return PushInt(data, i);
 }
@@ -1518,7 +1518,7 @@ std::expected<ExecutionResult, std::runtime_error> ReadInt(PassedExecutionData& 
 std::expected<ExecutionResult, std::runtime_error> ReadFloat(PassedExecutionData& data) {
   double d = 0.0;
 
-  std::cin >> d;
+  data.input_stream >> d;
 
   return PushFloat(data, d);
 }

@@ -2,6 +2,8 @@
 #define EXECUTION_TREE_PASSEDEXECUTIONDATA_HPP
 
 #include <memory>
+#include <istream>
+#include <ostream>
 
 #include "lib/runtime/RuntimeMemory.hpp"
 #include "lib/runtime/VirtualTableRepository.hpp"
@@ -15,6 +17,9 @@ struct PassedExecutionData {
   const runtime::VirtualTableRepository& virtual_table_repository;
   const FunctionRepository& function_repository;
   std::allocator<char> allocator;
+  std::istream& input_stream;
+  std::ostream& output_stream;
+  std::ostream& error_stream;
 };
 
 } // namespace ovum::vm::execution_tree
