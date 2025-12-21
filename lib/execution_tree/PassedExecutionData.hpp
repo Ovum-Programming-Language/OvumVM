@@ -1,8 +1,8 @@
 #ifndef EXECUTION_TREE_PASSEDEXECUTIONDATA_HPP
 #define EXECUTION_TREE_PASSEDEXECUTIONDATA_HPP
 
-#include <memory>
 #include <istream>
+#include <memory>
 #include <ostream>
 
 #include "lib/runtime/RuntimeMemory.hpp"
