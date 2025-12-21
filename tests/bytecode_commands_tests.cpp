@@ -1410,6 +1410,7 @@ TEST_F(BytecodeCommandsTestSuite, CompoundScenario) {
   // Push numbers, add, to string, print
   constexpr int64_t kFirstValue = 5;
   constexpr int64_t kSecondValue = 7;
+  constexpr std::string_view kResultStr = "12\n";
 
   auto push_int = MakeIntCmd("PushInt", kFirstValue);
   ASSERT_TRUE(push_int);
@@ -1428,4 +1429,5 @@ TEST_F(BytecodeCommandsTestSuite, CompoundScenario) {
   ASSERT_TRUE(print_line);
   EXPECT_TRUE(print_line->Execute(data_).has_value());
   EXPECT_FALSE(output_stream_.str().empty());
+  EXPECT_EQ(output_stream_.str(), std::string{kResultStr});
 }
