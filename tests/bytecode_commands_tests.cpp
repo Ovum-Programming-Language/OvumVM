@@ -848,9 +848,8 @@ TEST_F(BuiltinTestSuite, CallVirtualConstructorAndFields) {
     data.memory.machine_stack.emplace(static_cast<int64_t>(kVirtualReturn));
     return ExecutionResult::kNormal;
   });
-  auto destructor_func = MakeStubFunction(std::string{kRealDestructorName}, 1, [](auto& data) {
-    return ExecutionResult::kNormal;
-  });
+  auto destructor_func =
+      MakeStubFunction(std::string{kRealDestructorName}, 1, [](auto& data) { return ExecutionResult::kNormal; });
   auto func_idx = function_repo_.Add(std::move(func));
   ASSERT_TRUE(func_idx.has_value());
   auto destructor_idx = function_repo_.Add(std::move(destructor_func));
