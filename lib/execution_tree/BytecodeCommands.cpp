@@ -2322,7 +2322,7 @@ std::expected<ExecutionResult, std::runtime_error> Interop(PassedExecutionData& 
                                               " in library " + *library_name_str));
   }
 #else
-  void* handle = dlopen(library_name_str->c_str(), RTLD_LAZY);
+  void* handle = dlopen(library_name_str->c_str(), RTLD_NOW);
   if (!handle) {
     return std::unexpected(
         std::runtime_error("Interop: failed to load library " + *library_name_str + ": " + dlerror()));
