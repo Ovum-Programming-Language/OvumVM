@@ -1,4 +1,4 @@
-#include "BytecodeCommandsTestSuite.hpp"
+#include "BuiltinTestSuite.hpp"
 
 #include <algorithm>
 #include <cstdlib>
@@ -27,11 +27,11 @@ using ovum::vm::runtime::ObjectDescriptor;
 using ovum::vm::runtime::StackFrame;
 using ovum::vm::runtime::Variable;
 
-BytecodeCommandsTestSuite::BytecodeCommandsTestSuite() :
+BuiltinTestSuite::BuiltinTestSuite() :
     data_(memory_, vtable_repo_, function_repo_, allocator_, input_stream_, output_stream_, error_stream_) {
 }
 
-void BytecodeCommandsTestSuite::SetUp() {
+void BuiltinTestSuite::SetUp() {
   auto vtable_result = ovum::vm::runtime::RegisterBuiltinVirtualTables(vtable_repo_);
   ASSERT_TRUE(vtable_result.has_value()) << vtable_result.error().what();
 
@@ -43,7 +43,7 @@ void BytecodeCommandsTestSuite::SetUp() {
   memory_.stack_frames.push(std::move(frame));
 }
 
-void BytecodeCommandsTestSuite::TearDown() {
+void BuiltinTestSuite::TearDown() {
   CleanupObjects();
   while (!memory_.machine_stack.empty()) {
     memory_.machine_stack.pop();
@@ -53,7 +53,7 @@ void BytecodeCommandsTestSuite::TearDown() {
   }
 }
 
-std::unique_ptr<IExecutable> BytecodeCommandsTestSuite::MakeSimple(const std::string& name) {
+std::unique_ptr<IExecutable> BuiltinTestSuite::MakeSimple(const std::string& name) {
   auto cmd = CreateSimpleCommandByName(name);
   EXPECT_TRUE(cmd.has_value()) << "Simple command not found: " << name;
   if (!cmd.has_value()) {
@@ -62,7 +62,7 @@ std::unique_ptr<IExecutable> BytecodeCommandsTestSuite::MakeSimple(const std::st
   return std::move(cmd.value());
 }
 
-std::unique_ptr<IExecutable> BytecodeCommandsTestSuite::MakeStringCmd(const std::string& name, const std::string& arg) {
+std::unique_ptr<IExecutable> BuiltinTestSuite::MakeStringCmd(const std::string& name, const std::string& arg) {
   auto cmd = CreateStringCommandByName(name, arg);
   EXPECT_TRUE(cmd.has_value()) << "String command not found: " << name;
   if (!cmd.has_value()) {
@@ -71,7 +71,7 @@ std::unique_ptr<IExecutable> BytecodeCommandsTestSuite::MakeStringCmd(const std:
   return std::move(cmd.value());
 }
 
-std::unique_ptr<IExecutable> BytecodeCommandsTestSuite::MakeIntCmd(const std::string& name, int64_t arg) {
+std::unique_ptr<IExecutable> BuiltinTestSuite::MakeIntCmd(const std::string& name, int64_t arg) {
   auto cmd = CreateIntegerCommandByName(name, arg);
   EXPECT_TRUE(cmd.has_value()) << "Integer command not found: " << name;
   if (!cmd.has_value()) {
@@ -80,7 +80,7 @@ std::unique_ptr<IExecutable> BytecodeCommandsTestSuite::MakeIntCmd(const std::st
   return std::move(cmd.value());
 }
 
-std::unique_ptr<IExecutable> BytecodeCommandsTestSuite::MakeFloatCmd(const std::string& name, double arg) {
+std::unique_ptr<IExecutable> BuiltinTestSuite::MakeFloatCmd(const std::string& name, double arg) {
   auto cmd = CreateFloatCommandByName(name, arg);
   EXPECT_TRUE(cmd.has_value()) << "Float command not found: " << name;
   if (!cmd.has_value()) {
@@ -89,7 +89,7 @@ std::unique_ptr<IExecutable> BytecodeCommandsTestSuite::MakeFloatCmd(const std::
   return std::move(cmd.value());
 }
 
-std::unique_ptr<IExecutable> BytecodeCommandsTestSuite::MakeBoolCmd(const std::string& name, bool arg) {
+std::unique_ptr<IExecutable> BuiltinTestSuite::MakeBoolCmd(const std::string& name, bool arg) {
   auto cmd = CreateBooleanCommandByName(name, arg);
   EXPECT_TRUE(cmd.has_value()) << "Boolean command not found: " << name;
   if (!cmd.has_value()) {
@@ -98,7 +98,7 @@ std::unique_ptr<IExecutable> BytecodeCommandsTestSuite::MakeBoolCmd(const std::s
   return std::move(cmd.value());
 }
 
-void* BytecodeCommandsTestSuite::MakeString(const std::string& value) {
+void* BuiltinTestSuite::MakeString(const std::string& value) {
   auto vt = vtable_repo_.GetByName("String");
   if (!vt.has_value()) {
     return nullptr;
@@ -118,7 +118,7 @@ void* BytecodeCommandsTestSuite::MakeString(const std::string& value) {
   return obj;
 }
 
-void* BytecodeCommandsTestSuite::MakeNullable(void* wrapped) {
+void* BuiltinTestSuite::MakeNullable(void* wrapped) {
   auto vt = vtable_repo_.GetByName("Nullable");
   if (!vt.has_value()) {
     return nullptr;
@@ -139,7 +139,7 @@ void* BytecodeCommandsTestSuite::MakeNullable(void* wrapped) {
   return obj;
 }
 
-void* BytecodeCommandsTestSuite::MakeStringArray(const std::vector<std::string>& values) {
+void* BuiltinTestSuite::MakeStringArray(const std::vector<std::string>& values) {
   auto vt = vtable_repo_.GetByName("StringArray");
   if (!vt.has_value()) {
     return nullptr;
@@ -163,7 +163,7 @@ void* BytecodeCommandsTestSuite::MakeStringArray(const std::vector<std::string>&
   return obj;
 }
 
-void* BytecodeCommandsTestSuite::MakeByteArray(const std::vector<uint8_t>& values) {
+void* BuiltinTestSuite::MakeByteArray(const std::vector<uint8_t>& values) {
   auto vt = vtable_repo_.GetByName("ByteArray");
   if (!vt.has_value()) {
     return nullptr;
@@ -188,67 +188,67 @@ void* BytecodeCommandsTestSuite::MakeByteArray(const std::vector<uint8_t>& value
   return obj;
 }
 
-void BytecodeCommandsTestSuite::PushInt(int64_t value) {
+void BuiltinTestSuite::PushInt(int64_t value) {
   memory_.machine_stack.emplace(value);
 }
 
-void BytecodeCommandsTestSuite::PushFloat(double value) {
+void BuiltinTestSuite::PushFloat(double value) {
   memory_.machine_stack.emplace(value);
 }
 
-void BytecodeCommandsTestSuite::PushBool(bool value) {
+void BuiltinTestSuite::PushBool(bool value) {
   memory_.machine_stack.emplace(value);
 }
 
-void BytecodeCommandsTestSuite::PushChar(char value) {
+void BuiltinTestSuite::PushChar(char value) {
   memory_.machine_stack.emplace(value);
 }
 
-void BytecodeCommandsTestSuite::PushByte(uint8_t value) {
+void BuiltinTestSuite::PushByte(uint8_t value) {
   memory_.machine_stack.emplace(value);
 }
 
-void BytecodeCommandsTestSuite::PushObject(void* ptr) {
+void BuiltinTestSuite::PushObject(void* ptr) {
   memory_.machine_stack.emplace(ptr);
 }
 
-int64_t BytecodeCommandsTestSuite::PopInt() {
+int64_t BuiltinTestSuite::PopInt() {
   auto var = memory_.machine_stack.top();
   memory_.machine_stack.pop();
   return std::get<int64_t>(var);
 }
 
-double BytecodeCommandsTestSuite::PopDouble() {
+double BuiltinTestSuite::PopDouble() {
   auto var = memory_.machine_stack.top();
   memory_.machine_stack.pop();
   return std::get<double>(var);
 }
 
-bool BytecodeCommandsTestSuite::PopBool() {
+bool BuiltinTestSuite::PopBool() {
   auto var = memory_.machine_stack.top();
   memory_.machine_stack.pop();
   return std::get<bool>(var);
 }
 
-char BytecodeCommandsTestSuite::PopChar() {
+char BuiltinTestSuite::PopChar() {
   auto var = memory_.machine_stack.top();
   memory_.machine_stack.pop();
   return std::get<char>(var);
 }
 
-uint8_t BytecodeCommandsTestSuite::PopByte() {
+uint8_t BuiltinTestSuite::PopByte() {
   auto var = memory_.machine_stack.top();
   memory_.machine_stack.pop();
   return std::get<uint8_t>(var);
 }
 
-void* BytecodeCommandsTestSuite::PopObject() {
+void* BuiltinTestSuite::PopObject() {
   auto var = memory_.machine_stack.top();
   memory_.machine_stack.pop();
   return std::get<void*>(var);
 }
 
-void BytecodeCommandsTestSuite::ExpectTopStringEquals(const std::string& expected) {
+void BuiltinTestSuite::ExpectTopStringEquals(const std::string& expected) {
   ASSERT_FALSE(memory_.machine_stack.empty());
   auto var = memory_.machine_stack.top();
   ASSERT_TRUE(std::holds_alternative<void*>(var));
@@ -256,7 +256,7 @@ void BytecodeCommandsTestSuite::ExpectTopStringEquals(const std::string& expecte
   EXPECT_EQ(*str_ptr, expected);
 }
 
-void BytecodeCommandsTestSuite::ExpectTopNullableHasValue(bool has_value) {
+void BuiltinTestSuite::ExpectTopNullableHasValue(bool has_value) {
   ASSERT_FALSE(memory_.machine_stack.empty());
   auto var = memory_.machine_stack.top();
   ASSERT_TRUE(std::holds_alternative<void*>(var));
@@ -268,7 +268,7 @@ void BytecodeCommandsTestSuite::ExpectTopNullableHasValue(bool has_value) {
   }
 }
 
-void BytecodeCommandsTestSuite::CleanupObjects() {
+void BuiltinTestSuite::CleanupObjects() {
   std::vector<void*> objects;
   for (size_t i = 0; i < memory_.object_repository.GetCount(); ++i) {
     auto obj = memory_.object_repository.GetByIndex(i);
@@ -284,7 +284,7 @@ void BytecodeCommandsTestSuite::CleanupObjects() {
   memory_.object_repository.Clear();
 }
 
-void BytecodeCommandsTestSuite::DestroyObject(void* obj) {
+void BuiltinTestSuite::DestroyObject(void* obj) {
   auto* descriptor = reinterpret_cast<ObjectDescriptor*>(obj);
   auto vt = vtable_repo_.GetByIndex(descriptor->vtable_index);
   if (!vt.has_value()) {

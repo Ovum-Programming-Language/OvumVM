@@ -1,4 +1,4 @@
-#include "test_suites/BytecodeCommandsTestSuite.hpp"
+#include "test_suites/BuiltinTestSuite.hpp"
 
 #include <chrono>
 #include <cmath>
@@ -31,7 +31,7 @@ std::unique_ptr<ovum::vm::execution_tree::Function> MakeStubFunction(
 }
 } // namespace
 
-TEST_F(BytecodeCommandsTestSuite, StackManipulationCommands) {
+TEST_F(BuiltinTestSuite, StackManipulationCommands) {
   constexpr int64_t kTen = 10;
   constexpr int64_t kOne = 1;
   constexpr int64_t kTwo = 2;
@@ -71,7 +71,7 @@ TEST_F(BytecodeCommandsTestSuite, StackManipulationCommands) {
   EXPECT_FALSE(bad_rotate->Execute(data_).has_value());
 }
 
-TEST_F(BytecodeCommandsTestSuite, PushCommandsUseFactory) {
+TEST_F(BuiltinTestSuite, PushCommandsUseFactory) {
   constexpr double kFloat = 1.5;
   constexpr bool kBool = true;
   constexpr char kChar = 'Z';
@@ -98,7 +98,7 @@ TEST_F(BytecodeCommandsTestSuite, PushCommandsUseFactory) {
   EXPECT_EQ(PopByte(), kByte);
 }
 
-TEST_F(BytecodeCommandsTestSuite, LocalAndStaticOperations) {
+TEST_F(BuiltinTestSuite, LocalAndStaticOperations) {
   constexpr int64_t kLocalIndex = 2;
   constexpr int64_t kLocalValue = 7;
   constexpr int64_t kStaticIndex = 1;
@@ -131,7 +131,7 @@ TEST_F(BytecodeCommandsTestSuite, LocalAndStaticOperations) {
   EXPECT_EQ(PopInt(), kStaticValue);
 }
 
-TEST_F(BytecodeCommandsTestSuite, PopAndReturnCommands) {
+TEST_F(BuiltinTestSuite, PopAndReturnCommands) {
   constexpr int64_t kValue = 42;
 
   PushInt(kValue);
@@ -147,7 +147,7 @@ TEST_F(BytecodeCommandsTestSuite, PopAndReturnCommands) {
   EXPECT_EQ(result.value(), ExecutionResult::kReturn);
 }
 
-TEST_F(BytecodeCommandsTestSuite, IntegerArithmeticCommands) {
+TEST_F(BuiltinTestSuite, IntegerArithmeticCommands) {
   constexpr int64_t kAddLeft = 8;
   constexpr int64_t kAddRight = 4;
   constexpr int64_t kMulLeft = 6;
@@ -219,7 +219,7 @@ TEST_F(BytecodeCommandsTestSuite, IntegerArithmeticCommands) {
   EXPECT_EQ(PopInt(), kDecValue - 1);
 }
 
-TEST_F(BytecodeCommandsTestSuite, FloatArithmeticCommands) {
+TEST_F(BuiltinTestSuite, FloatArithmeticCommands) {
   constexpr double kAddLeft = 3.0;
   constexpr double kAddRight = 2.0;
   constexpr double kDivLeft = 5.0;
@@ -256,7 +256,7 @@ TEST_F(BytecodeCommandsTestSuite, FloatArithmeticCommands) {
   EXPECT_FALSE(div->Execute(data_).has_value());
 }
 
-TEST_F(BytecodeCommandsTestSuite, FloatExtendedOperations) {
+TEST_F(BuiltinTestSuite, FloatExtendedOperations) {
   constexpr double kSubLeft = 5.0;
   constexpr double kSubRight = 1.5;
   constexpr double kMulLeft = 2.0;
@@ -283,7 +283,7 @@ TEST_F(BytecodeCommandsTestSuite, FloatExtendedOperations) {
   EXPECT_DOUBLE_EQ(PopDouble(), -kNegValue);
 }
 
-TEST_F(BytecodeCommandsTestSuite, ByteArithmeticCommands) {
+TEST_F(BuiltinTestSuite, ByteArithmeticCommands) {
   constexpr uint8_t kInitial = 10;
   constexpr uint8_t kAddLeft = 5;
   constexpr uint8_t kAddRight = 3;
@@ -324,7 +324,7 @@ TEST_F(BytecodeCommandsTestSuite, ByteArithmeticCommands) {
   EXPECT_FALSE(div->Execute(data_).has_value());
 }
 
-TEST_F(BytecodeCommandsTestSuite, ByteExtendedOperations) {
+TEST_F(BuiltinTestSuite, ByteExtendedOperations) {
   constexpr uint8_t kMulLeft = 3;
   constexpr uint8_t kMulRight = 2;
   constexpr uint8_t kModLeft = 9;
@@ -409,7 +409,7 @@ TEST_F(BytecodeCommandsTestSuite, ByteExtendedOperations) {
   EXPECT_EQ(PopByte(), static_cast<uint8_t>(kShiftRightValue >> kShiftRightBy));
 }
 
-TEST_F(BytecodeCommandsTestSuite, ComparisonCommands) {
+TEST_F(BuiltinTestSuite, ComparisonCommands) {
   constexpr int64_t kIntEqualValue = 5;
   constexpr int64_t kIntLtLeft = 7;
   constexpr int64_t kIntLtRight = 5;
@@ -566,7 +566,7 @@ TEST_F(BytecodeCommandsTestSuite, ComparisonCommands) {
   EXPECT_TRUE(PopBool());
 }
 
-TEST_F(BytecodeCommandsTestSuite, BooleanAndBitwiseCommands) {
+TEST_F(BuiltinTestSuite, BooleanAndBitwiseCommands) {
   constexpr bool kTrue = true;
   constexpr bool kFalse = false;
   constexpr int64_t kIntAndLeft = 0b1010;
@@ -616,7 +616,7 @@ TEST_F(BytecodeCommandsTestSuite, BooleanAndBitwiseCommands) {
   EXPECT_EQ(PopByte(), static_cast<uint8_t>(kByteShiftValue << kByteShiftBy));
 }
 
-TEST_F(BytecodeCommandsTestSuite, IntBitwiseAndShiftCommands) {
+TEST_F(BuiltinTestSuite, IntBitwiseAndShiftCommands) {
   constexpr int64_t kOrLeft = 0b1010;
   constexpr int64_t kOrRight = 0b0101;
   constexpr int64_t kXorLeft = 0b1111;
@@ -662,7 +662,7 @@ TEST_F(BytecodeCommandsTestSuite, IntBitwiseAndShiftCommands) {
   EXPECT_EQ(PopInt(), kRShiftValue >> kRShiftBy);
 }
 
-TEST_F(BytecodeCommandsTestSuite, StringOperations) {
+TEST_F(BuiltinTestSuite, StringOperations) {
   constexpr std::string_view kFirst = "hello";
   constexpr std::string_view kSecond = "world";
   constexpr std::string_view kSubSource = "bytecode";
@@ -714,7 +714,7 @@ TEST_F(BytecodeCommandsTestSuite, StringOperations) {
   EXPECT_LT(PopInt(), kCompareLessThan);
 }
 
-TEST_F(BytecodeCommandsTestSuite, StringAndNumericConversions) {
+TEST_F(BuiltinTestSuite, StringAndNumericConversions) {
   constexpr std::string_view kIntString = "123";
   constexpr std::string_view kFloatString = "3.14";
   constexpr int64_t kIntValue = 123;
@@ -752,7 +752,7 @@ TEST_F(BytecodeCommandsTestSuite, StringAndNumericConversions) {
   ExpectTopStringEquals(std::string{kFloatToStrExpected});
 }
 
-TEST_F(BytecodeCommandsTestSuite, NumericConversions) {
+TEST_F(BuiltinTestSuite, NumericConversions) {
   constexpr int64_t kIntValue = 3;
   constexpr double kFloatValue = 7.8;
   constexpr uint8_t kByteValue = 200;
@@ -797,7 +797,7 @@ TEST_F(BytecodeCommandsTestSuite, NumericConversions) {
   EXPECT_EQ(PopByte(), static_cast<uint8_t>(kBoolValue));
 }
 
-TEST_F(BytecodeCommandsTestSuite, CallAndIndirectCommands) {
+TEST_F(BuiltinTestSuite, CallAndIndirectCommands) {
   constexpr int64_t kReturnValue = 99;
   constexpr int64_t kInvalidIndex = 999;
   constexpr std::string_view kTargetName = "Target";
@@ -825,7 +825,7 @@ TEST_F(BytecodeCommandsTestSuite, CallAndIndirectCommands) {
   EXPECT_FALSE(indirect_cmd->Execute(data_).has_value());
 }
 
-TEST_F(BytecodeCommandsTestSuite, CallVirtualConstructorAndFields) {
+TEST_F(BuiltinTestSuite, CallVirtualConstructorAndFields) {
   constexpr int64_t kFieldValue = 77;
   constexpr int64_t kVirtualReturn = 321;
   constexpr std::string_view kClassName = "Custom";
@@ -904,7 +904,7 @@ TEST_F(BytecodeCommandsTestSuite, CallVirtualConstructorAndFields) {
   PopObject();
 }
 
-TEST_F(BytecodeCommandsTestSuite, NullableAndSafeCallCommands) {
+TEST_F(BuiltinTestSuite, NullableAndSafeCallCommands) {
   constexpr std::string_view kInnerValue = "hi";
   constexpr int64_t kCoalesceInt = 0;
   constexpr int64_t kSafeReturnValue = 55;
@@ -972,7 +972,7 @@ TEST_F(BytecodeCommandsTestSuite, NullableAndSafeCallCommands) {
   EXPECT_EQ(*unwrapped_str, kInnerValue);
 }
 
-TEST_F(BytecodeCommandsTestSuite, TypeOperations) {
+TEST_F(BuiltinTestSuite, TypeOperations) {
   constexpr int64_t kValue = 5;
   constexpr std::string_view kTypeName = "int";
 
@@ -995,7 +995,7 @@ TEST_F(BytecodeCommandsTestSuite, TypeOperations) {
   EXPECT_EQ(PopInt(), static_cast<int64_t>(sizeof(int64_t)));
 }
 
-TEST_F(BytecodeCommandsTestSuite, InputOutputCommands) {
+TEST_F(BuiltinTestSuite, InputOutputCommands) {
   constexpr std::string_view kInputData = "line\nC 123 4.5";
   constexpr std::string_view kExpectedLine = "line";
   constexpr char kExpectedChar = 'C';
@@ -1043,7 +1043,7 @@ TEST_F(BytecodeCommandsTestSuite, InputOutputCommands) {
   EXPECT_EQ(output_stream_.str(), std::string{kCombinedOutput});
 }
 
-TEST_F(BytecodeCommandsTestSuite, TimeCommands) {
+TEST_F(BuiltinTestSuite, TimeCommands) {
   constexpr int64_t kSleepMs = 1;
   constexpr int64_t kEpochSeconds = 0;
   constexpr std::string_view kYearFormat = "%Y";
@@ -1104,7 +1104,7 @@ TEST_F(BytecodeCommandsTestSuite, TimeCommands) {
   EXPECT_NE(int_data, nullptr);
 }
 
-TEST_F(BytecodeCommandsTestSuite, FileSystemCommands) {
+TEST_F(BuiltinTestSuite, FileSystemCommands) {
   constexpr std::string_view kTempDirName = "ovum_vm_cmd_tests";
   constexpr std::string_view kFileName = "file.txt";
   constexpr std::string_view kCopyName = "copy.txt";
@@ -1193,7 +1193,7 @@ TEST_F(BytecodeCommandsTestSuite, FileSystemCommands) {
   EXPECT_TRUE(PopBool());
 }
 
-TEST_F(BytecodeCommandsTestSuite, SystemCommands) {
+TEST_F(BuiltinTestSuite, SystemCommands) {
   constexpr std::string_view kEnvName = "OVUM_VM_TEST_ENV";
   constexpr std::string_view kEnvValue = "VALUE";
   constexpr int64_t kSleepMsValue = 1;
@@ -1245,7 +1245,7 @@ TEST_F(BytecodeCommandsTestSuite, SystemCommands) {
   EXPECT_GE(PopInt(), kMinProcessorCount);
 }
 
-TEST_F(BytecodeCommandsTestSuite, RandomCommands) {
+TEST_F(BuiltinTestSuite, RandomCommands) {
   constexpr int64_t kSeedValue = 12345;
   constexpr int64_t kRangeMin = 1;
   constexpr int64_t kRangeMax = 3;
@@ -1298,7 +1298,7 @@ TEST_F(BytecodeCommandsTestSuite, RandomCommands) {
   EXPECT_LE(rf, kMaxUnit);
 }
 
-TEST_F(BytecodeCommandsTestSuite, MemoryAndOsInfoCommands) {
+TEST_F(BuiltinTestSuite, MemoryAndOsInfoCommands) {
   constexpr int64_t kZero = 0;
 
   auto mem_cmd = MakeSimple("GetMemoryUsage");
@@ -1347,7 +1347,7 @@ TEST_F(BytecodeCommandsTestSuite, MemoryAndOsInfoCommands) {
   PopObject();
 }
 
-TEST_F(BytecodeCommandsTestSuite, TypeIntrospectionAndSizeOf) {
+TEST_F(BuiltinTestSuite, TypeIntrospectionAndSizeOf) {
   constexpr uint8_t kByteValue = 1;
   constexpr std::string_view kByteType = "byte";
   constexpr std::string_view kStringValue = "text";
@@ -1375,7 +1375,7 @@ TEST_F(BytecodeCommandsTestSuite, TypeIntrospectionAndSizeOf) {
   EXPECT_EQ(PopInt(), kStringSize);
 }
 
-TEST_F(BytecodeCommandsTestSuite, InteropCommandNegativePath) {
+TEST_F(BuiltinTestSuite, InteropCommandNegativePath) {
   constexpr std::string_view kMissingLib = "nonexistent_library.so";
   constexpr std::string_view kMissingFunc = "missing";
   constexpr uint8_t kOutputInit = 0;
@@ -1395,7 +1395,7 @@ TEST_F(BytecodeCommandsTestSuite, InteropCommandNegativePath) {
   EXPECT_FALSE(interop->Execute(data_).has_value());
 }
 
-TEST_F(BytecodeCommandsTestSuite, ExitCommandTerminates) {
+TEST_F(BuiltinTestSuite, ExitCommandTerminates) {
   constexpr int64_t kExitCode = 0;
   auto exit_cmd = MakeSimple("Exit");
   PushInt(kExitCode);
@@ -1406,7 +1406,7 @@ TEST_F(BytecodeCommandsTestSuite, ExitCommandTerminates) {
 #endif
 }
 
-TEST_F(BytecodeCommandsTestSuite, CompoundScenario) {
+TEST_F(BuiltinTestSuite, CompoundScenario) {
   // Push numbers, add, to string, print
   constexpr int64_t kFirstValue = 5;
   constexpr int64_t kSecondValue = 7;

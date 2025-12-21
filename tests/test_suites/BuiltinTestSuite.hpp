@@ -1,5 +1,5 @@
-#ifndef BYTECODECOMMANDSTESTSUITE_HPP_
-#define BYTECODECOMMANDSTESTSUITE_HPP_
+#ifndef BUILTINTESTSUITE_HPP_
+#define BUILTINTESTSUITE_HPP_
 
 #include <cstdint>
 #include <expected>
@@ -16,8 +16,8 @@
 #include "lib/runtime/RuntimeMemory.hpp"
 #include "lib/runtime/VirtualTableRepository.hpp"
 
-struct BytecodeCommandsTestSuite : public testing::Test {
-  BytecodeCommandsTestSuite();
+struct BuiltinTestSuite : public testing::Test {
+  BuiltinTestSuite();
 
   void SetUp() override;
   void TearDown() override;
@@ -69,4 +69,4 @@ struct BytecodeCommandsTestSuite : public testing::Test {
   ovum::vm::execution_tree::PassedExecutionData data_;
 };
 
-#endif // BYTECODECOMMANDSTESTSUITE_HPP_
+#endif // BUILTINTESTSUITE_HPP_
