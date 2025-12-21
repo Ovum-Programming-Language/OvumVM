@@ -10,10 +10,12 @@ std::allocator<char> ByteArray::allocator_;
 ByteArray::ByteArray() = default;
 
 ByteArray::ByteArray(size_t size) : size_(size), capacity_(size) {
-  if (size > 0) {
-    AllocateMemory(size);
-    std::memset(data_, 0, size);
+  if (size == 0) {
+    capacity_ = 1;
   }
+
+  AllocateMemory(capacity_);
+  std::memset(data_, 0, size_);
 }
 
 ByteArray::ByteArray(void* data, size_t capacity) :
