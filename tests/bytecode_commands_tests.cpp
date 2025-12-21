@@ -829,6 +829,8 @@ TEST_F(BuiltinTestSuite, CallVirtualConstructorAndFields) {
   constexpr int64_t kFieldValue = 77;
   constexpr int64_t kVirtualReturn = 321;
   constexpr std::string_view kClassName = "Custom";
+  constexpr std::string_view kVirtualDestructorName = "_destructor_<M>";
+  constexpr std::string_view kRealDestructorName = "_Custom_destructor_<M>";
   constexpr std::string_view kMethodName = "virt";
   constexpr std::string_view kFieldType = "int";
   constexpr std::string_view kRealMethodName = "real";
@@ -838,6 +840,7 @@ TEST_F(BuiltinTestSuite, CallVirtualConstructorAndFields) {
                                      sizeof(ovum::vm::runtime::ObjectDescriptor) + sizeof(int64_t));
   auto field_offset = vt.AddField(std::string{kFieldType}, sizeof(ovum::vm::runtime::ObjectDescriptor));
   vt.AddFunction(std::string{kMethodName}, std::string{kRealMethodName});
+  vt.AddFunction(std::string{kVirtualDestructorName}, std::string{kRealDestructorName});
   auto vt_index = vtable_repo_.Add(std::move(vt));
   ASSERT_TRUE(vt_index.has_value());
 
@@ -845,9 +848,15 @@ TEST_F(BuiltinTestSuite, CallVirtualConstructorAndFields) {
     data.memory.machine_stack.emplace(static_cast<int64_t>(kVirtualReturn));
     return ExecutionResult::kNormal;
   });
+  auto destructor_func = MakeStubFunction(std::string{kRealDestructorName}, 1, [](auto& data) {
+    return ExecutionResult::kNormal;
+  });
   auto func_idx = function_repo_.Add(std::move(func));
   ASSERT_TRUE(func_idx.has_value());
+  auto destructor_idx = function_repo_.Add(std::move(destructor_func));
+  ASSERT_TRUE(destructor_idx.has_value());
   (void) func_idx;
+  (void) destructor_idx;
 
   auto obj_res = ovum::vm::runtime::AllocateObject(*vtable_repo_.GetByIndex(vt_index.value()).value(),
                                                    static_cast<uint32_t>(vt_index.value()),

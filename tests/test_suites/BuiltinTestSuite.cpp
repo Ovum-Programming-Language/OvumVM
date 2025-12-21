@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cstdlib>
-#include <fstream>
 
 #include "lib/execution_tree/ExecutionResult.hpp"
 #include "lib/execution_tree/Function.hpp"
@@ -287,36 +286,16 @@ void BuiltinTestSuite::CleanupObjects() {
 void BuiltinTestSuite::DestroyObject(void* obj) {
   auto* descriptor = reinterpret_cast<ObjectDescriptor*>(obj);
   auto vt = vtable_repo_.GetByIndex(descriptor->vtable_index);
-  if (!vt.has_value()) {
-    return;
-  }
+  ASSERT_TRUE(vt.has_value()) << vt.error().what();
 
-  const std::string name = vt.value()->GetName();
-  if (name == "String") {
-    auto* ptr = GetDataPointer<std::string>(obj);
-    ptr->~basic_string();
-  } else if (name == "StringArray" || name == "ObjectArray" || name == "PointerArray") {
-    auto* ptr = GetDataPointer<std::vector<void*>>(obj);
-    ptr->~vector();
-  } else if (name == "IntArray") {
-    auto* ptr = GetDataPointer<std::vector<int64_t>>(obj);
-    ptr->~vector();
-  } else if (name == "FloatArray") {
-    auto* ptr = GetDataPointer<std::vector<double>>(obj);
-    ptr->~vector();
-  } else if (name == "CharArray") {
-    auto* ptr = GetDataPointer<std::vector<char>>(obj);
-    ptr->~vector();
-  } else if (name == "ByteArray") {
-    auto* ptr = GetDataPointer<ovum::vm::runtime::ByteArray>(obj);
-    ptr->~ByteArray();
-  } else if (name == "BoolArray") {
-    auto* ptr = GetDataPointer<std::vector<bool>>(obj);
-    ptr->~vector();
-  } else if (name == "File") {
-    auto* ptr = GetDataPointer<std::fstream>(obj);
-    ptr->~basic_fstream();
-  }
+  auto destructor_id_result = vt.value()->GetRealFunctionId("_destructor_<M>");
+  ASSERT_TRUE(destructor_id_result.has_value()) << destructor_id_result.error().what();
+
+  auto destructor_function = function_repo_.GetById(destructor_id_result.value());
+  ASSERT_TRUE(destructor_function.has_value()) << destructor_function.error().what();
+
+  data_.memory.machine_stack.emplace(obj);
+  auto destructor_exec_result = destructor_function.value()->Execute(data_);
 
   allocator_.deallocate(reinterpret_cast<char*>(obj), vt.value()->GetSize());
 }
