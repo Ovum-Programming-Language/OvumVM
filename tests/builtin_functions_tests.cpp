@@ -36,8 +36,9 @@ void* AllocateObjectByName(BuiltinTestSuite& suite, const std::string& vtable_na
 }
 
 template<typename... Args>
-std::expected<ovum::vm::execution_tree::ExecutionResult, std::runtime_error> ExecuteFunction(
-    BuiltinTestSuite& suite, const std::string& name, Args&&... args) {
+std::expected<ovum::vm::execution_tree::ExecutionResult, std::runtime_error> ExecuteFunction(BuiltinTestSuite& suite,
+                                                                                             const std::string& name,
+                                                                                             Args&&... args) {
   auto fn = suite.function_repo_.GetByName(name);
   EXPECT_TRUE(fn.has_value()) << "Function not found: " << name;
   if (!fn.has_value()) {
@@ -131,7 +132,6 @@ TEST_F(BuiltinTestSuite, PrimitiveIntMethods) {
   auto hash = ExecuteFunction(*this, "_Int_GetHash_<C>", int_obj);
   ASSERT_TRUE(hash.has_value());
   ExpectStackTopEquals<int64_t>(*this, static_cast<int64_t>(std::hash<int64_t>{}(kValue)));
-
 }
 
 TEST_F(BuiltinTestSuite, PrimitiveFloatCharByteBoolMethods) {
