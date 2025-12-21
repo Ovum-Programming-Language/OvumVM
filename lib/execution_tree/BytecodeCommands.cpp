@@ -16,11 +16,13 @@
 #include "FunctionRepository.hpp"
 #include "IFunctionExecutable.hpp"
 #include "lib/executor/BuiltinFunctions.hpp"
+#include "lib/runtime/ByteArray.hpp"
 #include "lib/runtime/ObjectDescriptor.hpp"
 
 #ifdef _WIN32
 #include <windows.h>
 #else
+#include <dlfcn.h>
 #include <unistd.h>
 #endif
 
@@ -2265,6 +2267,92 @@ std::expected<ExecutionResult, std::runtime_error> SizeOf(PassedExecutionData& d
   }
 
   data.memory.machine_stack.emplace(static_cast<int64_t>(size));
+  return ExecutionResult::kNormal;
+}
+
+std::expected<ExecutionResult, std::runtime_error> Interop(PassedExecutionData& data) {
+  auto library_name_arg = TryExtractArgument<void*>(data, "Interop");
+  if (!library_name_arg) {
+    return std::unexpected(library_name_arg.error());
+  }
+
+  auto function_name_arg = TryExtractArgument<void*>(data, "Interop");
+  if (!function_name_arg) {
+    data.memory.machine_stack.emplace(*library_name_arg);
+    return std::unexpected(function_name_arg.error());
+  }
+
+  auto input_array_arg = TryExtractArgument<void*>(data, "Interop");
+  if (!input_array_arg) {
+    data.memory.machine_stack.emplace(*function_name_arg);
+    data.memory.machine_stack.emplace(*library_name_arg);
+    return std::unexpected(input_array_arg.error());
+  }
+
+  auto output_array_arg = TryExtractArgument<void*>(data, "Interop");
+  if (!output_array_arg) {
+    data.memory.machine_stack.emplace(*input_array_arg);
+    data.memory.machine_stack.emplace(*function_name_arg);
+    data.memory.machine_stack.emplace(*library_name_arg);
+    return std::unexpected(output_array_arg.error());
+  }
+
+  void* library_name_obj = library_name_arg.value();
+  auto* library_name_str = runtime::GetDataPointer<std::string>(library_name_obj);
+  void* function_name_obj = function_name_arg.value();
+  auto* function_name_str = runtime::GetDataPointer<std::string>(function_name_obj);
+
+  void* input_array_obj = input_array_arg.value();
+  auto* input_byte_array = runtime::GetDataPointer<runtime::ByteArray>(input_array_obj);
+  void* output_array_obj = output_array_arg.value();
+  auto* output_byte_array = runtime::GetDataPointer<runtime::ByteArray>(output_array_obj);
+
+  using FunctionPtr = long long (*)(void*, unsigned long long, void*, unsigned long long);
+
+#ifdef _WIN32
+  HMODULE handle = LoadLibraryA(library_name_str->c_str());
+  if (!handle) {
+    return std::unexpected(std::runtime_error("Interop: failed to load library " + *library_name_str));
+  }
+
+  auto func = reinterpret_cast<FunctionPtr>(GetProcAddress(handle, function_name_str->c_str()));
+  if (!func) {
+    FreeLibrary(handle);
+    return std::unexpected(std::runtime_error("Interop: failed to find function " + *function_name_str +
+                                              " in library " + *library_name_str));
+  }
+#else
+  void* handle = dlopen(library_name_str->c_str(), RTLD_LAZY);
+  if (!handle) {
+    return std::unexpected(
+        std::runtime_error("Interop: failed to load library " + *library_name_str + ": " + dlerror()));
+  }
+
+  auto func = reinterpret_cast<FunctionPtr>(dlsym(handle, function_name_str->c_str()));
+  if (!func) {
+    const char* error = dlerror();
+    dlclose(handle);
+    return std::unexpected(std::runtime_error("Interop: failed to find function " + *function_name_str +
+                                              " in library " + *library_name_str + ": " +
+                                              (error ? error : "unknown error")));
+  }
+#endif
+
+  void* input_data = input_byte_array->Data();
+  auto input_size = static_cast<unsigned long long>(input_byte_array->Size());
+  void* output_data = output_byte_array->Data();
+  auto output_size = static_cast<unsigned long long>(output_byte_array->Size());
+
+  long long result = func(input_data, input_size, output_data, output_size);
+
+#ifdef _WIN32
+  FreeLibrary(handle);
+#else
+  dlclose(handle);
+#endif
+
+  data.memory.machine_stack.emplace(static_cast<int64_t>(result));
+
   return ExecutionResult::kNormal;
 }
 
