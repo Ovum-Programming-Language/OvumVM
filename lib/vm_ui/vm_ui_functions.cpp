@@ -89,7 +89,10 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
   ovum::vm::execution_tree::PassedExecutionData execution_data{.memory = memory,
                                                                .virtual_table_repository = vtable_repo,
                                                                .function_repository = func_repo,
-                                                               .allocator = std::allocator<char>()};
+                                                               .allocator = std::allocator<char>(),
+                                                               .input_stream = in,
+                                                               .output_stream = out,
+                                                               .error_stream = err};
   int32_t return_code = 0;
 
   try {

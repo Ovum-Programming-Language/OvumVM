@@ -191,6 +191,9 @@ const std::unordered_map<std::string, SimpleCommandFunc>& GetSimpleCommands() {
 
       // Type operations
       {"TypeOf", bytecode::TypeOf},
+
+      // FFI operations
+      {"Interop", bytecode::Interop},
   };
   return kMap;
 }

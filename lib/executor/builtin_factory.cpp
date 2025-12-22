@@ -15,6 +15,7 @@
 #include "lib/execution_tree/FunctionRepository.hpp"
 #include "lib/execution_tree/IFunctionExecutable.hpp"
 #include "lib/executor/BuiltinFunctions.hpp"
+#include "lib/runtime/ByteArray.hpp"
 #include "lib/runtime/FunctionId.hpp"
 #include "lib/runtime/ObjectDescriptor.hpp"
 #include "lib/runtime/VirtualTable.hpp"
@@ -223,10 +224,10 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     }
   }
 
-  // ByteArray: wrapper around std::vector<uint8_t>
+  // ByteArray: wrapper around custom ByteArray implementation
   // Special handling for byte view casting
   {
-    VirtualTable byte_array_vtable("ByteArray", sizeof(ObjectDescriptor) + sizeof(std::vector<uint8_t>));
+    VirtualTable byte_array_vtable("ByteArray", sizeof(ObjectDescriptor) + sizeof(ovum::vm::runtime::ByteArray));
     byte_array_vtable.AddField("Object", sizeof(ObjectDescriptor));
     byte_array_vtable.AddFunction("_destructor_<M>", "_ByteArray_destructor_<M>");
     byte_array_vtable.AddFunction("_Equals_<C>_Object", "_ByteArray_Equals_<C>_Object");

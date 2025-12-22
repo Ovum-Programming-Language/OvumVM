@@ -89,7 +89,7 @@ jobs:
 
       - name: Create CMake cache
         run: |
-          cmake -S . -B cmake-build -DCMAKE_BUILD_TYPE=Debug
+          cmake -S . -B cmake-build -DCMAKE_BUILD_TYPE=Debug -DWITH_VALGRIND=1
 
       - name: Build tests target
         run: |

@@ -949,7 +949,8 @@ std::expected<ExecutionResult, std::runtime_error> StringToUtf8Bytes(PassedExecu
 
   void* byte_array_obj = byte_array_obj_result.value();
   auto* byte_array_data = runtime::GetDataPointer<runtime::ByteArray>(byte_array_obj);
-  new (byte_array_data) runtime::ByteArray(str->size());
+  new (byte_array_data) runtime::ByteArray(str->size() + 1); // +1 for null terminator
+  byte_array_data->Data()[str->size()] = 0;
   std::memcpy(byte_array_data->Data(), str->data(), str->size());
   data.memory.machine_stack.emplace(byte_array_obj);
 

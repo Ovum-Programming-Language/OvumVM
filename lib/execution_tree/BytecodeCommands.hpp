@@ -179,6 +179,8 @@ std::expected<ExecutionResult, std::runtime_error> TypeOf(PassedExecutionData& d
 std::expected<ExecutionResult, std::runtime_error> IsType(PassedExecutionData& data, const std::string& type);
 std::expected<ExecutionResult, std::runtime_error> SizeOf(PassedExecutionData& data, const std::string& type);
 
+std::expected<ExecutionResult, std::runtime_error> Interop(PassedExecutionData& data);
+
 } // namespace ovum::vm::execution_tree::bytecode
 
 #endif // BYTECODE_COMMANDS_HPP
