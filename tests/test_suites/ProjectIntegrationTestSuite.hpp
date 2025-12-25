@@ -1,5 +1,5 @@
-#ifndef TEMPORARYDIRECTORYTESTSUITE_HPP_
-#define TEMPORARYDIRECTORYTESTSUITE_HPP_
+#ifndef PROJECTINTEGRATIONTESTSUITE_HPP_
+#define PROJECTINTEGRATIONTESTSUITE_HPP_
 
 #include <string>
 
@@ -25,4 +25,4 @@ struct ProjectIntegrationTestSuite : public testing::Test { // special test stru
   void RunSingleTest(const TestData& test_data) const;
 };
 
-#endif // TEMPORARYDIRECTORYTESTSUITE_HPP_
+#endif // PROJECTINTEGRATIONTESTSUITE_HPP_
