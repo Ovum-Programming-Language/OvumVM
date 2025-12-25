@@ -197,9 +197,15 @@ TEST_F(ProjectIntegrationTestSuite, InteropTest2) {
 TEST_F(ProjectIntegrationTestSuite, InteropTest3) {
   constexpr int64_t kAdded = 239ll;
   constexpr int64_t kDivisor = 997ll;
-  constexpr int64_t kBinaryFilter = 0xA12BC3456DE89F70ll;
+  constexpr auto kBinaryFilter = static_cast<int64_t>(0xA12BC3456DE89F70ull);
+#ifdef WITH_VALGRIND
+  constexpr int64_t kMaxAllowedError = 1000000000ll; // I assume that 1 s is enough for the difference between
+                                                     // end of test and call to time from FFI library with Valgrind
+#else
   constexpr int64_t kMaxAllowedError = 10000000ll; // I assume that 10 ms is enough for the difference between
                                                    // end of test and call to time from FFI library
+#endif
+
   TestData test_data{
       .test_name = "checker.oil",
       .arguments = "",

@@ -21,7 +21,7 @@ void ProjectIntegrationTestSuite::RunSingleTest(const TestData& test_data) const
   std::string cmd = "ovum-vm -f \"";
   cmd += test_file.string();
   cmd += "\"";
-  
+
   if (!test_data.arguments.empty()) {
     cmd += " -- ";
     cmd += test_data.arguments;
