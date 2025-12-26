@@ -113,6 +113,8 @@ std::expected<ExecutionResult, std::runtime_error> Call(PassedExecutionData& dat
 std::expected<ExecutionResult, std::runtime_error> CallIndirect(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> CallVirtual(PassedExecutionData& data, const std::string& method);
 std::expected<ExecutionResult, std::runtime_error> Return(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> Break(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> Continue(PassedExecutionData& data);
 
 std::expected<ExecutionResult, std::runtime_error> GetField(PassedExecutionData& data, size_t number);
 std::expected<ExecutionResult, std::runtime_error> SetField(PassedExecutionData& data, size_t number);

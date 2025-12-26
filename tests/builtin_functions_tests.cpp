@@ -1,5 +1,6 @@
 #include "test_suites/BuiltinTestSuite.hpp"
 
+#include <algorithm>
 #include <expected>
 #include <filesystem>
 #include <string_view>
@@ -470,7 +471,7 @@ TEST_F(BuiltinTestSuite, FileMethods) {
   void* byte_array_obj = AllocateObjectByName(*this, "ByteArray");
   auto* byte_array = ovum::vm::runtime::GetDataPointer<ovum::vm::runtime::ByteArray>(byte_array_obj);
   new (byte_array) ovum::vm::runtime::ByteArray(bytes.size());
-  std::copy(bytes.begin(), bytes.end(), byte_array->Data());
+  std::ranges::copy(bytes, byte_array->Data());
 
   ASSERT_TRUE(ExecuteFunction(*this, "_File_Write_<M>_ByteArray", file_obj, byte_array_obj).has_value());
   ExpectStackTopEquals<int64_t>(*this, static_cast<int64_t>(bytes.size()));

@@ -182,7 +182,7 @@ void* BuiltinTestSuite::MakeByteArray(const std::vector<uint8_t>& values) {
   auto* byte_array = GetDataPointer<ovum::vm::runtime::ByteArray>(obj);
   new (byte_array) ovum::vm::runtime::ByteArray(values.size());
   if (values.size() > 0) {
-    std::copy(values.begin(), values.end(), byte_array->Data());
+    std::ranges::copy(values, byte_array->Data());
   }
   return obj;
 }
