@@ -6,9 +6,9 @@
 #include <optional>
 #include <stdexcept>
 
-#include "IGarbageCollector.hpp"
 #include "ObjectRepository.hpp"
 #include "VirtualTable.hpp"
+#include "lib/runtime/gc/IGarbageCollector.hpp"
 
 namespace ovum::vm::execution_tree { struct PassedExecutionData; }  // Forward declaration
 

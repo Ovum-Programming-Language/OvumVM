@@ -20,8 +20,8 @@
 #include "lib/runtime/ObjectDescriptor.hpp"
 #include "lib/runtime/VirtualTable.hpp"
 #include "lib/runtime/VirtualTableRepository.hpp"
-#include "lib/runtime/ArrayReferenceScanner.hpp"
-#include "lib/runtime/EmptyReferenceScanner.hpp"
+#include "lib/runtime/gc/reference_scanners/ArrayReferenceScanner.hpp"
+#include "lib/runtime/gc/reference_scanners/EmptyReferenceScanner.hpp"
 
 namespace ovum::vm::runtime {
 

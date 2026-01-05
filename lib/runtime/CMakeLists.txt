@@ -3,7 +3,7 @@ add_library(runtime STATIC
         VirtualTableRepository.cpp
         ObjectRepository.cpp
         ByteArray.cpp
-        MarkAndSweepGC.cpp
+        gc/MarkAndSweepGC.cpp
         MemoryManager.cpp
 )
 

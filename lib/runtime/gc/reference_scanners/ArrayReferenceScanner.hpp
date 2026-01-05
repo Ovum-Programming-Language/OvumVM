@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "IReferenceScanner.hpp"
-#include "ObjectDescriptor.hpp"  // Для GetDataPointer
+#include "lib/runtime/ObjectDescriptor.hpp" // Для GetDataPointer
 
 namespace ovum::vm::runtime {
 

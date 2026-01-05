@@ -10,9 +10,9 @@
 
 #include "FieldInfo.hpp"
 #include "FunctionId.hpp"
-#include "IReferenceScanner.hpp"
 #include "IVariableAccessor.hpp"
 #include "Variable.hpp"
+#include "lib/runtime/gc/reference_scanners/IReferenceScanner.hpp"
 
 namespace ovum::vm::runtime {
 

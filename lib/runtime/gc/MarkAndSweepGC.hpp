@@ -1,7 +1,7 @@
 #ifndef RUNTIME_MARKANDSWEEPGC_HPP
 #define RUNTIME_MARKANDSWEEPGC_HPP
 
-#include "IGarbageCollector.hpp"
+#include "lib/runtime/gc/IGarbageCollector.hpp"
 
 #include <queue>
 

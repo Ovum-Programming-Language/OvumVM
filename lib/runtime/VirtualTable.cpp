@@ -2,8 +2,8 @@
 
 #include <utility>
 
-#include "DefaultReferenceScanner.hpp"
 #include "VariableAccessor.hpp"
+#include "lib/runtime/gc/reference_scanners/DefaultReferenceScanner.hpp"
 
 namespace ovum::vm::runtime {
 

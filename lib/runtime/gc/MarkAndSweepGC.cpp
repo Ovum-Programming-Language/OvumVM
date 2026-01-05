@@ -4,9 +4,9 @@
 #include <ranges>
 #include <vector>
 
-#include "ObjectDescriptor.hpp"
 #include "lib/execution_tree/PassedExecutionData.hpp"
-#include "VirtualTableRepository.hpp"
+#include "lib/runtime/ObjectDescriptor.hpp"
+#include "lib/runtime/VirtualTableRepository.hpp"
 
 namespace ovum::vm::runtime {
 

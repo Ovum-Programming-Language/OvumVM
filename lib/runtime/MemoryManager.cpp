@@ -3,9 +3,9 @@
 #include <utility>
 
 #include "ObjectDescriptor.hpp"
-#include "lib/execution_tree/PassedExecutionData.hpp"
 #include "lib/execution_tree/FunctionRepository.hpp"
-#include "MarkAndSweepGC.hpp"
+#include "lib/execution_tree/PassedExecutionData.hpp"
+#include "lib/runtime/gc/MarkAndSweepGC.hpp"
 
 namespace ovum::vm::runtime {
 

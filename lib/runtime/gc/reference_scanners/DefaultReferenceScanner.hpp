@@ -2,7 +2,7 @@
 #define RUNTIME_DEFAULTREFERENCESCANNER_HPP
 
 #include "IReferenceScanner.hpp"
-#include "VirtualTable.hpp"
+#include "lib/runtime/VirtualTable.hpp"
 
 namespace ovum::vm::runtime {
 
