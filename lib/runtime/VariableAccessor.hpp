@@ -22,6 +22,7 @@ public:
     }
 
     *reinterpret_cast<T*>(value_ptr) = std::get<T>(variable);
+
     return {};
   }
 

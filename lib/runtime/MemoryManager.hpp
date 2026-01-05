@@ -13,7 +13,7 @@
 
 namespace ovum::vm::execution_tree {
 struct PassedExecutionData;
-}
+} // namespace ovum::vm::execution_tree
 
 namespace ovum::vm::runtime {
 

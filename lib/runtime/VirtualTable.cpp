@@ -2,8 +2,9 @@
 
 #include <utility>
 
-#include "VariableAccessor.hpp"
 #include "lib/runtime/gc/reference_scanners/DefaultReferenceScanner.hpp"
+
+#include "VariableAccessor.hpp"
 
 namespace ovum::vm::runtime {
 
@@ -94,6 +95,7 @@ bool VirtualTable::IsFieldReferenceType(size_t index) const {
   if (index >= fields_.size()) {
     return false;
   }
+
   return fields_[index].variable_accessor->IsReferenceType();
 }
 

@@ -8,11 +8,12 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "lib/runtime/gc/reference_scanners/IReferenceScanner.hpp"
+
 #include "FieldInfo.hpp"
 #include "FunctionId.hpp"
 #include "IVariableAccessor.hpp"
 #include "Variable.hpp"
-#include "lib/runtime/gc/reference_scanners/IReferenceScanner.hpp"
 
 namespace ovum::vm::runtime {
 

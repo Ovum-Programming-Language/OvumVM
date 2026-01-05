@@ -152,8 +152,7 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
 
   auto clear_result = memory_manager.Clear(execution_data);
   if (!clear_result.has_value()) {
-    err << "Warning: Failed to clean up objects during shutdown: "
-        << clear_result.error().what() << "\n";
+    err << "Warning: Failed to clean up objects during shutdown: " << clear_result.error().what() << "\n";
     return_code = 4;
   }
 

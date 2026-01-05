@@ -66,8 +66,10 @@ std::expected<void, std::runtime_error> MemoryManager::DeallocateObject(void* ob
     const VirtualTable* vt = vt_res.value();
 
     auto dtor_id_res = vt->GetRealFunctionId("_destructor_<M>");
+
     if (dtor_id_res.has_value()) {
       auto func_res = data.function_repository.GetById(dtor_id_res.value());
+
       if (func_res.has_value()) {
         runtime::StackFrame frame;
         frame.local_variables.emplace_back(obj);

@@ -3,12 +3,13 @@
 
 #include <vector>
 
+#include "lib/runtime/ObjectDescriptor.hpp"
+
 #include "IReferenceScanner.hpp"
-#include "lib/runtime/ObjectDescriptor.hpp" // Для GetDataPointer
 
 namespace ovum::vm::runtime {
 
-template <typename T>
+template<typename T>
 class ArrayReferenceScanner : public IReferenceScanner {
 public:
   void Scan(void* obj, const ReferenceVisitor& visitor) const override {

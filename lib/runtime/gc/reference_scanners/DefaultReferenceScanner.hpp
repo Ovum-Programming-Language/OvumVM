@@ -1,14 +1,16 @@
 #ifndef RUNTIME_DEFAULTREFERENCESCANNER_HPP
 #define RUNTIME_DEFAULTREFERENCESCANNER_HPP
 
-#include "IReferenceScanner.hpp"
 #include "lib/runtime/VirtualTable.hpp"
+
+#include "IReferenceScanner.hpp"
 
 namespace ovum::vm::runtime {
 
 class DefaultReferenceScanner : public IReferenceScanner {
 public:
-  explicit DefaultReferenceScanner(const VirtualTable* vt) : vt_(vt) {}
+  explicit DefaultReferenceScanner(const VirtualTable* vt) : vt_(vt) {
+  }
 
   void Scan(void* obj, const ReferenceVisitor& visitor) const override {
     for (size_t i = 0; i < vt_->GetFieldCount(); ++i) {

@@ -4,11 +4,13 @@
 #include <expected>
 #include <stdexcept>
 
-namespace ovum::vm::execution_tree { struct PassedExecutionData; }  // Forward declaration
+namespace ovum::vm::execution_tree {
+struct PassedExecutionData;
+} // namespace ovum::vm::execution_tree
 
 namespace ovum::vm::runtime {
 
-constexpr uint32_t kMarkBit = 1U;  // Mark bit in badge
+constexpr uint32_t kMarkBit = 1U;
 
 class IGarbageCollector { // NOLINT(cppcoreguidelines-special-member-functions)
 public:

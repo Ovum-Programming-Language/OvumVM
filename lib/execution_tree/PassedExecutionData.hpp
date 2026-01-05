@@ -5,9 +5,9 @@
 #include <memory>
 #include <ostream>
 
+#include "lib/runtime/MemoryManager.hpp"
 #include "lib/runtime/RuntimeMemory.hpp"
 #include "lib/runtime/VirtualTableRepository.hpp"
-#include "lib/runtime/MemoryManager.hpp"
 
 namespace ovum::vm::execution_tree {
 
