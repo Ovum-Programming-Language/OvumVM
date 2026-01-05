@@ -40,6 +40,8 @@ const std::unordered_map<std::string, SimpleCommandFunc>& GetSimpleCommands() {
 
       // Control flow
       {"Return", bytecode::Return},
+      {"Break", bytecode::Break},
+      {"Continue", bytecode::Continue},
 
       // Arithmetic operations (unary)
       {"IntNegate", bytecode::IntNegate},

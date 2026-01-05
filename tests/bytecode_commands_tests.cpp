@@ -1360,8 +1360,7 @@ TEST_F(BuiltinTestSuite, TypeIntrospectionAndSizeOf) {
   constexpr std::string_view kByteType = "byte";
   constexpr std::string_view kStringValue = "text";
   constexpr std::string_view kStringType = "String";
-  constexpr int64_t kStringSize =
-      static_cast<int64_t>(sizeof(ovum::vm::runtime::ObjectDescriptor) + sizeof(std::string));
+  constexpr auto kStringSize = static_cast<int64_t>(sizeof(ovum::vm::runtime::ObjectDescriptor) + sizeof(std::string));
 
   PushByte(kByteValue);
   auto type_of = MakeSimple("TypeOf");

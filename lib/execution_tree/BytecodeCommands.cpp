@@ -1119,6 +1119,14 @@ std::expected<ExecutionResult, std::runtime_error> Return(PassedExecutionData& d
   return ExecutionResult::kReturn;
 }
 
+std::expected<ExecutionResult, std::runtime_error> Break(PassedExecutionData& data) {
+  return ExecutionResult::kBreak;
+}
+
+std::expected<ExecutionResult, std::runtime_error> Continue(PassedExecutionData& data) {
+  return ExecutionResult::kContinue;
+}
+
 std::expected<ExecutionResult, std::runtime_error> GetField(PassedExecutionData& data, size_t number) {
   auto argument = TryExtractArgument<void*>(data, "GetField");
 
