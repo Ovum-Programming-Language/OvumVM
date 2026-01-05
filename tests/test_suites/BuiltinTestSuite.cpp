@@ -1,14 +1,13 @@
 #include "BuiltinTestSuite.hpp"
 
 #include <algorithm>
-#include <cstdlib>
 
 #include "lib/execution_tree/ExecutionResult.hpp"
-#include "lib/execution_tree/Function.hpp"
 #include "lib/execution_tree/command_factory.hpp"
 #include "lib/executor/BuiltinFunctions.hpp"
 #include "lib/executor/builtin_factory.hpp"
 #include "lib/runtime/ByteArray.hpp"
+#include "lib/runtime/MemoryManager.hpp"
 #include "lib/runtime/ObjectDescriptor.hpp"
 
 using ovum::vm::execution_tree::CreateBooleanCommandByName;
@@ -17,17 +16,15 @@ using ovum::vm::execution_tree::CreateIntegerCommandByName;
 using ovum::vm::execution_tree::CreateSimpleCommandByName;
 using ovum::vm::execution_tree::CreateStringCommandByName;
 using ovum::vm::execution_tree::ExecutionResult;
-using ovum::vm::execution_tree::Function;
 using ovum::vm::execution_tree::IExecutable;
 using ovum::vm::execution_tree::PassedExecutionData;
-using ovum::vm::runtime::AllocateObject;
 using ovum::vm::runtime::GetDataPointer;
 using ovum::vm::runtime::ObjectDescriptor;
 using ovum::vm::runtime::StackFrame;
 using ovum::vm::runtime::Variable;
 
 BuiltinTestSuite::BuiltinTestSuite() :
-    data_(memory_, vtable_repo_, function_repo_, allocator_, input_stream_, output_stream_, error_stream_) {
+    data_(memory_, vtable_repo_, function_repo_, memory_manager_, input_stream_, output_stream_, error_stream_) {
 }
 
 void BuiltinTestSuite::SetUp() {
@@ -43,13 +40,15 @@ void BuiltinTestSuite::SetUp() {
 }
 
 void BuiltinTestSuite::TearDown() {
-  CleanupObjects();
   while (!memory_.machine_stack.empty()) {
     memory_.machine_stack.pop();
   }
   while (!memory_.stack_frames.empty()) {
     memory_.stack_frames.pop();
   }
+
+  auto clear_result = memory_manager_.Clear(data_);
+  ASSERT_TRUE(clear_result.has_value()) << clear_result.error().what();
 }
 
 std::unique_ptr<IExecutable> BuiltinTestSuite::MakeSimple(const std::string& name) {
@@ -91,6 +90,7 @@ std::unique_ptr<IExecutable> BuiltinTestSuite::MakeFloatCmd(const std::string& n
 std::unique_ptr<IExecutable> BuiltinTestSuite::MakeBoolCmd(const std::string& name, bool arg) {
   auto cmd = CreateBooleanCommandByName(name, arg);
   EXPECT_TRUE(cmd.has_value()) << "Boolean command not found: " << name;
+
   if (!cmd.has_value()) {
     return nullptr;
   }
@@ -106,12 +106,12 @@ void* BuiltinTestSuite::MakeString(const std::string& value) {
   if (!idx.has_value()) {
     return nullptr;
   }
-  auto obj_result =
-      AllocateObject(*vt.value(), static_cast<uint32_t>(idx.value()), memory_.object_repository, data_.allocator);
-  if (!obj_result.has_value()) {
+
+  auto obj_res = memory_manager_.AllocateObject(*vt.value(), static_cast<uint32_t>(idx.value()), data_);
+  if (!obj_res.has_value())
     return nullptr;
-  }
-  void* obj = obj_result.value();
+
+  void* obj = obj_res.value();
   auto* str_ptr = GetDataPointer<std::string>(obj);
   new (str_ptr) std::string(value);
   return obj;
@@ -126,13 +126,12 @@ void* BuiltinTestSuite::MakeNullable(void* wrapped) {
   if (!idx.has_value()) {
     return nullptr;
   }
-  auto obj_result =
-      AllocateObject(*vt.value(), static_cast<uint32_t>(idx.value()), memory_.object_repository, data_.allocator);
-  if (!obj_result.has_value()) {
-    return nullptr;
-  }
 
-  void* obj = obj_result.value();
+  auto obj_res = memory_manager_.AllocateObject(*vt.value(), static_cast<uint32_t>(idx.value()), data_);
+  if (!obj_res.has_value())
+    return nullptr;
+
+  void* obj = obj_res.value();
   auto* nullable_ptr = GetDataPointer<void*>(obj);
   *nullable_ptr = wrapped;
   return obj;
@@ -148,12 +147,11 @@ void* BuiltinTestSuite::MakeStringArray(const std::vector<std::string>& values) 
     return nullptr;
   }
 
-  auto obj_result =
-      AllocateObject(*vt.value(), static_cast<uint32_t>(idx.value()), memory_.object_repository, data_.allocator);
-  if (!obj_result.has_value()) {
+  auto obj_res = memory_manager_.AllocateObject(*vt.value(), static_cast<uint32_t>(idx.value()), data_);
+  if (!obj_res.has_value())
     return nullptr;
-  }
-  void* obj = obj_result.value();
+
+  void* obj = obj_res.value();
   auto* vec_ptr = GetDataPointer<std::vector<void*>>(obj);
   new (vec_ptr) std::vector<void*>();
   for (const auto& val : values) {
@@ -172,13 +170,12 @@ void* BuiltinTestSuite::MakeByteArray(const std::vector<uint8_t>& values) {
     return nullptr;
   }
 
-  auto obj_result =
-      AllocateObject(*vt.value(), static_cast<uint32_t>(idx.value()), memory_.object_repository, data_.allocator);
-  if (!obj_result.has_value()) {
+  auto obj_res = memory_manager_.AllocateObject(*vt.value(), static_cast<uint32_t>(idx.value()), data_);
+  if (!obj_res.has_value()) {
     return nullptr;
   }
 
-  void* obj = obj_result.value();
+  void* obj = obj_res.value();
   auto* byte_array = GetDataPointer<ovum::vm::runtime::ByteArray>(obj);
   new (byte_array) ovum::vm::runtime::ByteArray(values.size());
   if (values.size() > 0) {
@@ -297,5 +294,5 @@ void BuiltinTestSuite::DestroyObject(void* obj) {
   data_.memory.machine_stack.emplace(obj);
   auto destructor_exec_result = destructor_function.value()->Execute(data_);
 
-  allocator_.deallocate(reinterpret_cast<char*>(obj), vt.value()->GetSize());
+  memory_manager_.DeallocateObject(reinterpret_cast<char*>(obj), data_);
 }

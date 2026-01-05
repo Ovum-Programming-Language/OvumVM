@@ -65,7 +65,7 @@ struct BuiltinTestSuite : public testing::Test {
   std::stringstream input_stream_;
   std::stringstream output_stream_;
   std::stringstream error_stream_;
-  std::allocator<char> allocator_{};
+  ovum::vm::runtime::MemoryManager memory_manager_{};
   ovum::vm::execution_tree::PassedExecutionData data_;
 };
 

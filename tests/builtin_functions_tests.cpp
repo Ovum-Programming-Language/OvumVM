@@ -27,8 +27,8 @@ void* AllocateObjectByName(BuiltinTestSuite& suite, const std::string& vtable_na
   if (!idx.has_value()) {
     return nullptr;
   }
-  auto obj_result = ovum::vm::runtime::AllocateObject(
-      *vt.value(), static_cast<uint32_t>(idx.value()), suite.memory_.object_repository, suite.allocator_);
+  auto obj_result = suite.memory_manager_.AllocateObject(
+      *vt.value(), static_cast<uint32_t>(idx.value()), suite.data_);
   EXPECT_TRUE(obj_result.has_value()) << "Allocation failed for " << vtable_name;
   if (!obj_result.has_value()) {
     return nullptr;
