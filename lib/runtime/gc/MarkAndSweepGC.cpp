@@ -2,6 +2,7 @@
 
 #include <queue>
 #include <ranges>
+#include <stack>
 #include <vector>
 
 #include "lib/execution_tree/PassedExecutionData.hpp"
@@ -26,13 +27,12 @@ void MarkAndSweepGC::Mark(execution_tree::PassedExecutionData& data) {
 
     auto* desc = reinterpret_cast<ObjectDescriptor*>(obj);
     if (desc->badge & kMarkBit) {
-      continue;  // Already marked
+      continue;
     }
     desc->badge |= kMarkBit;
 
     auto vt_res = data.virtual_table_repository.GetByIndex(desc->vtable_index);
     if (!vt_res.has_value()) {
-      // Error handling: skip for now
       continue;
     }
     const VirtualTable* vt = vt_res.value();
@@ -47,6 +47,7 @@ void MarkAndSweepGC::Mark(execution_tree::PassedExecutionData& data) {
 
 void MarkAndSweepGC::Sweep(execution_tree::PassedExecutionData& data) {
   std::vector<void*> to_delete;
+  to_delete.reserve(data.memory_manager.GetRepository().GetCount() / 4);
 
   const ObjectRepository& repo = data.memory_manager.GetRepository();
   for (size_t i = 0; i < repo.GetCount(); ++i) {
@@ -56,27 +57,21 @@ void MarkAndSweepGC::Sweep(execution_tree::PassedExecutionData& data) {
     }
 
     const ObjectDescriptor* const_desc = obj_res.value();
-
     void* obj = const_cast<void*>(static_cast<const void*>(const_desc));
 
     if (!(const_desc->badge & kMarkBit)) {
       to_delete.push_back(obj);
     }
 
-    // Сброс mark-bit для всех объектов
     const_cast<ObjectDescriptor*>(const_desc)->badge &= ~kMarkBit;
   }
 
-  for (void* obj : to_delete) {
+  for (auto obj : std::ranges::reverse_view(to_delete)) {
     auto dealloc_res = data.memory_manager.DeallocateObject(obj, data);
-    if (!dealloc_res.has_value()) {
-      // Log error, continue
-    }
   }
 }
 
 void MarkAndSweepGC::AddRoots(std::queue<void*>& worklist, execution_tree::PassedExecutionData& data) {
-  // Scan global variables
   for (const auto& var : data.memory.global_variables) {
     if (std::holds_alternative<void*>(var)) {
       void* ptr = std::get<void*>(var);
@@ -86,13 +81,10 @@ void MarkAndSweepGC::AddRoots(std::queue<void*>& worklist, execution_tree::Passe
     }
   }
 
-  // Scan stack frames
-  std::vector<StackFrame> temp_frames;
-  while (!data.memory.stack_frames.empty()) {
-    temp_frames.push_back(data.memory.stack_frames.top());
-    data.memory.stack_frames.pop();
-  }
-  for (const auto& frame : temp_frames) {
+  std::stack<StackFrame> temp_frames = data.memory.stack_frames;
+
+  while (!temp_frames.empty()) {
+    const StackFrame& frame = temp_frames.top();
     for (const auto& var : frame.local_variables) {
       if (std::holds_alternative<void*>(var)) {
         void* ptr = std::get<void*>(var);
@@ -101,17 +93,18 @@ void MarkAndSweepGC::AddRoots(std::queue<void*>& worklist, execution_tree::Passe
         }
       }
     }
-  }
-  for (auto & temp_frame : std::ranges::reverse_view(temp_frames)) {
-    data.memory.stack_frames.push(temp_frame);
+    temp_frames.pop();
   }
 
-  // Scan machine stack
   std::vector<Variable> temp_stack;
-  while (!data.memory.machine_stack.empty()) {
-    temp_stack.push_back(data.memory.machine_stack.top());
-    data.memory.machine_stack.pop();
+  temp_stack.reserve(data.memory.machine_stack.size());
+
+  std::stack<Variable> temp_machine_stack = data.memory.machine_stack;
+  while (!temp_machine_stack.empty()) {
+    temp_stack.push_back(temp_machine_stack.top());
+    temp_machine_stack.pop();
   }
+
   for (const auto& var : temp_stack) {
     if (std::holds_alternative<void*>(var)) {
       void* ptr = std::get<void*>(var);
@@ -119,9 +112,6 @@ void MarkAndSweepGC::AddRoots(std::queue<void*>& worklist, execution_tree::Passe
         worklist.push(ptr);
       }
     }
-  }
-  for (auto & it : std::ranges::reverse_view(temp_stack)) {
-    data.memory.machine_stack.push(it);
   }
 }
 

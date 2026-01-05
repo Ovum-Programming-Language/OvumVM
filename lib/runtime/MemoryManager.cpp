@@ -2,42 +2,42 @@
 
 #include <utility>
 
-#include "ObjectDescriptor.hpp"
 #include "lib/execution_tree/FunctionRepository.hpp"
 #include "lib/execution_tree/PassedExecutionData.hpp"
 #include "lib/runtime/gc/MarkAndSweepGC.hpp"
 
+#include "ObjectDescriptor.hpp"
+
 namespace ovum::vm::runtime {
 
-MemoryManager::MemoryManager() : max_objects_(kDefaultMaxObjects) {
-  gc_ = std::make_unique<MarkAndSweepGC>();  // Assume enabled by default
+MemoryManager::MemoryManager() : gc_threshold_(kDefaultMaxObjects) {
+  gc_ = std::make_unique<MarkAndSweepGC>();
 }
 
 std::expected<void*, std::runtime_error> MemoryManager::AllocateObject(const VirtualTable& vtable,
                                                                        uint32_t vtable_index,
                                                                        execution_tree::PassedExecutionData& data) {
-  const size_t size = sizeof(ObjectDescriptor) + vtable.GetSize();
-  char* raw_memory = allocator_.allocate(size);
+  const size_t total_size = sizeof(ObjectDescriptor) + vtable.GetSize();
+  char* raw_memory = allocator_.allocate(total_size);
   if (!raw_memory) {
-    return std::unexpected(std::runtime_error("MemoryManager: Allocation failed"));
+    return std::unexpected(std::runtime_error("MemoryManager: Allocation failed - out of memory"));
   }
 
-  auto* descriptor = reinterpret_cast<ObjectDescriptor*>(raw_memory);
+  auto* descriptor = new (raw_memory) ObjectDescriptor{};
   descriptor->vtable_index = vtable_index;
-  descriptor->badge = 0;  // Clear mark bit
+  descriptor->badge = 0;
 
   auto add_result = repo_.Add(descriptor);
   if (!add_result.has_value()) {
-    allocator_.deallocate(raw_memory, size);
+    descriptor->~ObjectDescriptor();
+    allocator_.deallocate(raw_memory, total_size);
     return std::unexpected(add_result.error());
   }
 
-  // Авто-GC если превышен threshold
-  if (repo_.GetCount() > max_objects_) {
-    auto gc_result = CollectGarbage(data);
-    if (!gc_result.has_value()) {
-      // Log error, but continue
-    }
+  descriptor->repo_index = add_result.value();
+
+  if (repo_.GetCount() > gc_threshold_) {
+    CollectGarbage(data);
   }
 
   return reinterpret_cast<void*>(descriptor);
@@ -46,103 +46,73 @@ std::expected<void*, std::runtime_error> MemoryManager::AllocateObject(const Vir
 std::expected<void, std::runtime_error> MemoryManager::DeallocateObject(void* obj,
                                                                         execution_tree::PassedExecutionData& data) {
   if (!obj) {
-    return std::unexpected(std::runtime_error("DeallocateObject: Null object"));
-  }
-
-  // Найти индекс в repo
-  auto index = static_cast<size_t>(-1);
-  for (size_t i = 0; i < repo_.GetCount(); ++i) {
-    auto repo_obj_res = repo_.GetByIndex(i);
-    if (repo_obj_res.has_value() && repo_obj_res.value() == obj) {
-      index = i;
-      break;
-    }
-  }
-
-  if (std::cmp_equal(index ,-1)) {
-    return std::unexpected(std::runtime_error("DeallocateObject: Object not found in repository"));
+    return std::unexpected(std::runtime_error("DeallocateObject: Null object pointer"));
   }
 
   auto* desc = reinterpret_cast<ObjectDescriptor*>(obj);
+  const size_t index = desc->repo_index;
 
-  // Вызов деструктора
+  if (index >= repo_.GetCount()) {
+    return std::unexpected(std::runtime_error("DeallocateObject: Invalid repo_index (out of bounds)"));
+  }
+
+  auto check_res = repo_.GetByIndex(index);
+  if (!check_res.has_value() || check_res.value() != desc) {
+    return std::unexpected(std::runtime_error("DeallocateObject: repo_index mismatch (corrupted?)"));
+  }
+
   auto vt_res = data.virtual_table_repository.GetByIndex(desc->vtable_index);
   if (vt_res.has_value()) {
     const VirtualTable* vt = vt_res.value();
-    auto dtor_id_res = vt->GetRealFunctionId("_" + vt->GetName() + "_destructor_<M>");
+
+    auto dtor_id_res = vt->GetRealFunctionId("_destructor_<M>");
     if (dtor_id_res.has_value()) {
       auto func_res = data.function_repository.GetById(dtor_id_res.value());
       if (func_res.has_value()) {
-        // Создать frame, push obj, Execute
         runtime::StackFrame frame;
-        frame.function_name = dtor_id_res.value();
         frame.local_variables.emplace_back(obj);
-        data.memory.stack_frames.push(frame);
-        func_res.value()->Execute(data);
+        data.memory.stack_frames.push(std::move(frame));
+
+        auto exec_res = func_res.value()->Execute(data);
+        if (!exec_res.has_value()) {
+        }
+
         data.memory.stack_frames.pop();
       }
     }
 
-    // Deallocate
-    const size_t size = sizeof(ObjectDescriptor) + vt->GetSize();
+    const size_t total_size = sizeof(ObjectDescriptor) + vt->GetSize();
     char* raw = reinterpret_cast<char*>(obj);
-    allocator_.deallocate(raw, size);
+    desc->~ObjectDescriptor();
+    allocator_.deallocate(raw, total_size);
   }
 
-  // Удалить из repo
-  auto remove_res = repo_.Remove(index);
-  if (!remove_res.has_value()) {
-    return std::unexpected(remove_res.error());
+  repo_.Remove(index);
+
+  return {};
+}
+
+std::expected<void, std::runtime_error> MemoryManager::Clear(execution_tree::PassedExecutionData& data) {
+  while (repo_.GetCount() > 0) {
+    const size_t last_index = repo_.GetCount() - 1;
+    auto obj_res = repo_.GetByIndex(last_index);
+    if (!obj_res.has_value()) {
+      repo_.Remove(last_index);
+      continue;
+    }
+
+    DeallocateObject(obj_res.value(), data);
   }
 
   return {};
 }
 
 std::expected<void, std::runtime_error> MemoryManager::CollectGarbage(execution_tree::PassedExecutionData& data) {
-  if (!gc_.has_value()) {
+  if (!gc_) {
     return std::unexpected(std::runtime_error("MemoryManager: No GC configured"));
   }
+
   return gc_.value()->Collect(data);
-}
-
-std::expected<void, std::runtime_error> MemoryManager::Clear(execution_tree::PassedExecutionData& data) {
-  for (size_t i = 0; i < repo_.GetCount(); ++i) {
-    auto obj_res = repo_.GetByIndex(i);
-    if (!obj_res.has_value()) {
-      continue;
-    }
-    void* obj = obj_res.value();
-    auto* desc = reinterpret_cast<ObjectDescriptor*>(obj);
-
-    // Получить VT
-    auto vt_res = data.virtual_table_repository.GetByIndex(desc->vtable_index);
-    if (!vt_res.has_value()) {
-      continue;
-    }
-    const VirtualTable* vt = vt_res.value();
-
-    // Получить ID деструктора
-    auto dtor_id_res = vt->GetRealFunctionId("_" + vt->GetName() + "_destructor_<M>");
-    if (dtor_id_res.has_value()) {
-      auto func_res = data.function_repository.GetById(dtor_id_res.value());
-      if (func_res.has_value()) {
-        // Создать frame, push obj, Execute
-        runtime::StackFrame frame;
-        frame.function_name = dtor_id_res.value();
-        frame.local_variables.emplace_back(obj);
-        data.memory.stack_frames.push(frame);
-        func_res.value()->Execute(data);
-        data.memory.stack_frames.pop();
-      }
-    }
-
-    // Deallocate
-    const size_t size = sizeof(ObjectDescriptor) + vt->GetSize();
-    char* raw = reinterpret_cast<char*>(obj);
-    allocator_.deallocate(raw, size);
-  }
-  repo_.Clear();
-  return {};
 }
 
 const ObjectRepository& MemoryManager::GetRepository() const {

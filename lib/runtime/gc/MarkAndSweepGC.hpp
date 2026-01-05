@@ -1,9 +1,9 @@
 #ifndef RUNTIME_MARKANDSWEEPGC_HPP
 #define RUNTIME_MARKANDSWEEPGC_HPP
 
-#include "lib/runtime/gc/IGarbageCollector.hpp"
-
 #include <queue>
+
+#include "lib/runtime/gc/IGarbageCollector.hpp"
 
 namespace ovum::vm::runtime {
 
