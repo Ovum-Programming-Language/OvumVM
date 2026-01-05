@@ -172,10 +172,8 @@ std::expected<ExecutionResult, std::runtime_error> FundamentalTypeToString(Passe
     return std::unexpected(vtable_index_result.error());
   }
 
-  auto string_obj_result = runtime::AllocateObject(*string_vtable,
-                                                   static_cast<uint32_t>(vtable_index_result.value()),
-                                                   data.memory.object_repository,
-                                                   data.allocator);
+  auto string_obj_result =
+      data.memory_manager.AllocateObject(*string_vtable, static_cast<uint32_t>(vtable_index_result.value()), data);
 
   if (!string_obj_result.has_value()) {
     return std::unexpected(string_obj_result.error());
@@ -938,10 +936,8 @@ std::expected<ExecutionResult, std::runtime_error> StringToUtf8Bytes(PassedExecu
     return std::unexpected(vtable_index_result.error());
   }
 
-  auto byte_array_obj_result = runtime::AllocateObject(*byte_array_vtable,
-                                                       static_cast<uint32_t>(vtable_index_result.value()),
-                                                       data.memory.object_repository,
-                                                       data.allocator);
+  auto byte_array_obj_result =
+      data.memory_manager.AllocateObject(*byte_array_vtable, static_cast<uint32_t>(vtable_index_result.value()), data);
 
   if (!byte_array_obj_result.has_value()) {
     return std::unexpected(byte_array_obj_result.error());
@@ -1919,10 +1915,8 @@ std::expected<ExecutionResult, std::runtime_error> FileRead(PassedExecutionData&
     return std::unexpected(vtable_index_result.error());
   }
 
-  auto byte_array_obj_result = runtime::AllocateObject(*byte_array_vtable,
-                                                       static_cast<uint32_t>(vtable_index_result.value()),
-                                                       data.memory.object_repository,
-                                                       data.allocator);
+  auto byte_array_obj_result =
+      data.memory_manager.AllocateObject(*byte_array_vtable, static_cast<uint32_t>(vtable_index_result.value()), data);
 
   if (!byte_array_obj_result.has_value()) {
     return std::unexpected(byte_array_obj_result.error());
@@ -2001,10 +1995,8 @@ std::expected<ExecutionResult, std::runtime_error> FileReadLine(PassedExecutionD
     return std::unexpected(vtable_index_result.error());
   }
 
-  auto string_obj_result = runtime::AllocateObject(*string_vtable,
-                                                   static_cast<uint32_t>(vtable_index_result.value()),
-                                                   data.memory.object_repository,
-                                                   data.allocator);
+  auto string_obj_result =
+      data.memory_manager.AllocateObject(*string_vtable, static_cast<uint32_t>(vtable_index_result.value()), data);
 
   if (!string_obj_result.has_value()) {
     return std::unexpected(string_obj_result.error());

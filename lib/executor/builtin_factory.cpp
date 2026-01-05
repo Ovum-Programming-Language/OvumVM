@@ -20,6 +20,8 @@
 #include "lib/runtime/ObjectDescriptor.hpp"
 #include "lib/runtime/VirtualTable.hpp"
 #include "lib/runtime/VirtualTableRepository.hpp"
+#include "lib/runtime/ArrayReferenceScanner.hpp"
+#include "lib/runtime/EmptyReferenceScanner.hpp"
 
 namespace ovum::vm::runtime {
 
@@ -186,6 +188,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     int_array_vtable.AddFunction("_GetHash_<C>", "_IntArray_GetHash_<C>");
     int_array_vtable.AddInterface("IComparable");
     int_array_vtable.AddInterface("IHashable");
+    int_array_vtable.SetReferenceScanner(std::make_unique<EmptyReferenceScanner>());
     auto result = repository.Add(std::move(int_array_vtable));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -202,6 +205,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     float_array_vtable.AddFunction("_GetHash_<C>", "_FloatArray_GetHash_<C>");
     float_array_vtable.AddInterface("IComparable");
     float_array_vtable.AddInterface("IHashable");
+    float_array_vtable.SetReferenceScanner(std::make_unique<EmptyReferenceScanner>());
     auto result = repository.Add(std::move(float_array_vtable));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -218,6 +222,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     char_array_vtable.AddFunction("_GetHash_<C>", "_CharArray_GetHash_<C>");
     char_array_vtable.AddInterface("IComparable");
     char_array_vtable.AddInterface("IHashable");
+    char_array_vtable.SetReferenceScanner(std::make_unique<EmptyReferenceScanner>());
     auto result = repository.Add(std::move(char_array_vtable));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -235,6 +240,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     byte_array_vtable.AddFunction("_GetHash_<C>", "_ByteArray_GetHash_<C>");
     byte_array_vtable.AddInterface("IComparable");
     byte_array_vtable.AddInterface("IHashable");
+    byte_array_vtable.SetReferenceScanner(std::make_unique<EmptyReferenceScanner>());
     auto result = repository.Add(std::move(byte_array_vtable));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -251,6 +257,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     bool_array_vtable.AddFunction("_GetHash_<C>", "_BoolArray_GetHash_<C>");
     bool_array_vtable.AddInterface("IComparable");
     bool_array_vtable.AddInterface("IHashable");
+    bool_array_vtable.SetReferenceScanner(std::make_unique<EmptyReferenceScanner>());
     auto result = repository.Add(std::move(bool_array_vtable));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -267,6 +274,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     object_array_vtable.AddFunction("_GetHash_<C>", "_ObjectArray_GetHash_<C>");
     object_array_vtable.AddInterface("IComparable");
     object_array_vtable.AddInterface("IHashable");
+    object_array_vtable.SetReferenceScanner(std::make_unique<ArrayReferenceScanner<void*>>());
     auto result = repository.Add(std::move(object_array_vtable));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -283,6 +291,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     string_array_vtable.AddFunction("_GetHash_<C>", "_StringArray_GetHash_<C>");
     string_array_vtable.AddInterface("IComparable");
     string_array_vtable.AddInterface("IHashable");
+    string_array_vtable.SetReferenceScanner(std::make_unique<ArrayReferenceScanner<void*>>());
     auto result = repository.Add(std::move(string_array_vtable));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -315,6 +324,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     pointer_array_vtable.AddFunction("_GetHash_<C>", "_PointerArray_GetHash_<C>");
     pointer_array_vtable.AddInterface("IComparable");
     pointer_array_vtable.AddInterface("IHashable");
+    pointer_array_vtable.SetReferenceScanner(std::make_unique<ArrayReferenceScanner<void*>>());
     auto result = repository.Add(std::move(pointer_array_vtable));
     if (!result.has_value()) {
       return std::unexpected(result.error());
