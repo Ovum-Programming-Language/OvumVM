@@ -150,6 +150,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     string_vtable.AddInterface("IComparable");
     string_vtable.AddInterface("IHashable");
     string_vtable.AddInterface("IStringConvertible");
+    string_vtable.SetReferenceScanner(std::make_unique<EmptyReferenceScanner>());
     auto result = repository.Add(std::move(string_vtable));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -171,6 +172,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     file_vtable.AddFunction("_Seek_<M>_Int", "_File_Seek_<M>_Int");
     file_vtable.AddFunction("_Tell_<C>", "_File_Tell_<C>");
     file_vtable.AddFunction("_Eof_<C>", "_File_Eof_<C>");
+    file_vtable.SetReferenceScanner(std::make_unique<EmptyReferenceScanner>());
     // File does not implement IComparable or IHashable (files cannot be meaningfully compared or hashed)
     auto result = repository.Add(std::move(file_vtable));
     if (!result.has_value()) {
