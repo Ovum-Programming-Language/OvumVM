@@ -86,10 +86,11 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
   ovum::vm::execution_tree::FunctionRepository func_repo;
   ovum::vm::runtime::VirtualTableRepository vtable_repo;
   ovum::vm::runtime::RuntimeMemory memory;
+  ovum::vm::runtime::MemoryManager memory_manager;
   ovum::vm::execution_tree::PassedExecutionData execution_data{.memory = memory,
                                                                .virtual_table_repository = vtable_repo,
                                                                .function_repository = func_repo,
-                                                               .allocator = std::allocator<char>(),
+                                                               .memory_manager = memory_manager,
                                                                .input_stream = in,
                                                                .output_stream = out,
                                                                .error_stream = err};
@@ -196,8 +197,12 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
       continue;
     }
 
-    size_t object_size = vtable_result.value()->GetSize();
-    execution_data.allocator.deallocate(reinterpret_cast<char*>(object), object_size);
+    auto clear_result = memory_manager.Clear(execution_data);
+    if (!clear_result.has_value()) {
+      err << "Warning: Failed to clean up objects during shutdown: "
+          << clear_result.error().what() << "\n";
+      return_code = 5;
+    }
   }
 
   return return_code;
