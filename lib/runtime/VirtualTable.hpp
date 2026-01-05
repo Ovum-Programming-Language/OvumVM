@@ -2,6 +2,7 @@
 #define RUNTIME_VIRTUAL_TABLE_HPP
 
 #include <expected>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -9,6 +10,7 @@
 
 #include "FieldInfo.hpp"
 #include "FunctionId.hpp"
+#include "IReferenceScanner.hpp"
 #include "IVariableAccessor.hpp"
 #include "Variable.hpp"
 
@@ -29,9 +31,15 @@ public:
       const FunctionId& virtual_function_id) const;
   [[nodiscard]] bool IsType(const std::string& interface_name) const;
 
+  [[nodiscard]] size_t GetFieldCount() const;
+  [[nodiscard]] bool IsFieldReferenceType(size_t index) const;
+
   void AddFunction(const FunctionId& virtual_function_id, const FunctionId& real_function_id);
   size_t AddField(const std::string& type_name, int64_t offset);
   void AddInterface(const std::string& interface_name);
+
+  void SetReferenceScanner(std::unique_ptr<IReferenceScanner> scanner);
+  void ScanReferences(void* obj, const ReferenceVisitor& visitor) const;
 
 private:
   static const std::unordered_map<std::string, std::shared_ptr<IVariableAccessor>> kVariableAccessorsByTypeName;
@@ -41,6 +49,8 @@ private:
   std::vector<FieldInfo> fields_;
   std::unordered_map<FunctionId, FunctionId> functions_;
   std::unordered_set<std::string> interfaces_;
+
+  std::unique_ptr<IReferenceScanner> reference_scanner_;
 };
 
 } // namespace ovum::vm::runtime
