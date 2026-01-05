@@ -857,9 +857,8 @@ TEST_F(BuiltinTestSuite, CallVirtualConstructorAndFields) {
   (void) func_idx;
   (void) destructor_idx;
 
-  auto obj_res = memory_manager_.AllocateObject(*vtable_repo_.GetByIndex(vt_index.value()).value(),
-                                                   static_cast<uint32_t>(vt_index.value()),
-                                                   data_);
+  auto obj_res = memory_manager_.AllocateObject(
+      *vtable_repo_.GetByIndex(vt_index.value()).value(), static_cast<uint32_t>(vt_index.value()), data_);
   ASSERT_TRUE(obj_res.has_value());
   void* obj = obj_res.value();
 
