@@ -150,59 +150,11 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
     return_code = 4;
   }
 
-  for (size_t i = 0; i < memory.object_repository.GetCount(); ++i) {
-    auto object_result = memory.object_repository.GetByIndex(i);
-
-    if (!object_result.has_value()) {
-      err << "Failed to get object: " << object_result.error().what() << "\n";
-      return_code = 4;
-      continue;
-    }
-
-    ovum::vm::runtime::ObjectDescriptor* object = object_result.value();
-    uint32_t vtable_index = object->vtable_index;
-    auto vtable_result = vtable_repo.GetByIndex(vtable_index);
-
-    if (!vtable_result.has_value()) {
-      err << "Failed to get vtable for index " << vtable_index << ": " << vtable_result.error().what() << "\n";
-      return_code = 4;
-      continue;
-    }
-
-    auto destructor_id_result = vtable_result.value()->GetRealFunctionId("_destructor_<M>");
-
-    if (!destructor_id_result.has_value()) {
-      err << "Failed to get destructor for index " << vtable_index << ": " << destructor_id_result.error().what()
-          << "\n";
-      return_code = 4;
-      continue;
-    }
-
-    auto destructor_function = execution_data.function_repository.GetById(destructor_id_result.value());
-
-    if (!destructor_function.has_value()) {
-      err << "Failed to get destructor function for index " << vtable_index << ": "
-          << destructor_function.error().what() << "\n";
-      return_code = 4;
-      continue;
-    }
-
-    execution_data.memory.machine_stack.emplace(object);
-    auto destructor_exec_result = destructor_function.value()->Execute(execution_data);
-
-    if (!destructor_exec_result.has_value()) {
-      err << "Failed to execute destructor for index " << vtable_index << ": " << destructor_exec_result.error().what()
-          << "\n";
-      return_code = 4;
-      continue;
-    }
-
-    auto clear_result = memory_manager.Clear(execution_data);
-    if (!clear_result.has_value()) {
-      err << "Warning: Failed to clean up objects during shutdown: "
-          << clear_result.error().what() << "\n";
-      return_code = 5;
-    }
+  auto clear_result = memory_manager.Clear(execution_data);
+  if (!clear_result.has_value()) {
+    err << "Warning: Failed to clean up objects during shutdown: "
+        << clear_result.error().what() << "\n";
+    return_code = 4;
   }
 
   return return_code;
