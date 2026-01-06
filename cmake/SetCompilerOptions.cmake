@@ -21,6 +21,8 @@ endif()
 # x86_64 is reported as "AMD64" on Windows, "x86_64" on Linux/Mac
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(AMD64|x86_64)$")
     set(OVUM_JIT_X64_AVAILABLE ON CACHE BOOL "JIT compiler available for x86_64 architecture")
+    set(JIT_PROVIDED ON CACHE BOOL "JIT compiler provided")
+    add_compile_definitions(JIT_PROVIDED)
     message(STATUS "Architecture: ${CMAKE_SYSTEM_PROCESSOR} - JIT support available")
 else()
     set(OVUM_JIT_X64_AVAILABLE OFF CACHE BOOL "JIT compiler available for x86_64 architecture")
