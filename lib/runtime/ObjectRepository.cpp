@@ -12,6 +12,7 @@ std::expected<void, std::runtime_error> ObjectRepository::Add(ObjectDescriptor* 
   if (!descriptor) {
     return std::unexpected(std::runtime_error("ObjectRepository: Cannot add null descriptor"));
   }
+
   objects_.insert(descriptor);
   return {};
 }
@@ -20,7 +21,7 @@ std::expected<void, std::runtime_error> ObjectRepository::Remove(ObjectDescripto
   if (!descriptor) {
     return std::unexpected(std::runtime_error("ObjectRepository: Cannot remove null descriptor"));
   }
-  
+
   auto it = objects_.find(descriptor);
   if (it == objects_.end()) {
     return std::unexpected(std::runtime_error("ObjectRepository: Descriptor not found"));
