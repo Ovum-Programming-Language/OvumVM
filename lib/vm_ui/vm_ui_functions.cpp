@@ -59,6 +59,8 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
   ArgumentParser::ArgParser arg_parser("ovum-vm", PassArgumentTypes());
   arg_parser.AddCompositeArgument('f', "file", "Path to the bytecode file").AddIsGood(is_file).AddValidate(is_file);
   arg_parser.AddUnsignedLongLongArgument('j', "jit-boundary", "JIT compilation boundary").Default(kDefaultJitBoundary);
+  arg_parser.AddUnsignedLongLongArgument('m', "max-objects", "Maximum number of objects to keep in memory")
+      .Default(kDefaultMaxObjects);
   arg_parser.AddHelp('h', "help", "Show this help message");
 
   bool parse_result = arg_parser.Parse(parser_args, {.out_stream = err, .print_messages = true});
@@ -76,6 +78,7 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
   file_path = arg_parser.GetCompositeValue("file");
 
   size_t jit_boundary = arg_parser.GetUnsignedLongLongValue("jit-boundary");
+  size_t max_objects = arg_parser.GetUnsignedLongLongValue("max-objects");
   std::string sample = ReadFileContent(file_path, err);
 
   if (sample.empty()) {
@@ -87,8 +90,7 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
   ovum::vm::execution_tree::FunctionRepository func_repo;
   ovum::vm::runtime::VirtualTableRepository vtable_repo;
   ovum::vm::runtime::RuntimeMemory memory;
-  ovum::vm::runtime::MemoryManager memory_manager(std::make_unique<ovum::vm::runtime::MarkAndSweepGC>(),
-                                                  kDefaultMaxObjects);
+  ovum::vm::runtime::MemoryManager memory_manager(std::make_unique<ovum::vm::runtime::MarkAndSweepGC>(), max_objects);
   ovum::vm::execution_tree::PassedExecutionData execution_data{.memory = memory,
                                                                .virtual_table_repository = vtable_repo,
                                                                .function_repository = func_repo,

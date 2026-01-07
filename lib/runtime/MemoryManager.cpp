@@ -10,7 +10,8 @@
 
 namespace ovum::vm::runtime {
 
-MemoryManager::MemoryManager(std::unique_ptr<IGarbageCollector> gc, size_t max_objects) : gc_(std::move(gc)), gc_threshold_(max_objects) {
+MemoryManager::MemoryManager(std::unique_ptr<IGarbageCollector> gc, size_t max_objects) :
+    gc_(std::move(gc)), gc_threshold_(max_objects) {
 }
 
 std::expected<void*, std::runtime_error> MemoryManager::AllocateObject(const VirtualTable& vtable,
