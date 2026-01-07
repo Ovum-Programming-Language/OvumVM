@@ -52,16 +52,29 @@ std::expected<void, std::runtime_error> MemoryManager::DeallocateObject(void* ob
   auto* desc = reinterpret_cast<ObjectDescriptor*>(obj);
   const size_t index = desc->repo_index;
 
+  std::string object_type = "Unknown";
+  auto vt_res = data.virtual_table_repository.GetByIndex(desc->vtable_index);
+  if (vt_res.has_value()) {
+    object_type = vt_res.value()->GetName();
+  }
+//  data.error_stream << "DeallocateObject: obj=" << obj
+//                    << " repo_index=" << index
+//                    << " vtable_index=" << desc->vtable_index
+//                    << " type=" << object_type << "\n";
+
   if (index >= repo_.GetCount()) {
+//    data.error_stream << "ERROR: Invalid repo_index " << index << " (repo size=" << repo_.GetCount()
+//                      << ") for object of type " << object_type << " at " << obj << "\n";
     return std::unexpected(std::runtime_error("DeallocateObject: Invalid repo_index (out of bounds)"));
   }
 
   auto check_res = repo_.GetByIndex(index);
   if (!check_res.has_value() || check_res.value() != desc) {
-    return std::unexpected(std::runtime_error("DeallocateObject: repo_index mismatch (corrupted?)"));
+//    data.error_stream << "ERROR: repo_index mismatch for object " << obj
+//                      << " (type=" << object_type << "), expected at index " << index << "\n";
+    return std::unexpected(std::runtime_error("DeallocateObject: repo_index mismatch"));
   }
 
-  auto vt_res = data.virtual_table_repository.GetByIndex(desc->vtable_index);
   if (vt_res.has_value()) {
     const VirtualTable* vt = vt_res.value();
 
@@ -98,12 +111,18 @@ std::expected<void, std::runtime_error> MemoryManager::Clear(execution_tree::Pas
   while (repo_.GetCount() > 0) {
     const size_t last_index = repo_.GetCount() - 1;
     auto obj_res = repo_.GetByIndex(last_index);
-    if (!obj_res.has_value()) {
-      repo_.Remove(last_index);
-      continue;
-    }
 
-    DeallocateObject(obj_res.value(), data);
+    if (obj_res.has_value()) {
+      auto dealloc_res = DeallocateObject(obj_res.value(), data);
+      if (!dealloc_res.has_value()) {
+//        data.error_stream << "Clear: Deallocate failed for index " << last_index << ": "
+//                          << dealloc_res.error().what() << " — forcing Remove\n";
+        repo_.Remove(last_index);
+      }
+    } else {
+//      data.error_stream << "Clear: Invalid object at index " << last_index << " — forcing Remove\n";
+      repo_.Remove(last_index);
+    }
   }
 
   return {};
