@@ -3,8 +3,9 @@
 
 #include <cstddef>
 #include <expected>
+#include <functional>
 #include <stdexcept>
-#include <vector>
+#include <unordered_set>
 
 #include "ObjectDescriptor.hpp"
 
@@ -16,18 +17,16 @@ public:
 
   void Reserve(size_t count);
 
-  [[nodiscard]] std::expected<size_t, std::runtime_error> Add(ObjectDescriptor* descriptor);
-  std::expected<void, std::runtime_error> Remove(size_t index);
+  [[nodiscard]] std::expected<void, std::runtime_error> Add(ObjectDescriptor* descriptor);
+  std::expected<void, std::runtime_error> Remove(ObjectDescriptor* descriptor);
   void Clear();
 
-  [[nodiscard]] std::expected<ObjectDescriptor*, std::runtime_error> GetByIndex(size_t index);
-
-  [[nodiscard]] std::expected<const ObjectDescriptor*, std::runtime_error> GetByIndex(size_t index) const;
+  void ForAll(const std::function<void(void*)>& func) const;
 
   [[nodiscard]] size_t GetCount() const;
 
 private:
-  std::vector<ObjectDescriptor*> objects_;
+  std::unordered_set<ObjectDescriptor*> objects_;
 };
 
 } // namespace ovum::vm::runtime

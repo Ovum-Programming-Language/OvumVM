@@ -16,7 +16,6 @@
 #include "lib/executor/Executor.hpp"
 #include "lib/executor/IJitExecutorFactory.hpp"
 #include "lib/executor/builtin_factory.hpp"
-#include "lib/runtime/ObjectDescriptor.hpp"
 #include "lib/runtime/RuntimeMemory.hpp"
 #include "lib/runtime/VirtualTableRepository.hpp"
 

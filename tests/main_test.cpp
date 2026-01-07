@@ -245,5 +245,5 @@ TEST_F(ProjectIntegrationTestSuite, InteropTest3) {
   int64_t time_from_code = code - kAdded;
   time_from_code *= kDivisor;
   time_from_code ^= kBinaryFilter;
-  ASSERT_TRUE(std::abs(time_from_code - current_nanotime) <= kMaxAllowedError);
+  ASSERT_LE(std::abs(time_from_code - current_nanotime), kMaxAllowedError);
 }

@@ -1,7 +1,6 @@
 #include "MarkAndSweepGC.hpp"
 
 #include <queue>
-#include <ranges>
 #include <stack>
 #include <vector>
 
@@ -50,23 +49,17 @@ void MarkAndSweepGC::Sweep(execution_tree::PassedExecutionData& data) {
   to_delete.reserve(data.memory_manager.GetRepository().GetCount() / 4);
 
   const ObjectRepository& repo = data.memory_manager.GetRepository();
-  for (size_t i = 0; i < repo.GetCount(); ++i) {
-    auto obj_res = repo.GetByIndex(i);
-    if (!obj_res.has_value()) {
-      continue;
-    }
+  repo.ForAll([&to_delete](void* obj) {
+    auto* desc = reinterpret_cast<ObjectDescriptor*>(obj);
 
-    const ObjectDescriptor* const_desc = obj_res.value();
-    void* obj = const_cast<void*>(static_cast<const void*>(const_desc));
-
-    if (!(const_desc->badge & kMarkBit)) {
+    if (!(desc->badge & kMarkBit)) {
       to_delete.push_back(obj);
     }
 
-    const_cast<ObjectDescriptor*>(const_desc)->badge &= ~kMarkBit;
-  }
+    desc->badge &= ~kMarkBit;
+  });
 
-  for (auto obj : std::ranges::reverse_view(to_delete)) {
+  for (auto obj : to_delete) {
     auto dealloc_res = data.memory_manager.DeallocateObject(obj, data);
   }
 }

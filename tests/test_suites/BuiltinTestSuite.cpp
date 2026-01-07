@@ -266,12 +266,7 @@ void BuiltinTestSuite::ExpectTopNullableHasValue(bool has_value) {
 
 void BuiltinTestSuite::CleanupObjects() {
   std::vector<void*> objects;
-  for (size_t i = 0; i < memory_.object_repository.GetCount(); ++i) {
-    auto obj = memory_.object_repository.GetByIndex(i);
-    if (obj.has_value()) {
-      objects.push_back(obj.value());
-    }
-  }
+  memory_.object_repository.ForAll([&objects](void* obj) { objects.push_back(obj); });
 
   for (void* obj : objects) {
     DestroyObject(obj);
@@ -294,5 +289,6 @@ void BuiltinTestSuite::DestroyObject(void* obj) {
   data_.memory.machine_stack.emplace(obj);
   auto destructor_exec_result = destructor_function.value()->Execute(data_);
 
-  memory_manager_.DeallocateObject(reinterpret_cast<char*>(obj), data_);
+  auto dealloc_res = memory_manager_.DeallocateObject(obj, data_);
+  ASSERT_TRUE(dealloc_res.has_value()) << dealloc_res.error().what();
 }
