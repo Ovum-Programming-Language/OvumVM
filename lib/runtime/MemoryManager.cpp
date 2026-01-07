@@ -5,14 +5,12 @@
 
 #include "lib/execution_tree/FunctionRepository.hpp"
 #include "lib/execution_tree/PassedExecutionData.hpp"
-#include "lib/runtime/gc/MarkAndSweepGC.hpp"
 
 #include "ObjectDescriptor.hpp"
 
 namespace ovum::vm::runtime {
 
-MemoryManager::MemoryManager() : gc_threshold_(kDefaultMaxObjects) {
-  gc_ = std::make_unique<MarkAndSweepGC>();
+MemoryManager::MemoryManager(std::unique_ptr<IGarbageCollector> gc, size_t max_objects) : gc_(std::move(gc)), gc_threshold_(max_objects) {
 }
 
 std::expected<void*, std::runtime_error> MemoryManager::AllocateObject(const VirtualTable& vtable,
@@ -138,7 +136,7 @@ std::expected<void, std::runtime_error> MemoryManager::CollectGarbage(execution_
     return std::unexpected(std::runtime_error("MemoryManager: No GC configured"));
   }
 
-  return gc_.value()->Collect(data);
+  return gc_->Collect(data);
 }
 
 const ObjectRepository& MemoryManager::GetRepository() const {

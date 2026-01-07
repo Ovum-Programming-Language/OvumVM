@@ -15,6 +15,7 @@
 #include "lib/execution_tree/PassedExecutionData.hpp"
 #include "lib/runtime/RuntimeMemory.hpp"
 #include "lib/runtime/VirtualTableRepository.hpp"
+#include "lib/runtime/gc/MarkAndSweepGC.hpp"
 
 struct BuiltinTestSuite : public testing::Test {
   BuiltinTestSuite();
@@ -58,6 +59,8 @@ struct BuiltinTestSuite : public testing::Test {
   void CleanupObjects();
   void DestroyObject(void* obj);
 
+  constexpr static size_t kDefaultMaxObjects = 10000;
+
   // Repositories for fixtures
   ovum::vm::runtime::RuntimeMemory memory_{};
   ovum::vm::runtime::VirtualTableRepository vtable_repo_{};
@@ -65,7 +68,8 @@ struct BuiltinTestSuite : public testing::Test {
   std::stringstream input_stream_;
   std::stringstream output_stream_;
   std::stringstream error_stream_;
-  ovum::vm::runtime::MemoryManager memory_manager_{};
+  ovum::vm::runtime::MemoryManager memory_manager_{std::make_unique<ovum::vm::runtime::MarkAndSweepGC>(),
+                                                   kDefaultMaxObjects};
   ovum::vm::execution_tree::PassedExecutionData data_;
 };
 

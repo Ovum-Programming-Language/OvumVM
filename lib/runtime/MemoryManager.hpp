@@ -3,7 +3,6 @@
 
 #include <expected>
 #include <memory>
-#include <optional>
 #include <stdexcept>
 
 #include "lib/runtime/gc/IGarbageCollector.hpp"
@@ -17,11 +16,9 @@ struct PassedExecutionData;
 
 namespace ovum::vm::runtime {
 
-constexpr size_t kDefaultMaxObjects = 10000; // Default threshold for auto-GC
-
 class MemoryManager {
 public:
-  MemoryManager();
+  MemoryManager(std::unique_ptr<IGarbageCollector> gc, size_t max_objects);
 
   std::expected<void*, std::runtime_error> AllocateObject(const VirtualTable& vtable,
                                                           uint32_t vtable_index,
@@ -35,7 +32,7 @@ public:
 private:
   ObjectRepository repo_;
   std::allocator<char> allocator_;
-  std::optional<std::unique_ptr<IGarbageCollector>> gc_;
+  std::unique_ptr<IGarbageCollector> gc_;
   size_t gc_threshold_;
 };
 

@@ -18,12 +18,14 @@
 #include "lib/executor/builtin_factory.hpp"
 #include "lib/runtime/RuntimeMemory.hpp"
 #include "lib/runtime/VirtualTableRepository.hpp"
+#include "lib/runtime/gc/MarkAndSweepGC.hpp"
 
 #ifdef JIT_PROVIDED
 #include <jit/JitExecutorFactory.hpp>
 #endif
 
 constexpr size_t kDefaultJitBoundary = 100000;
+constexpr size_t kDefaultMaxObjects = 10000;
 
 std::string ReadFileContent(const std::string& file_path, std::ostream& err) {
   std::ifstream file(file_path);
@@ -85,7 +87,8 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
   ovum::vm::execution_tree::FunctionRepository func_repo;
   ovum::vm::runtime::VirtualTableRepository vtable_repo;
   ovum::vm::runtime::RuntimeMemory memory;
-  ovum::vm::runtime::MemoryManager memory_manager;
+  ovum::vm::runtime::MemoryManager memory_manager(std::make_unique<ovum::vm::runtime::MarkAndSweepGC>(),
+                                                  kDefaultMaxObjects);
   ovum::vm::execution_tree::PassedExecutionData execution_data{.memory = memory,
                                                                .virtual_table_repository = vtable_repo,
                                                                .function_repository = func_repo,
