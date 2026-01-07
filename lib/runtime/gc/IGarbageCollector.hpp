@@ -1,6 +1,7 @@
 #ifndef RUNTIME_GARBAGECOLLECTOR_HPP
 #define RUNTIME_GARBAGECOLLECTOR_HPP
 
+#include <cstdint>
 #include <expected>
 #include <stdexcept>
 
