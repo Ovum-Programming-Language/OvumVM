@@ -59,18 +59,51 @@ void MarkAndSweepGC::Sweep(execution_tree::PassedExecutionData& data) {
     desc->badge &= ~kMarkBit;
   });
 
+  data.error_stream << "[GC Sweep] Starting sweep. Total objects in repo: "
+                    << repo.GetCount()
+                    << ", objects to delete: " << to_delete.size() << "\n";
+
+  for (auto obj : to_delete) {
+    auto* desc = reinterpret_cast<ObjectDescriptor*>(obj);
+
+    auto vt_res = data.virtual_table_repository.GetByIndex(desc->vtable_index);
+    std::string type_name = "<unknown type>";
+    if (vt_res.has_value()) {
+      type_name = vt_res.value()->GetName();
+    }
+
+    data.error_stream << "[GC Sweep] Deleting object: "
+                      << type_name
+                      << " at address " << obj << "\n";
+  }
+
   for (auto obj : to_delete) {
     auto dealloc_res = data.memory_manager.DeallocateObject(obj, data);
+    if (!dealloc_res) {
+      data.error_stream << dealloc_res.error().what();
+    }
   }
 }
 
 void MarkAndSweepGC::AddRoots(std::queue<void*>& worklist, execution_tree::PassedExecutionData& data) {
+  data.error_stream << "[GC Roots] Scanning " << data.memory.stack_frames.size() << " frames\n";
+  size_t root_count = 0;
+
   for (const auto& var : data.memory.global_variables) {
     if (std::holds_alternative<void*>(var)) {
       void* ptr = std::get<void*>(var);
       if (ptr) {
         worklist.push(ptr);
       }
+
+      if (ptr) {
+        root_count++;
+        auto* desc = reinterpret_cast<ObjectDescriptor*>(ptr);
+        auto vt_res = data.virtual_table_repository.GetByIndex(desc->vtable_index);
+        std::string name = vt_res ? vt_res.value()->GetName() : "unknown";
+        data.error_stream << "[GC Root] Found live object: " << name << " at " << ptr << "\n";
+      }
+      data.error_stream << "[GC Roots] Total roots: " << root_count << "\n";
     }
   }
 
@@ -84,6 +117,15 @@ void MarkAndSweepGC::AddRoots(std::queue<void*>& worklist, execution_tree::Passe
         if (ptr) {
           worklist.push(ptr);
         }
+
+        if (ptr) {
+          root_count++;
+          auto* desc = reinterpret_cast<ObjectDescriptor*>(ptr);
+          auto vt_res = data.virtual_table_repository.GetByIndex(desc->vtable_index);
+          std::string name = vt_res ? vt_res.value()->GetName() : "unknown";
+          data.error_stream << "[GC Root] Found live object: " << name << " at " << ptr << "\n";
+        }
+        data.error_stream << "[GC Roots] Total roots: " << root_count << "\n";
       }
     }
     temp_frames.pop();
@@ -104,6 +146,15 @@ void MarkAndSweepGC::AddRoots(std::queue<void*>& worklist, execution_tree::Passe
       if (ptr) {
         worklist.push(ptr);
       }
+
+      if (ptr) {
+        root_count++;
+        auto* desc = reinterpret_cast<ObjectDescriptor*>(ptr);
+        auto vt_res = data.virtual_table_repository.GetByIndex(desc->vtable_index);
+        std::string name = vt_res ? vt_res.value()->GetName() : "unknown";
+        data.error_stream << "[GC Root] Found live object: " << name << " at " << ptr << "\n";
+      }
+      data.error_stream << "[GC Roots] Total roots: " << root_count << "\n";
     }
   }
 }
