@@ -79,12 +79,12 @@ void MarkAndSweepGC::Sweep(execution_tree::PassedExecutionData& data) {
     data.error_stream << "[GC Sweep] Deleting object: "
                       << type_name
                       << " at address " << obj << "\n";
-  }
 
-  for (auto obj : to_delete) {
     auto dealloc_res = data.memory_manager.DeallocateObject(obj, data);
     if (!dealloc_res) {
-      data.error_stream << dealloc_res.error().what();
+      data.error_stream << "[GC Error] Failed to deallocate object of type '"
+                        << type_name << "' at " << obj << ": "
+                        << dealloc_res.error().what() << "\n";
     }
   }
 }
