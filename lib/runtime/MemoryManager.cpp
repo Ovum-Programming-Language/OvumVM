@@ -1,5 +1,7 @@
 #include "MemoryManager.hpp"
 
+#include <cstring>
+#include <optional>
 #include <utility>
 #include <vector>
 

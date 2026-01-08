@@ -1,5 +1,6 @@
 #include "MarkAndSweepGC.hpp"
 
+#include <optional>
 #include <queue>
 #include <stack>
 #include <vector>
@@ -12,8 +13,7 @@ namespace ovum::vm::runtime {
 
 std::expected<void, std::runtime_error> MarkAndSweepGC::Collect(execution_tree::PassedExecutionData& data) {
   Mark(data);
-  Sweep(data);
-  return {};
+  return Sweep(data);
 }
 
 void MarkAndSweepGC::Mark(execution_tree::PassedExecutionData& data) {
@@ -51,7 +51,7 @@ void MarkAndSweepGC::Mark(execution_tree::PassedExecutionData& data) {
   }
 }
 
-void MarkAndSweepGC::Sweep(execution_tree::PassedExecutionData& data) {
+std::expected<void, std::runtime_error> MarkAndSweepGC::Sweep(execution_tree::PassedExecutionData& data) {
   std::vector<void*> to_delete;
   const ObjectRepository& repo = data.memory_manager.GetRepository();
 
@@ -65,59 +65,36 @@ void MarkAndSweepGC::Sweep(execution_tree::PassedExecutionData& data) {
     desc->badge &= ~kMarkBit;
   });
 
-  data.error_stream << "[GC Sweep] Starting sweep. Total objects in repo: " << repo.GetCount()
-                    << ", objects to delete: " << to_delete.size() << "\n";
+  std::optional<std::runtime_error> first_error;
 
   for (void* obj : to_delete) {
-    auto* desc = reinterpret_cast<ObjectDescriptor*>(obj);
-
-    std::expected<const VirtualTable*, std::runtime_error> vt_res =
-        data.virtual_table_repository.GetByIndex(desc->vtable_index);
-
-    std::string type_name = "<unknown type>";
-    if (vt_res.has_value()) {
-      type_name = vt_res.value()->GetName();
-    }
-
-    data.error_stream << "[GC Sweep] Deleting object: " << type_name << " at address " << obj << "\n";
-
     std::expected<void, std::runtime_error> dealloc_res = data.memory_manager.DeallocateObject(obj, data);
 
-    if (dealloc_res.has_value()) {
-      desc->badge &= ~kMarkBit;
-    } else {
-      data.error_stream << "[GC Error] Failed to deallocate object of type '" << type_name << "' at " << obj << ": "
-                        << dealloc_res.error().what() << "\n";
+    if (!dealloc_res.has_value() && !first_error) {
+      first_error = dealloc_res.error();
     }
   }
+
+  if (first_error) {
+    return std::unexpected(*first_error);
+  }
+
+  return {};
 }
 
 void MarkAndSweepGC::AddRoots(std::queue<void*>& worklist, execution_tree::PassedExecutionData& data) {
-  data.error_stream << "[GC Roots] Scanning " << data.memory.stack_frames.size() << " frames\n";
-  size_t root_count = 0;
-
   for (const Variable& var : data.memory.global_variables) {
     if (std::holds_alternative<void*>(var)) {
       void* ptr = std::get<void*>(var);
 
       if (ptr) {
         worklist.push(ptr);
-        ++root_count;
-
-        auto* desc = reinterpret_cast<ObjectDescriptor*>(ptr);
-        std::expected<const VirtualTable*, std::runtime_error> vt_res =
-            data.virtual_table_repository.GetByIndex(desc->vtable_index);
-
-        std::string name = vt_res.has_value() ? vt_res.value()->GetName() : "unknown";
-        data.error_stream << "[GC Root] Found live object: " << name << " at " << ptr << "\n";
       }
     }
   }
 
-  data.error_stream << "[GC Roots] Total roots: " << root_count << "\n";
-
-  std::stack<StackFrame> temp_stack_frames;
-  std::swap(temp_stack_frames, data.memory.stack_frames);
+  // Note that there is no way to traverse a std::stack without emptying it, so we need to create a temporary stack.
+  std::stack<StackFrame> temp_stack_frames = data.memory.stack_frames;
 
   while (!temp_stack_frames.empty()) {
     const StackFrame& frame = temp_stack_frames.top();
@@ -128,14 +105,6 @@ void MarkAndSweepGC::AddRoots(std::queue<void*>& worklist, execution_tree::Passe
 
         if (ptr) {
           worklist.push(ptr);
-          ++root_count;
-
-          auto* desc = reinterpret_cast<ObjectDescriptor*>(ptr);
-          std::expected<const VirtualTable*, std::runtime_error> vt_res =
-              data.virtual_table_repository.GetByIndex(desc->vtable_index);
-
-          std::string name = vt_res ? vt_res.value()->GetName() : "unknown";
-          data.error_stream << "[GC Root] Found live object: " << name << " at " << ptr << "\n";
         }
       }
     }
@@ -143,10 +112,7 @@ void MarkAndSweepGC::AddRoots(std::queue<void*>& worklist, execution_tree::Passe
     temp_stack_frames.pop();
   }
 
-  std::swap(temp_stack_frames, data.memory.stack_frames);
-
-  std::stack<Variable> temp_machine_stack;
-  std::swap(temp_machine_stack, data.memory.machine_stack);
+  std::stack<Variable> temp_machine_stack = data.memory.machine_stack;
 
   while (!temp_machine_stack.empty()) {
     const Variable& var = temp_machine_stack.top();
@@ -156,20 +122,11 @@ void MarkAndSweepGC::AddRoots(std::queue<void*>& worklist, execution_tree::Passe
 
       if (ptr) {
         worklist.push(ptr);
-        ++root_count;
-
-        auto* desc = reinterpret_cast<ObjectDescriptor*>(ptr);
-        std::expected<const VirtualTable*, std::runtime_error> vt_res =
-            data.virtual_table_repository.GetByIndex(desc->vtable_index);
-
-        std::string name = vt_res.has_value() ? vt_res.value()->GetName() : "unknown";
-        data.error_stream << "[GC Root] Found live object: " << name << " at " << ptr << "\n";
       }
     }
+
     temp_machine_stack.pop();
   }
-
-  std::swap(temp_machine_stack, data.memory.machine_stack);
 }
 
 } // namespace ovum::vm::runtime

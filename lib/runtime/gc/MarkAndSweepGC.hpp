@@ -13,7 +13,7 @@ public:
 
 private:
   void Mark(execution_tree::PassedExecutionData& data);
-  void Sweep(execution_tree::PassedExecutionData& data);
+  std::expected<void, std::runtime_error> Sweep(execution_tree::PassedExecutionData& data);
   void AddRoots(std::queue<void*>& worklist, execution_tree::PassedExecutionData& data);
 };
 
