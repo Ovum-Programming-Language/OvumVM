@@ -26,8 +26,11 @@ std::expected<void*, std::runtime_error> MemoryManager::AllocateObject(const Vir
   }
 
   const size_t total_size = vtable.GetSize();
-  char* raw_memory = allocator_.allocate(total_size);
-  if (!raw_memory) {
+
+  char* raw_memory = nullptr;
+  try {
+    raw_memory = allocator_.allocate(total_size);
+  } catch (const std::bad_alloc&) {
     return std::unexpected(std::runtime_error("MemoryManager: Allocation failed - out of memory"));
   }
 
