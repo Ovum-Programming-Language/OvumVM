@@ -9,25 +9,34 @@ namespace ovum::vm::runtime {
 
 class DefaultReferenceScanner : public IReferenceScanner {
 public:
-  explicit DefaultReferenceScanner(const VirtualTable* vt) : vt_(vt) {
+  explicit DefaultReferenceScanner(const VirtualTable& vt) {
+    for (size_t i = 0; i < vt.GetFieldCount(); ++i) {
+      if (vt.IsFieldReferenceType(i)) {
+        reference_fields_.emplace_back(
+            vt.GetFieldOffset(i),
+            vt.GetFieldAccessor(i)
+        );
+      }
+    }
   }
 
   void Scan(void* obj, const ReferenceVisitor& visitor) const override {
-    for (size_t i = 0; i < vt_->GetFieldCount(); ++i) {
-      if (vt_->IsFieldReferenceType(i)) {
-        auto var_res = vt_->GetVariableByIndex(obj, i);
-        if (var_res.has_value() && std::holds_alternative<void*>(var_res.value())) {
-          void* ptr = std::get<void*>(var_res.value());
-          if (ptr) {
-            visitor(ptr);
-          }
+    for (const FieldInfo& field : reference_fields_) {
+      auto var_res = field.variable_accessor->GetVariable(
+          reinterpret_cast<char*>(obj) + field.offset
+      );
+
+      if (std::holds_alternative<void*>(var_res)) {
+        void* ptr = std::get<void*>(var_res);
+        if (ptr) {
+          visitor(ptr);
         }
       }
     }
   }
 
 private:
-  const VirtualTable* vt_;
+  std::vector<FieldInfo> reference_fields_;
 };
 
 } // namespace ovum::vm::runtime
