@@ -107,56 +107,51 @@ void MarkAndSweepGC::AddRoots(std::queue<void*>& worklist, execution_tree::Passe
     }
   }
 
-  std::stack<StackFrame> temp_frames = data.memory.stack_frames;
 
-  while (!temp_frames.empty()) {
-    const StackFrame& frame = temp_frames.top();
+  std::stack<StackFrame> temp_stack_frames;
+  std::swap(temp_stack_frames, data.memory.stack_frames);
+
+  while (!temp_stack_frames.empty()) {
+    const StackFrame& frame = temp_stack_frames.top();
     for (const auto& var : frame.local_variables) {
       if (std::holds_alternative<void*>(var)) {
         void* ptr = std::get<void*>(var);
         if (ptr) {
           worklist.push(ptr);
-        }
-
-        if (ptr) {
-          root_count++;
+          ++root_count;
           auto* desc = reinterpret_cast<ObjectDescriptor*>(ptr);
           auto vt_res = data.virtual_table_repository.GetByIndex(desc->vtable_index);
           std::string name = vt_res ? vt_res.value()->GetName() : "unknown";
           data.error_stream << "[GC Root] Found live object: " << name << " at " << ptr << "\n";
         }
-        data.error_stream << "[GC Roots] Total roots: " << root_count << "\n";
       }
     }
-    temp_frames.pop();
+    temp_stack_frames.pop();
   }
 
-  std::vector<Variable> temp_stack;
-  temp_stack.reserve(data.memory.machine_stack.size());
+  std::swap(temp_stack_frames, data.memory.stack_frames);
 
-  std::stack<Variable> temp_machine_stack = data.memory.machine_stack;
+
+  std::stack<Variable> temp_machine_stack;
+  std::swap(temp_machine_stack, data.memory.machine_stack);
+
   while (!temp_machine_stack.empty()) {
-    temp_stack.push_back(temp_machine_stack.top());
-    temp_machine_stack.pop();
-  }
-
-  for (const auto& var : temp_stack) {
+    const Variable& var = temp_machine_stack.top();
     if (std::holds_alternative<void*>(var)) {
       void* ptr = std::get<void*>(var);
       if (ptr) {
         worklist.push(ptr);
-      }
-
-      if (ptr) {
-        root_count++;
+        ++root_count;
         auto* desc = reinterpret_cast<ObjectDescriptor*>(ptr);
         auto vt_res = data.virtual_table_repository.GetByIndex(desc->vtable_index);
         std::string name = vt_res ? vt_res.value()->GetName() : "unknown";
         data.error_stream << "[GC Root] Found live object: " << name << " at " << ptr << "\n";
       }
-      data.error_stream << "[GC Roots] Total roots: " << root_count << "\n";
     }
+    temp_machine_stack.pop();
   }
+
+  std::swap(temp_machine_stack, data.memory.machine_stack);
 }
 
 } // namespace ovum::vm::runtime
