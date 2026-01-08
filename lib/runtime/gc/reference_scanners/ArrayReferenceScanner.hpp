@@ -2,6 +2,7 @@
 #define RUNTIME_ARRAYREFERENCESCANNER_HPP
 
 #include <vector>
+#include <type_traits>
 
 #include "lib/runtime/ObjectDescriptor.hpp"
 
@@ -13,11 +14,17 @@ template<typename T>
 class ArrayReferenceScanner : public IReferenceScanner {
 public:
   void Scan(void* obj, const ReferenceVisitor& visitor) const override {
-    const auto& vec = *GetDataPointer<const std::vector<T>>(obj);
-    for (auto p : vec) {
-      if (p) {
-        visitor(p);
+    const char* base = reinterpret_cast<const char*>(obj) + sizeof(ObjectDescriptor);
+    const auto& vec = *reinterpret_cast<const std::vector<T>*>(base);
+
+    if constexpr (std::is_pointer_v<T>) {
+      for (T p : vec) {
+        if (p) {
+          visitor(reinterpret_cast<void*>(p));
+        }
       }
+    } else {
+      (void)visitor;
     }
   }
 };
