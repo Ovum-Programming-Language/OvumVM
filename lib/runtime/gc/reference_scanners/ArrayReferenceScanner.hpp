@@ -15,7 +15,7 @@ class ArrayReferenceScanner : public IReferenceScanner {
 public:
   void Scan(void* obj, const ReferenceVisitor& visitor) const override {
     const char* base = reinterpret_cast<const char*>(obj) + sizeof(ObjectDescriptor);
-    const auto& vec = *reinterpret_cast<const std::vector<T>*>(base);
+    const std::vector<T>& vec = *reinterpret_cast<const std::vector<T>*>(base);
 
     if constexpr (std::is_pointer_v<T>) {
       for (T p : vec) {

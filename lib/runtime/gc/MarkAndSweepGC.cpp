@@ -28,16 +28,19 @@ void MarkAndSweepGC::Mark(execution_tree::PassedExecutionData& data) {
       continue;
     }
 
-    auto* desc = reinterpret_cast<ObjectDescriptor*>(obj);
+    ObjectDescriptor* desc = reinterpret_cast<ObjectDescriptor*>(obj);
     if (desc->badge & kMarkBit) {
       continue;
     }
     desc->badge |= kMarkBit;
 
-    auto vt_res = data.virtual_table_repository.GetByIndex(desc->vtable_index);
+    std::expected<const VirtualTable*, std::runtime_error> vt_res =
+        data.virtual_table_repository.GetByIndex(desc->vtable_index);
+
     if (!vt_res.has_value()) {
       continue;
     }
+
     const VirtualTable* vt = vt_res.value();
 
     vt->ScanReferences(obj, [&](void* ref) {
@@ -50,10 +53,10 @@ void MarkAndSweepGC::Mark(execution_tree::PassedExecutionData& data) {
 
 void MarkAndSweepGC::Sweep(execution_tree::PassedExecutionData& data) {
   std::vector<void*> to_delete;
-
   const ObjectRepository& repo = data.memory_manager.GetRepository();
+
   repo.ForAll([&to_delete](void* obj) {
-    auto* desc = reinterpret_cast<ObjectDescriptor*>(obj);
+    ObjectDescriptor* desc = reinterpret_cast<ObjectDescriptor*>(obj);
 
     if (!(desc->badge & kMarkBit)) {
       to_delete.push_back(obj);
@@ -65,10 +68,12 @@ void MarkAndSweepGC::Sweep(execution_tree::PassedExecutionData& data) {
   data.error_stream << "[GC Sweep] Starting sweep. Total objects in repo: " << repo.GetCount()
                     << ", objects to delete: " << to_delete.size() << "\n";
 
-  for (auto obj : to_delete) {
-    auto* desc = reinterpret_cast<ObjectDescriptor*>(obj);
+  for (void* obj : to_delete) {
+    ObjectDescriptor* desc = reinterpret_cast<ObjectDescriptor*>(obj);
 
-    auto vt_res = data.virtual_table_repository.GetByIndex(desc->vtable_index);
+    std::expected<const VirtualTable*, std::runtime_error> vt_res =
+        data.virtual_table_repository.GetByIndex(desc->vtable_index);
+
     std::string type_name = "<unknown type>";
     if (vt_res.has_value()) {
       type_name = vt_res.value()->GetName();
@@ -76,7 +81,8 @@ void MarkAndSweepGC::Sweep(execution_tree::PassedExecutionData& data) {
 
     data.error_stream << "[GC Sweep] Deleting object: " << type_name << " at address " << obj << "\n";
 
-    auto dealloc_res = data.memory_manager.DeallocateObject(obj, data);
+    std::expected<void, std::runtime_error> dealloc_res = data.memory_manager.DeallocateObject(obj, data);
+
     if (dealloc_res.has_value()) {
       desc->badge &= ~kMarkBit;
     } else {
@@ -90,27 +96,25 @@ void MarkAndSweepGC::AddRoots(std::queue<void*>& worklist, execution_tree::Passe
   data.error_stream << "[GC Roots] Scanning " << data.memory.stack_frames.size() << " frames\n";
   size_t root_count = 0;
 
-  for (const auto& var : data.memory.global_variables) {
+  for (const Variable& var : data.memory.global_variables) {
     if (std::holds_alternative<void*>(var)) {
       void* ptr = std::get<void*>(var);
 
       if (ptr) {
         worklist.push(ptr);
-      }
+        ++root_count;
 
-      if (ptr) {
-        root_count++;
+        ObjectDescriptor* desc = reinterpret_cast<ObjectDescriptor*>(ptr);
+        std::expected<const VirtualTable*, std::runtime_error> vt_res =
+            data.virtual_table_repository.GetByIndex(desc->vtable_index);
 
-        auto* desc = reinterpret_cast<ObjectDescriptor*>(ptr);
-        auto vt_res = data.virtual_table_repository.GetByIndex(desc->vtable_index);
-
-        std::string name = vt_res ? vt_res.value()->GetName() : "unknown";
+        std::string name = vt_res.has_value() ? vt_res.value()->GetName() : "unknown";
         data.error_stream << "[GC Root] Found live object: " << name << " at " << ptr << "\n";
       }
-
-      data.error_stream << "[GC Roots] Total roots: " << root_count << "\n";
     }
   }
+
+  data.error_stream << "[GC Roots] Total roots: " << root_count << "\n";
 
   std::stack<StackFrame> temp_stack_frames;
   std::swap(temp_stack_frames, data.memory.stack_frames);
@@ -118,7 +122,7 @@ void MarkAndSweepGC::AddRoots(std::queue<void*>& worklist, execution_tree::Passe
   while (!temp_stack_frames.empty()) {
     const StackFrame& frame = temp_stack_frames.top();
 
-    for (const auto& var : frame.local_variables) {
+    for (const Variable& var : frame.local_variables) {
       if (std::holds_alternative<void*>(var)) {
         void* ptr = std::get<void*>(var);
 
@@ -127,7 +131,8 @@ void MarkAndSweepGC::AddRoots(std::queue<void*>& worklist, execution_tree::Passe
           ++root_count;
 
           auto* desc = reinterpret_cast<ObjectDescriptor*>(ptr);
-          auto vt_res = data.virtual_table_repository.GetByIndex(desc->vtable_index);
+          std::expected<const VirtualTable*, std::runtime_error> vt_res =
+              data.virtual_table_repository.GetByIndex(desc->vtable_index);
 
           std::string name = vt_res ? vt_res.value()->GetName() : "unknown";
           data.error_stream << "[GC Root] Found live object: " << name << " at " << ptr << "\n";
@@ -145,6 +150,7 @@ void MarkAndSweepGC::AddRoots(std::queue<void*>& worklist, execution_tree::Passe
 
   while (!temp_machine_stack.empty()) {
     const Variable& var = temp_machine_stack.top();
+
     if (std::holds_alternative<void*>(var)) {
       void* ptr = std::get<void*>(var);
 
@@ -152,10 +158,11 @@ void MarkAndSweepGC::AddRoots(std::queue<void*>& worklist, execution_tree::Passe
         worklist.push(ptr);
         ++root_count;
 
-        auto* desc = reinterpret_cast<ObjectDescriptor*>(ptr);
-        auto vt_res = data.virtual_table_repository.GetByIndex(desc->vtable_index);
+        ObjectDescriptor* desc = reinterpret_cast<ObjectDescriptor*>(ptr);
+        std::expected<const VirtualTable*, std::runtime_error> vt_res =
+            data.virtual_table_repository.GetByIndex(desc->vtable_index);
 
-        std::string name = vt_res ? vt_res.value()->GetName() : "unknown";
+        std::string name = vt_res.has_value() ? vt_res.value()->GetName() : "unknown";
         data.error_stream << "[GC Root] Found live object: " << name << " at " << ptr << "\n";
       }
     }

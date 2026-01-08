@@ -1,6 +1,10 @@
 #ifndef RUNTIME_DEFAULTREFERENCESCANNER_HPP
 #define RUNTIME_DEFAULTREFERENCESCANNER_HPP
 
+#include <vector>
+
+#include "lib/runtime/FieldInfo.hpp"
+#include "lib/runtime/Variable.hpp"
 #include "lib/runtime/VirtualTable.hpp"
 
 #include "IReferenceScanner.hpp"
@@ -19,10 +23,11 @@ public:
 
   void Scan(void* obj, const ReferenceVisitor& visitor) const override {
     for (const FieldInfo& field : reference_fields_) {
-      auto var_res = field.variable_accessor->GetVariable(reinterpret_cast<char*>(obj) + field.offset);
+      Variable var_res = field.variable_accessor->GetVariable(reinterpret_cast<char*>(obj) + field.offset);
 
       if (std::holds_alternative<void*>(var_res)) {
         void* ptr = std::get<void*>(var_res);
+
         if (ptr) {
           visitor(ptr);
         }
