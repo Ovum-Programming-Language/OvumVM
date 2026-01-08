@@ -2,8 +2,6 @@
 
 #include <utility>
 
-#include "lib/runtime/gc/reference_scanners/DefaultReferenceScanner.hpp"
-
 #include "VariableAccessor.hpp"
 
 namespace ovum::vm::runtime {
@@ -18,7 +16,6 @@ const std::unordered_map<std::string, std::shared_ptr<IVariableAccessor>> Virtua
 };
 
 VirtualTable::VirtualTable(std::string name, size_t size) : name_(std::move(name)), size_(size) {
-  reference_scanner_ = std::make_unique<DefaultReferenceScanner>(this);
 }
 
 std::string VirtualTable::GetName() const {
@@ -89,6 +86,14 @@ void VirtualTable::SetReferenceScanner(std::unique_ptr<IReferenceScanner> scanne
 
 size_t VirtualTable::GetFieldCount() const {
   return fields_.size();
+}
+
+int64_t VirtualTable::GetFieldOffset(size_t index) const {
+  return fields_[index].offset;
+}
+
+std::shared_ptr<IVariableAccessor> VirtualTable::GetFieldAccessor(size_t index) const {
+  return fields_[index].variable_accessor;
 }
 
 bool VirtualTable::IsFieldReferenceType(size_t index) const {

@@ -34,6 +34,8 @@ public:
 
   [[nodiscard]] size_t GetFieldCount() const;
   [[nodiscard]] bool IsFieldReferenceType(size_t index) const;
+  [[nodiscard]] int64_t GetFieldOffset(size_t index) const;
+  [[nodiscard]] std::shared_ptr<IVariableAccessor> GetFieldAccessor(size_t index) const;
 
   void AddFunction(const FunctionId& virtual_function_id, const FunctionId& real_function_id);
   size_t AddField(const std::string& type_name, int64_t offset);
