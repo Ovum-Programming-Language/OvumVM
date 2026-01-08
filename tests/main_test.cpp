@@ -251,3 +251,34 @@ TEST_F(ProjectIntegrationTestSuite, InteropTest3) {
   time_from_code ^= kBinaryFilter;
   ASSERT_LE(std::abs(time_from_code - current_nanotime), kMaxAllowedError);
 }
+
+TEST_F(ProjectIntegrationTestSuite, MemcheckTest) {
+  TestData test_data{
+      .test_name = "memcheck.oil",
+      .arguments = "",
+      .input = "",
+      .expected_output = "",
+      .expected_error = "",
+      .expected_return_code = 0,
+  };
+
+  std::filesystem::path test_file = kTestDataDir;
+  test_file /= "examples";
+  test_file /= "compiled";
+  test_file /= test_data.test_name;
+  std::string cmd = "ovum-vm -f \"";
+  cmd += test_file.string();
+  cmd += "\"";
+  cmd += " -m 10000";
+
+  if (!test_data.arguments.empty()) {
+    cmd += " -- ";
+    cmd += test_data.arguments;
+  }
+
+  std::istringstream in(test_data.input);
+  std::ostringstream out;
+  std::ostringstream err;
+  ASSERT_EQ(StartVmConsoleUI(SplitString(cmd), out, in, err), test_data.expected_return_code);
+  ASSERT_EQ(err.str(), test_data.expected_error);
+}
