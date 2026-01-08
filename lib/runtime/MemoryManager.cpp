@@ -108,33 +108,62 @@ std::expected<void, std::runtime_error> MemoryManager::DeallocateObject(void* ob
 std::expected<void, std::runtime_error> MemoryManager::Clear(execution_tree::PassedExecutionData& data) {
   std::vector<void*> objects_to_clear;
   objects_to_clear.reserve(repo_.GetCount());
-  std::expected<void, std::runtime_error> clear_res = {};
 
   repo_.ForAll([&objects_to_clear](void* obj) { objects_to_clear.push_back(obj); });
+
+  std::optional<std::runtime_error> first_error;
 
   for (void* obj : objects_to_clear) {
     auto* desc = reinterpret_cast<ObjectDescriptor*>(obj);
 
-    auto dealloc_res = DeallocateObject(obj, data);
-    if (!dealloc_res.has_value()) {
-      // If deallocation fails, try to remove from repository and deallocate manually
-      auto remove_res = repo_.Remove(desc);
-      if (remove_res.has_value()) {
-        // Try to get vtable to deallocate memory
-        auto vt_res = data.virtual_table_repository.GetByIndex(desc->vtable_index);
-        if (vt_res.has_value()) {
-          const size_t total_size = vt_res.value()->GetSize();
-          char* raw = reinterpret_cast<char*>(obj);
-          allocator_.deallocate(raw, total_size);
+    auto vt_res = data.virtual_table_repository.GetByIndex(desc->vtable_index);
+    if (!vt_res.has_value()) {
+      if (!first_error)
+        first_error =
+            std::runtime_error("Clear: Virtual table not found for index " + std::to_string(desc->vtable_index));
+      continue;
+    }
+
+    const VirtualTable* vt = vt_res.value();
+
+    auto dtor_id_res = vt->GetRealFunctionId("_destructor_<M>");
+    if (dtor_id_res.has_value()) {
+      auto func_res = data.function_repository.GetById(dtor_id_res.value());
+      if (func_res.has_value()) {
+        runtime::StackFrame frame = {.function_name = "Object deallocation (Clear)"};
+        data.memory.machine_stack.emplace(obj);
+        data.memory.stack_frames.push(std::move(frame));
+        auto exec_res = func_res.value()->Execute(data);
+        data.memory.stack_frames.pop();
+
+        if (!exec_res.has_value()) {
+          if (!first_error) {
+             first_error = exec_res.error();
+          }
+          continue;
         }
       }
-      clear_res = dealloc_res; // Save the error
     }
+
+    auto remove_res = repo_.Remove(desc);
+    if (!remove_res.has_value()) {
+      if (!first_error)
+        first_error = remove_res.error();
+      continue;
+    }
+
+    const size_t total_size = vt->GetSize();
+    char* raw = reinterpret_cast<char*>(obj);
+    allocator_.deallocate(raw, total_size);
   }
 
   repo_.Clear();
 
-  return clear_res;
+  if (first_error.has_value()) {
+    return std::unexpected(*first_error);
+  }
+
+  return {};
 }
 
 std::expected<void, std::runtime_error> MemoryManager::CollectGarbage(execution_tree::PassedExecutionData& data) {
