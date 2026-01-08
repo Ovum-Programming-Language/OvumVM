@@ -28,7 +28,7 @@ void MarkAndSweepGC::Mark(execution_tree::PassedExecutionData& data) {
       continue;
     }
 
-    ObjectDescriptor* desc = reinterpret_cast<ObjectDescriptor*>(obj);
+    auto* desc = reinterpret_cast<ObjectDescriptor*>(obj);
     if (desc->badge & kMarkBit) {
       continue;
     }
@@ -56,7 +56,7 @@ void MarkAndSweepGC::Sweep(execution_tree::PassedExecutionData& data) {
   const ObjectRepository& repo = data.memory_manager.GetRepository();
 
   repo.ForAll([&to_delete](void* obj) {
-    ObjectDescriptor* desc = reinterpret_cast<ObjectDescriptor*>(obj);
+    auto* desc = reinterpret_cast<ObjectDescriptor*>(obj);
 
     if (!(desc->badge & kMarkBit)) {
       to_delete.push_back(obj);
@@ -69,7 +69,7 @@ void MarkAndSweepGC::Sweep(execution_tree::PassedExecutionData& data) {
                     << ", objects to delete: " << to_delete.size() << "\n";
 
   for (void* obj : to_delete) {
-    ObjectDescriptor* desc = reinterpret_cast<ObjectDescriptor*>(obj);
+    auto* desc = reinterpret_cast<ObjectDescriptor*>(obj);
 
     std::expected<const VirtualTable*, std::runtime_error> vt_res =
         data.virtual_table_repository.GetByIndex(desc->vtable_index);
@@ -104,7 +104,7 @@ void MarkAndSweepGC::AddRoots(std::queue<void*>& worklist, execution_tree::Passe
         worklist.push(ptr);
         ++root_count;
 
-        ObjectDescriptor* desc = reinterpret_cast<ObjectDescriptor*>(ptr);
+        auto* desc = reinterpret_cast<ObjectDescriptor*>(ptr);
         std::expected<const VirtualTable*, std::runtime_error> vt_res =
             data.virtual_table_repository.GetByIndex(desc->vtable_index);
 
@@ -158,7 +158,7 @@ void MarkAndSweepGC::AddRoots(std::queue<void*>& worklist, execution_tree::Passe
         worklist.push(ptr);
         ++root_count;
 
-        ObjectDescriptor* desc = reinterpret_cast<ObjectDescriptor*>(ptr);
+        auto* desc = reinterpret_cast<ObjectDescriptor*>(ptr);
         std::expected<const VirtualTable*, std::runtime_error> vt_res =
             data.virtual_table_repository.GetByIndex(desc->vtable_index);
 

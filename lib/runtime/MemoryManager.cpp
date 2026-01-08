@@ -34,7 +34,7 @@ std::expected<void*, std::runtime_error> MemoryManager::AllocateObject(const Vir
     return std::unexpected(std::runtime_error("MemoryManager: Allocation failed - out of memory"));
   }
 
-  ObjectDescriptor* descriptor = reinterpret_cast<ObjectDescriptor*>(raw_memory);
+  auto* descriptor = reinterpret_cast<ObjectDescriptor*>(raw_memory);
   descriptor->vtable_index = vtable_index;
   descriptor->badge = 0;
 
@@ -56,7 +56,7 @@ std::expected<void, std::runtime_error> MemoryManager::DeallocateObject(void* ob
     return std::unexpected(std::runtime_error("DeallocateObject: Null object pointer"));
   }
 
-  ObjectDescriptor* desc = reinterpret_cast<ObjectDescriptor*>(obj);
+  auto* desc = reinterpret_cast<ObjectDescriptor*>(obj);
 
   std::expected<const VirtualTable*, std::runtime_error> vt_res =
       data.virtual_table_repository.GetByIndex(desc->vtable_index);
@@ -115,7 +115,7 @@ std::expected<void, std::runtime_error> MemoryManager::Clear(execution_tree::Pas
   std::optional<std::runtime_error> first_error;
 
   for (void* obj : objects_to_clear) {
-    ObjectDescriptor* desc = reinterpret_cast<ObjectDescriptor*>(obj);
+    auto* desc = reinterpret_cast<ObjectDescriptor*>(obj);
 
     std::expected<const VirtualTable*, std::runtime_error> vt_res =
         data.virtual_table_repository.GetByIndex(desc->vtable_index);
