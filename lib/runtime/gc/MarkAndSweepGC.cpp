@@ -24,6 +24,10 @@ void MarkAndSweepGC::Mark(execution_tree::PassedExecutionData& data) {
     void* obj = worklist.front();
     worklist.pop();
 
+    if (obj == nullptr) {
+      continue;
+    }
+
     auto* desc = reinterpret_cast<ObjectDescriptor*>(obj);
     if (desc->badge & kMarkBit) {
       continue;
