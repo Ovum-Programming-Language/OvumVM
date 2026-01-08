@@ -17,6 +17,14 @@ MemoryManager::MemoryManager(std::unique_ptr<IGarbageCollector> gc, size_t max_o
 std::expected<void*, std::runtime_error> MemoryManager::AllocateObject(const VirtualTable& vtable,
                                                                        uint32_t vtable_index,
                                                                        execution_tree::PassedExecutionData& data) {
+  if (repo_.GetCount() > gc_threshold_) {
+    auto collect_res = CollectGarbage(data);
+
+    if (!collect_res.has_value()) {
+      return std::unexpected(collect_res.error());
+    }
+  }
+
   const size_t total_size = vtable.GetSize();
   char* raw_memory = allocator_.allocate(total_size);
   if (!raw_memory) {
@@ -27,18 +35,12 @@ std::expected<void*, std::runtime_error> MemoryManager::AllocateObject(const Vir
   descriptor->vtable_index = vtable_index;
   descriptor->badge = 0;
 
+  std::memset(raw_memory + sizeof(ObjectDescriptor), 0, total_size - sizeof(ObjectDescriptor));
+
   auto add_result = repo_.Add(descriptor);
   if (!add_result.has_value()) {
     allocator_.deallocate(raw_memory, total_size);
     return std::unexpected(add_result.error());
-  }
-
-  if (repo_.GetCount() > gc_threshold_) {
-    auto collect_res = CollectGarbage(data);
-
-    if (!collect_res.has_value()) {
-      return std::unexpected(collect_res.error());
-    }
   }
 
   return reinterpret_cast<void*>(descriptor);
