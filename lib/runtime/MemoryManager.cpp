@@ -86,6 +86,10 @@ std::expected<void, std::runtime_error> MemoryManager::DeallocateObject(void* ob
   auto exec_res = func_res.value()->Execute(data);
   data.memory.stack_frames.pop();
 
+  if (!exec_res.has_value()) {
+    return std::unexpected(exec_res.error());
+  }
+
   const size_t total_size = vt->GetSize();
   char* raw = reinterpret_cast<char*>(obj);
 
@@ -97,10 +101,6 @@ std::expected<void, std::runtime_error> MemoryManager::DeallocateObject(void* ob
 
   // Now safe to deallocate memory
   allocator_.deallocate(raw, total_size);
-
-  if (!exec_res.has_value()) {
-    return std::unexpected(exec_res.error());
-  }
 
   return {};
 }
