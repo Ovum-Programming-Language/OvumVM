@@ -138,7 +138,7 @@ std::expected<void, std::runtime_error> MemoryManager::Clear(execution_tree::Pas
 
         if (!exec_res.has_value()) {
           if (!first_error) {
-             first_error = exec_res.error();
+            first_error = exec_res.error();
           }
           continue;
         }

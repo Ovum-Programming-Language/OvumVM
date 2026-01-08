@@ -1,8 +1,8 @@
 #ifndef RUNTIME_ARRAYREFERENCESCANNER_HPP
 #define RUNTIME_ARRAYREFERENCESCANNER_HPP
 
-#include <vector>
 #include <type_traits>
+#include <vector>
 
 #include "lib/runtime/ObjectDescriptor.hpp"
 
@@ -24,7 +24,7 @@ public:
         }
       }
     } else {
-      (void)visitor;
+      (void) visitor;
     }
   }
 };
