@@ -25,10 +25,6 @@ public:
 
     return {};
   }
-
-  [[nodiscard]] bool IsReferenceType() const override {
-    return std::is_same_v<T, void*>;
-  }
 };
 
 } // namespace ovum::vm::runtime

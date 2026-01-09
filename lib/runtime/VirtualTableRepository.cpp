@@ -38,20 +38,24 @@ std::expected<const VirtualTable*, std::runtime_error> VirtualTableRepository::G
 }
 
 std::expected<VirtualTable*, std::runtime_error> VirtualTableRepository::GetByName(const std::string& name) {
-  if (index_by_name_.find(name) == index_by_name_.end()) {
+  const auto it = index_by_name_.find(name);
+
+  if (it == index_by_name_.end()) {
     return std::unexpected(std::runtime_error("VirtualTable not found by name: " + name));
   }
 
-  return &vtables_[index_by_name_.at(name)];
+  return &vtables_[it->second];
 }
 
 std::expected<const VirtualTable*, std::runtime_error> VirtualTableRepository::GetByName(
     const std::string& name) const {
-  if (index_by_name_.find(name) == index_by_name_.end()) {
+  const auto it = index_by_name_.find(name);
+
+  if (it == index_by_name_.end()) {
     return std::unexpected(std::runtime_error("VirtualTable not found by name: " + name));
   }
 
-  return &vtables_[index_by_name_.at(name)];
+  return &vtables_[it->second];
 }
 
 std::expected<size_t, std::runtime_error> VirtualTableRepository::GetIndexByName(const std::string& name) const {

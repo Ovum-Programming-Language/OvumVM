@@ -253,7 +253,9 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
 
   // ObjectArray: wrapper around std::vector<void*>
   {
-    VirtualTable object_array_vtable("ObjectArray", sizeof(ObjectDescriptor) + sizeof(std::vector<void*>), std::make_unique<ArrayReferenceScanner>());
+    VirtualTable object_array_vtable("ObjectArray",
+                                     sizeof(ObjectDescriptor) + sizeof(std::vector<void*>),
+                                     std::make_unique<ArrayReferenceScanner>());
     object_array_vtable.AddFunction("_destructor_<M>", "_ObjectArray_destructor_<M>");
     object_array_vtable.AddFunction("_Equals_<C>_Object", "_ObjectArray_Equals_<C>_Object");
     object_array_vtable.AddFunction("_IsLess_<C>_Object", "_ObjectArray_IsLess_<C>_Object");
@@ -268,7 +270,9 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
 
   // StringArray: more typed ObjectArray
   {
-    VirtualTable string_array_vtable("StringArray", sizeof(ObjectDescriptor) + sizeof(std::vector<void*>), std::make_unique<ArrayReferenceScanner>());
+    VirtualTable string_array_vtable("StringArray",
+                                     sizeof(ObjectDescriptor) + sizeof(std::vector<void*>),
+                                     std::make_unique<ArrayReferenceScanner>());
     string_array_vtable.AddFunction("_destructor_<M>", "_StringArray_destructor_<M>");
     string_array_vtable.AddFunction("_Equals_<C>_Object", "_StringArray_Equals_<C>_Object");
     string_array_vtable.AddFunction("_IsLess_<C>_Object", "_StringArray_IsLess_<C>_Object");
@@ -299,7 +303,9 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
 
   // PointerArray: unsafe array of pointers
   {
-    VirtualTable pointer_array_vtable("PointerArray", sizeof(ObjectDescriptor) + sizeof(std::vector<void*>), std::make_unique<ArrayReferenceScanner>());
+    VirtualTable pointer_array_vtable("PointerArray",
+                                      sizeof(ObjectDescriptor) + sizeof(std::vector<void*>),
+                                      std::make_unique<ArrayReferenceScanner>());
     pointer_array_vtable.AddFunction("_destructor_<M>", "_PointerArray_destructor_<M>");
     pointer_array_vtable.AddFunction("_Equals_<C>_Object", "_PointerArray_Equals_<C>_Object");
     pointer_array_vtable.AddFunction("_IsLess_<C>_Object", "_PointerArray_IsLess_<C>_Object");

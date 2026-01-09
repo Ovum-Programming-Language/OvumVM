@@ -14,7 +14,6 @@ public:
 
   virtual Variable GetVariable(void* value_ptr) const = 0;
   virtual std::expected<void, std::runtime_error> WriteVariable(void* value_ptr, const Variable& variable) const = 0;
-  [[nodiscard]] virtual bool IsReferenceType() const = 0;
 };
 
 } // namespace ovum::vm::runtime
