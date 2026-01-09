@@ -15,6 +15,23 @@
 #include "lib/runtime/Variable.hpp"
 #include "lib/runtime/VirtualTable.hpp"
 
+namespace ovum::vm::runtime {
+
+// Helper to hash vector using algorithm from PureFunction.hpp
+template<typename T>
+int64_t HashVector(const std::vector<T>& vec) {
+  static constexpr size_t kHashMultiplier = 0x9e3779b9;
+  static constexpr size_t kHashShift = 6;
+
+  size_t seed = 0;
+  for (const T& value : vec) {
+    seed ^= std::hash<T>{}(value) + kHashMultiplier + (seed << kHashShift) + (seed >> kHashShift);
+  }
+  return static_cast<int64_t>(seed);
+}
+
+} // namespace ovum::vm::runtime
+
 namespace ovum::vm::execution_tree {
 
 // Helper to check if two objects have the same type (same vtable_index)

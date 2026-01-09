@@ -1,19 +1,12 @@
 #ifndef EXECUTOR_BUILTINFUNCTIONS_HPP
 #define EXECUTOR_BUILTINFUNCTIONS_HPP
 
-#include <cstdint>
-#include <cstring>
 #include <expected>
-#include <functional>
-#include <memory>
 #include <stdexcept>
-#include <vector>
 
 #include "lib/execution_tree/ExecutionResult.hpp"
 #include "lib/execution_tree/PassedExecutionData.hpp"
 #include "lib/runtime/ObjectDescriptor.hpp"
-#include "lib/runtime/ObjectRepository.hpp"
-#include "lib/runtime/VirtualTable.hpp"
 
 namespace ovum::vm::runtime {
 
@@ -26,50 +19,6 @@ T* GetDataPointer(void* object_ptr) {
 template<typename T>
 const T* GetDataPointer(const void* object_ptr) {
   return reinterpret_cast<const T*>(reinterpret_cast<const char*>(object_ptr) + sizeof(ObjectDescriptor));
-}
-
-// Helper to hash vector using algorithm from PureFunction.hpp
-template<typename T>
-int64_t HashVector(const std::vector<T>& vec) {
-  static constexpr size_t kHashMultiplier = 0x9e3779b9;
-  static constexpr size_t kHashShift = 6;
-
-  size_t seed = 0;
-  for (const T& value : vec) {
-    seed ^= std::hash<T>{}(value) + kHashMultiplier + (seed << kHashShift) + (seed >> kHashShift);
-  }
-  return static_cast<int64_t>(seed);
-}
-
-// Allocation helper: allocates memory for an object and initializes ObjectDescriptor
-template<typename Allocator = std::allocator<char>>
-std::expected<void*, std::runtime_error> AllocateObject(const VirtualTable& vtable,
-                                                        uint32_t vtable_index,
-                                                        ObjectRepository& object_repository,
-                                                        Allocator&& allocator = Allocator{}) {
-  const size_t size = vtable.GetSize();
-  char* memory = allocator.allocate(size);
-  if (memory == nullptr) {
-    return std::unexpected(std::runtime_error("AllocateObject: failed to allocate memory"));
-  }
-
-  // Initialize ObjectDescriptor at the first 8 bytes
-  ObjectDescriptor* descriptor = reinterpret_cast<ObjectDescriptor*>(memory);
-  descriptor->vtable_index = vtable_index;
-  descriptor->badge = 0;
-
-  // Zero-initialize the rest of the memory
-  std::memset(memory + sizeof(ObjectDescriptor), 0, size - sizeof(ObjectDescriptor));
-
-  // Add to ObjectRepository
-  auto add_result = object_repository.Add(descriptor);
-  if (!add_result.has_value()) {
-    allocator.deallocate(memory, size);
-    return std::unexpected(std::runtime_error(std::string("AllocateObject: failed to add object to repository: ") +
-                                              add_result.error().what()));
-  }
-
-  return memory;
 }
 
 } // namespace ovum::vm::runtime
