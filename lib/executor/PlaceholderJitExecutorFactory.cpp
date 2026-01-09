@@ -4,7 +4,10 @@
 
 namespace ovum::vm::executor {
 
-std::unique_ptr<IJitExecutor> PlaceholderJitExecutorFactory::Create(const std::string&) const {
+std::unique_ptr<IJitExecutor> PlaceholderJitExecutorFactory::Create(
+    const std::string&,
+    std::unique_ptr<std::vector<TokenPtr>>
+  ) const {
   return std::make_unique<PlaceholderJitExecutor>();
 }
 

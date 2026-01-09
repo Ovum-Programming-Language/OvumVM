@@ -88,6 +88,9 @@ std::expected<bool, BytecodeParserError> FunctionParser::Handle(ParsingSessionPt
   }
 
   std::unique_ptr<vm::execution_tree::Block> body = std::make_unique<vm::execution_tree::Block>();
+  std::unique_ptr<std::vector<TokenPtr>> jit_body = std::make_unique<std::vector<TokenPtr>>();
+
+  ctx->CopyUntilBlockEnd(std::move(jit_body));
 
   ctx->SetCurrentBlock(body.get());
 
@@ -113,7 +116,7 @@ std::expected<bool, BytecodeParserError> FunctionParser::Handle(ParsingSessionPt
   FunctionFactory factory(ctx->GetJitFactory(), ctx->GetJitBoundary());
 
   std::unique_ptr<vm::execution_tree::IFunctionExecutable> func =
-      factory.Create(name_res.value(), arity, std::move(body), is_pure, std::move(pure_types), no_jit);
+      factory.Create(name_res.value(), arity, std::move(body), is_pure, std::move(pure_types), no_jit, std::move(jit_body));
 
   if (func == nullptr) {
     return std::unexpected(BytecodeParserError("Failed to create function: JIT compilation failed"));

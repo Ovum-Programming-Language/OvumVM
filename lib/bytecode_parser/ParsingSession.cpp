@@ -181,4 +181,22 @@ std::expected<bool, BytecodeParserError> ParsingSession::ConsumeBoolLiteral() {
                                              std::to_string(token->GetPosition().GetColumn())));
 }
 
+
+void ParsingSession::CopyUntilBlockEnd(std::unique_ptr<std::vector<TokenPtr>> result) {
+  size_t pos = pos_; 
+  size_t cnt = 1;
+  while (pos < tokens_.size() && tokens_[pos]->GetStringType() != "EOF") {
+    if (tokens_[pos]->GetStringType() == "PUNCT" && tokens_[pos]->GetLexeme() == std::string(1, '}')) {
+      --cnt;
+      if (cnt == 0) {
+        break;
+      }
+    } else if (tokens_[pos]->GetStringType() == "PUNCT" && tokens_[pos]->GetLexeme() == std::string(1, '{')) {
+      ++cnt;
+    }
+
+    result->push_back(tokens_[pos]);
+  }
+}
+
 } // namespace ovum::bytecode::parser
