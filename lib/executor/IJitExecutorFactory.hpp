@@ -17,7 +17,7 @@ public:
 
   [[nodiscard]] virtual std::unique_ptr<IJitExecutor> Create(
     const std::string& function_name,
-    std::unique_ptr<std::vector<TokenPtr>> jit_body
+    std::shared_ptr<std::vector<TokenPtr>> jit_body
   ) const = 0;
 };
 

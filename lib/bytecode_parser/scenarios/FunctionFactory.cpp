@@ -21,7 +21,7 @@ vm::execution_tree::PureFunction<Base> FunctionFactory::WrapPure(Base&& base,
 template<vm::execution_tree::ExecutableFunction Base>
 std::expected<vm::execution_tree::JitCompilingFunction<Base>, std::runtime_error> FunctionFactory::WrapJit(
     Base&& base,
-    std::unique_ptr<std::vector<TokenPtr>> jit_body) {
+    std::shared_ptr<std::vector<TokenPtr>> jit_body) {
   if (!jit_factory_.has_value()) {
     return std::unexpected(std::runtime_error("Jit factory not set"));
   }
@@ -37,7 +37,7 @@ std::unique_ptr<vm::execution_tree::IFunctionExecutable> FunctionFactory::Create
     bool pure,
     std::vector<std::string> pure_argument_types,
     bool no_jit,
-    std::unique_ptr<std::vector<TokenPtr>> jit_body) {
+    std::shared_ptr<std::vector<TokenPtr>> jit_body) {
   RegularFunction regular = MakeRegular(id, arity, std::move(body));
 
   if (!pure || pure_argument_types.empty()) {

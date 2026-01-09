@@ -36,7 +36,7 @@ public:
                                                                   bool pure = false,
                                                                   std::vector<std::string> pure_argument_types = {},
                                                                   bool no_jit = false,
-                                                                  std::unique_ptr<std::vector<TokenPtr>> jit_body = nullptr);
+                                                                  std::shared_ptr<std::vector<TokenPtr>> jit_body = nullptr);
 
 private:
   vm::execution_tree::Function MakeRegular(const vm::runtime::FunctionId& id,
@@ -49,7 +49,7 @@ private:
   template<vm::execution_tree::ExecutableFunction Base>
   std::expected<vm::execution_tree::JitCompilingFunction<Base>, std::runtime_error> WrapJit(
     Base&& base,
-    std::unique_ptr<std::vector<TokenPtr>> jit_body
+    std::shared_ptr<std::vector<TokenPtr>> jit_body
   );
 
   std::optional<std::reference_wrapper<vm::executor::IJitExecutorFactory>> jit_factory_;

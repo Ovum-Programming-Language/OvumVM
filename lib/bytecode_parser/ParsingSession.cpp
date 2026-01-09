@@ -182,7 +182,8 @@ std::expected<bool, BytecodeParserError> ParsingSession::ConsumeBoolLiteral() {
 }
 
 
-void ParsingSession::CopyUntilBlockEnd(std::unique_ptr<std::vector<TokenPtr>> result) {
+std::vector<TokenPtr> ParsingSession::CopyUntilBlockEnd() {
+  std::vector<TokenPtr> result;
   size_t pos = pos_; 
   size_t cnt = 1;
   while (pos < tokens_.size() && tokens_[pos]->GetStringType() != "EOF") {
@@ -195,8 +196,10 @@ void ParsingSession::CopyUntilBlockEnd(std::unique_ptr<std::vector<TokenPtr>> re
       ++cnt;
     }
 
-    result->push_back(tokens_[pos]);
+    result.push_back(tokens_[pos]);
   }
+
+  return result;
 }
 
 } // namespace ovum::bytecode::parser
