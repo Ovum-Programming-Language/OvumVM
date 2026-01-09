@@ -29,9 +29,11 @@ void MarkAndSweepGC::Mark(execution_tree::PassedExecutionData& data) {
     }
 
     auto* desc = reinterpret_cast<ObjectDescriptor*>(obj);
+
     if (desc->badge & kMarkBit) {
       continue;
     }
+
     desc->badge |= kMarkBit;
 
     std::expected<const VirtualTable*, std::runtime_error> vt_res =
@@ -43,7 +45,7 @@ void MarkAndSweepGC::Mark(execution_tree::PassedExecutionData& data) {
 
     const VirtualTable* vt = vt_res.value();
 
-    vt->ScanReferences(obj, [&](void* ref) {
+    vt->ScanReferences(obj, [&worklist](void* ref) {
       if (ref) {
         worklist.push(ref);
       }
@@ -83,49 +85,42 @@ std::expected<void, std::runtime_error> MarkAndSweepGC::Sweep(execution_tree::Pa
 }
 
 void MarkAndSweepGC::AddRoots(std::queue<void*>& worklist, execution_tree::PassedExecutionData& data) {
-  for (const Variable& var : data.memory.global_variables) {
-    if (std::holds_alternative<void*>(var)) {
-      void* ptr = std::get<void*>(var);
-
-      if (ptr) {
-        worklist.push(ptr);
-      }
-    }
-  }
+  AddAllVariables(worklist, data.memory.global_variables);
 
   // Note that there is no way to traverse a std::stack without emptying it, so we need to create a temporary stack.
   std::stack<StackFrame> temp_stack_frames = data.memory.stack_frames;
 
   while (!temp_stack_frames.empty()) {
     const StackFrame& frame = temp_stack_frames.top();
-
-    for (const Variable& var : frame.local_variables) {
-      if (std::holds_alternative<void*>(var)) {
-        void* ptr = std::get<void*>(var);
-
-        if (ptr) {
-          worklist.push(ptr);
-        }
-      }
-    }
-
+    AddAllVariables(worklist, frame.local_variables);
     temp_stack_frames.pop();
   }
 
-  std::stack<Variable> temp_machine_stack = data.memory.machine_stack;
+  AddAllVariables(worklist, data.memory.machine_stack);
+}
 
-  while (!temp_machine_stack.empty()) {
-    const Variable& var = temp_machine_stack.top();
+void MarkAndSweepGC::AddAllVariables(std::queue<void*>& worklist, const std::vector<Variable>& variables) {
+  for (const Variable& var : variables) {
+    AddRoot(worklist, var);
+  }
+}
 
-    if (std::holds_alternative<void*>(var)) {
-      void* ptr = std::get<void*>(var);
+void MarkAndSweepGC::AddAllVariables(std::queue<void*>& worklist, VariableStack variables) {
+  while (!variables.empty()) {
+    AddRoot(worklist, variables.top());
+    variables.pop();
+  }
+}
 
-      if (ptr) {
-        worklist.push(ptr);
-      }
-    }
+void MarkAndSweepGC::AddRoot(std::queue<void*>& worklist, const Variable& var) {
+  if (!std::holds_alternative<void*>(var)) {
+    return;
+  }
 
-    temp_machine_stack.pop();
+  void* ptr = std::get<void*>(var);
+
+  if (ptr) {
+    worklist.push(ptr);
   }
 }
 

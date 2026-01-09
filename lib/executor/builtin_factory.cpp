@@ -276,7 +276,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     object_array_vtable.AddFunction("_GetHash_<C>", "_ObjectArray_GetHash_<C>");
     object_array_vtable.AddInterface("IComparable");
     object_array_vtable.AddInterface("IHashable");
-    object_array_vtable.SetReferenceScanner(std::make_unique<ArrayReferenceScanner<void*>>());
+    object_array_vtable.SetReferenceScanner(std::make_unique<ArrayReferenceScanner>());
     auto result = repository.Add(std::move(object_array_vtable));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -293,7 +293,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     string_array_vtable.AddFunction("_GetHash_<C>", "_StringArray_GetHash_<C>");
     string_array_vtable.AddInterface("IComparable");
     string_array_vtable.AddInterface("IHashable");
-    string_array_vtable.SetReferenceScanner(std::make_unique<ArrayReferenceScanner<void*>>());
+    string_array_vtable.SetReferenceScanner(std::make_unique<ArrayReferenceScanner>());
     auto result = repository.Add(std::move(string_array_vtable));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -326,7 +326,7 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
     pointer_array_vtable.AddFunction("_GetHash_<C>", "_PointerArray_GetHash_<C>");
     pointer_array_vtable.AddInterface("IComparable");
     pointer_array_vtable.AddInterface("IHashable");
-    pointer_array_vtable.SetReferenceScanner(std::make_unique<ArrayReferenceScanner<void*>>());
+    pointer_array_vtable.SetReferenceScanner(std::make_unique<ArrayReferenceScanner>());
     auto result = repository.Add(std::move(pointer_array_vtable));
     if (!result.has_value()) {
       return std::unexpected(result.error());
