@@ -4,7 +4,6 @@
 
 #include "FunctionFactory.hpp"
 #include "lib/bytecode_parser/BytecodeParserError.hpp"
-#include "lib/runtime/gc/reference_scanners/DefaultReferenceScanner.hpp"
 
 namespace ovum::bytecode::parser {
 
@@ -183,8 +182,6 @@ std::expected<bool, BytecodeParserError> VtableParser::Handle(std::shared_ptr<Pa
       return std::unexpected(BytecodeParserError("Unknown vtable directive: " + ctx->Current()->GetLexeme()));
     }
   }
-
-  vtable.SetReferenceScanner(std::make_unique<vm::runtime::DefaultReferenceScanner>(vtable));
 
   e = ctx->ExpectPunct('}');
 

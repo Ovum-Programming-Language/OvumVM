@@ -7,7 +7,7 @@ namespace ovum::vm::runtime {
 
 class ArrayReferenceScanner : public IReferenceScanner {
 public:
-  void Scan(void* obj, const ReferenceVisitor& visitor) const override;
+  void Scan(void* obj, const std::vector<FieldInfo>& fields, const ReferenceVisitor& visitor) const override;
 };
 
 } // namespace ovum::vm::runtime

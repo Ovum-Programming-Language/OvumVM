@@ -6,7 +6,7 @@
 
 namespace ovum::vm::runtime {
 
-void ArrayReferenceScanner::Scan(void* obj, const ReferenceVisitor& visitor) const {
+void ArrayReferenceScanner::Scan(void* obj, const std::vector<FieldInfo>&, const ReferenceVisitor& visitor) const {
   const char* base = reinterpret_cast<const char*>(obj) + sizeof(ObjectDescriptor);
   const std::vector<void*>& vec = *reinterpret_cast<const std::vector<void*>*>(base);
 

@@ -19,7 +19,7 @@ namespace ovum::vm::runtime {
 
 class VirtualTable {
 public:
-  VirtualTable(std::string name, size_t size);
+  VirtualTable(std::string name, size_t size, std::unique_ptr<IReferenceScanner> scanner = nullptr);
 
   [[nodiscard]] std::string GetName() const;
   [[nodiscard]] size_t GetSize() const;
@@ -33,15 +33,11 @@ public:
   [[nodiscard]] bool IsType(const std::string& interface_name) const;
 
   [[nodiscard]] size_t GetFieldCount() const;
-  [[nodiscard]] bool IsFieldReferenceType(size_t index) const;
-  [[nodiscard]] int64_t GetFieldOffset(size_t index) const;
-  [[nodiscard]] std::shared_ptr<IVariableAccessor> GetFieldAccessor(size_t index) const;
 
   void AddFunction(const FunctionId& virtual_function_id, const FunctionId& real_function_id);
   size_t AddField(const std::string& type_name, int64_t offset);
   void AddInterface(const std::string& interface_name);
 
-  void SetReferenceScanner(std::unique_ptr<IReferenceScanner> scanner);
   void ScanReferences(void* obj, const ReferenceVisitor& visitor) const;
 
 private:
