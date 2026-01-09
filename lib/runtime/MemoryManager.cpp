@@ -13,20 +13,12 @@
 namespace ovum::vm::runtime {
 
 MemoryManager::MemoryManager(std::unique_ptr<IGarbageCollector> gc, size_t max_objects) :
-    gc_(std::move(gc)), gc_threshold_(max_objects) {
+    gc_(std::move(gc)), gc_threshold_(max_objects), gc_in_progress_(false) {
 }
 
 std::expected<void*, std::runtime_error> MemoryManager::AllocateObject(const VirtualTable& vtable,
                                                                        uint32_t vtable_index,
                                                                        execution_tree::PassedExecutionData& data) {
-  if (repo_.GetCount() > gc_threshold_) {
-    std::expected<void, std::runtime_error> collect_res = CollectGarbage(data);
-
-    if (!collect_res.has_value()) {
-      return std::unexpected(collect_res.error());
-    }
-  }
-
   const size_t total_size = vtable.GetSize();
   char* raw_memory = nullptr;
 
@@ -109,6 +101,8 @@ std::expected<void, std::runtime_error> MemoryManager::DeallocateObject(void* ob
 }
 
 std::expected<void, std::runtime_error> MemoryManager::Clear(execution_tree::PassedExecutionData& data) {
+  gc_in_progress_ = true;
+
   std::vector<void*> objects_to_clear;
   objects_to_clear.reserve(repo_.GetCount());
 
@@ -174,6 +168,8 @@ std::expected<void, std::runtime_error> MemoryManager::Clear(execution_tree::Pas
     return std::unexpected(*first_error);
   }
 
+  gc_in_progress_ = false;
+
   return {};
 }
 
@@ -182,7 +178,27 @@ std::expected<void, std::runtime_error> MemoryManager::CollectGarbage(execution_
     return std::unexpected(std::runtime_error("MemoryManager: No GC configured"));
   }
 
-  return gc_->Collect(data);
+  if (!gc_in_progress_) {
+    gc_in_progress_ = true;
+    auto gc_res = gc_->Collect(data);
+    gc_in_progress_ = false;
+    return gc_res;
+  }
+
+  return {};
+}
+
+std::expected<void, std::runtime_error> MemoryManager::CollectGarbageIfRequired(
+    execution_tree::PassedExecutionData& data) {
+  if (repo_.GetCount() > gc_threshold_) {
+    std::expected<void, std::runtime_error> collect_res = CollectGarbage(data);
+
+    if (!collect_res.has_value()) {
+      return std::unexpected(collect_res.error());
+    }
+  }
+
+  return {};
 }
 
 const ObjectRepository& MemoryManager::GetRepository() const {

@@ -25,6 +25,7 @@ public:
                                                           execution_tree::PassedExecutionData& data);
   std::expected<void, std::runtime_error> DeallocateObject(void* obj, execution_tree::PassedExecutionData& data);
   std::expected<void, std::runtime_error> CollectGarbage(execution_tree::PassedExecutionData& data);
+  std::expected<void, std::runtime_error> CollectGarbageIfRequired(execution_tree::PassedExecutionData& data);
   std::expected<void, std::runtime_error> Clear(execution_tree::PassedExecutionData& data);
 
   [[nodiscard]] const ObjectRepository& GetRepository() const;
@@ -34,6 +35,7 @@ private:
   std::allocator<char> allocator_;
   std::unique_ptr<IGarbageCollector> gc_;
   size_t gc_threshold_;
+  bool gc_in_progress_;
 };
 
 } // namespace ovum::vm::runtime
