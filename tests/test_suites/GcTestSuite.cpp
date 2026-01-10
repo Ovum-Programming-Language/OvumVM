@@ -56,7 +56,7 @@ void GcTestSuite::TearDown() {
                                                      .output_stream = std::cout,
                                                      .error_stream = std::cerr};
   auto res = data.memory_manager.Clear(data);
-  ASSERT_TRUE(res.has_value()) << "GC failed: " << res.error().what();
+  ASSERT_TRUE(res.has_value()) << "Clear failed: " << res.error().what();
 }
 
 void GcTestSuite::RegisterTestVtables() {
@@ -87,7 +87,7 @@ void GcTestSuite::RegisterTestVtables() {
 }
 
 void GcTestSuite::RegisterNoOpDestructors() {
-  const std::vector<std::string> types = {"Simple", "WithRef", "Array"};
+  const std::vector<std::string> types = {"Simple", "WithRef"};
 
   for (const auto& type : types) {
     std::string func_name = "_" + type + "_destructor_<M>";
@@ -105,6 +105,31 @@ void GcTestSuite::RegisterNoOpDestructors() {
 
     ASSERT_TRUE(res.has_value()) << "Failed to register destructor for " << type << ": " << res.error().what();
   }
+
+  std::string func_name = "_Array_destructor_<M>";
+
+  auto body = std::make_unique<ovum::vm::execution_tree::Block>();
+
+  auto no_op_cmd = [](ovum::vm::execution_tree::PassedExecutionData& data)
+      -> std::expected<ovum::vm::execution_tree::ExecutionResult, std::runtime_error> {
+    if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0])) {
+      return std::unexpected(std::runtime_error("ArrayDestructor: invalid argument types"));
+    }
+
+    using vector_type = std::vector<void*>;
+    void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+    auto* vec_data = reinterpret_cast<std::vector<void*>*>(reinterpret_cast<char*>(obj_ptr) + sizeof(ovum::vm::runtime::ObjectDescriptor));
+    vec_data->~vector_type();
+    return NoOpDestructor(data);
+  };
+
+  body->AddStatement(std::make_unique<ovum::vm::execution_tree::Command<decltype(no_op_cmd)>>(no_op_cmd));
+
+  auto function = std::make_unique<ovum::vm::execution_tree::Function>(func_name, 1u, std::move(body));
+
+  auto res = fr_.Add(std::move(function));
+
+  ASSERT_TRUE(res.has_value()) << "Failed to register destructor for " << "Array" << ": " << res.error().what();
 }
 
 std::unordered_set<void*> GcTestSuite::SnapshotRepo(const ovum::vm::runtime::ObjectRepository& repo) const {
