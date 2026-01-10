@@ -27,6 +27,7 @@ private:
   static const std::unordered_set<std::string> kFloatCommands;
   static const std::unordered_set<std::string> kBooleanCommands;
   static const std::unordered_set<std::string> kIdentCommands;
+  static const std::unordered_set<std::string> kCharCommands;
 };
 
 } // namespace ovum::bytecode::parser

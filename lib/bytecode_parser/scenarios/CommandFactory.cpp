@@ -6,7 +6,8 @@
 
 namespace ovum::bytecode::parser {
 
-const std::unordered_set<std::string> CommandFactory::kStringCommands = {"PushString", "PushChar"};
+const std::unordered_set<std::string> CommandFactory::kStringCommands = {"PushString"};
+const std::unordered_set<std::string> CommandFactory::kCharCommands = {"PushChar"};
 
 const std::unordered_set<std::string> CommandFactory::kIntegerCommands = {
     "PushInt", "PushByte", "Rotate", "LoadLocal", "SetLocal", "LoadStatic", "SetStatic", "GetField", "SetField"};
@@ -100,6 +101,23 @@ std::expected<std::unique_ptr<vm::execution_tree::IExecutable>, BytecodeParserEr
 
     if (!cmd) {
       return std::unexpected(BytecodeParserError("Failed to create identifier command: " + cmd_name));
+    }
+
+    return std::move(cmd.value());
+  }
+
+  if (kCharCommands.contains(cmd_name)) {
+    std::expected<int64_t, BytecodeParserError> value = ctx->ConsumeIntLiteral();
+
+    if (!value) {
+      return std::unexpected(value.error());
+    }
+
+    std::expected<std::unique_ptr<vm::execution_tree::IExecutable>, std::out_of_range> cmd =
+        vm::execution_tree::CreateIntegerCommandByName(cmd_name, value.value());
+
+    if (!cmd) {
+      return std::unexpected(BytecodeParserError("Failed to create char command: " + cmd_name));
     }
 
     return std::move(cmd.value());
