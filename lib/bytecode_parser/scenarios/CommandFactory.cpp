@@ -17,7 +17,7 @@ const std::unordered_set<std::string> CommandFactory::kFloatCommands = {"PushFlo
 const std::unordered_set<std::string> CommandFactory::kBooleanCommands = {"PushBool"};
 
 const std::unordered_set<std::string> CommandFactory::kIdentCommands = {
-    "NewArray", "Call", "CallVirtual", "CallConstructor", "GetVTable", "SetVTable", "SafeCall", "IsType", "SizeOf"};
+    "Call", "CallVirtual", "CallConstructor", "GetVTable", "SetVTable", "SafeCall", "IsType", "SizeOf"};
 
 std::expected<std::unique_ptr<vm::execution_tree::IExecutable>, BytecodeParserError> CommandFactory::CreateCommand(
     const std::string& cmd_name, std::shared_ptr<ParsingSession> ctx) const {
