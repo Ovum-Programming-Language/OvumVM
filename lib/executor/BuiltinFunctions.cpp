@@ -15,6 +15,23 @@
 #include "lib/runtime/Variable.hpp"
 #include "lib/runtime/VirtualTable.hpp"
 
+namespace ovum::vm::runtime {
+
+// Helper to hash vector using algorithm from PureFunction.hpp
+template<typename T>
+int64_t HashVector(const std::vector<T>& vec) {
+  static constexpr size_t kHashMultiplier = 0x9e3779b9;
+  static constexpr size_t kHashShift = 6;
+
+  size_t seed = 0;
+  for (const T& value : vec) {
+    seed ^= std::hash<T>{}(value) + kHashMultiplier + (seed << kHashShift) + (seed >> kHashShift);
+  }
+  return static_cast<int64_t>(seed);
+}
+
+} // namespace ovum::vm::runtime
+
 namespace ovum::vm::execution_tree {
 
 // Helper to check if two objects have the same type (same vtable_index)
@@ -172,10 +189,8 @@ std::expected<ExecutionResult, std::runtime_error> FundamentalTypeToString(Passe
     return std::unexpected(vtable_index_result.error());
   }
 
-  auto string_obj_result = runtime::AllocateObject(*string_vtable,
-                                                   static_cast<uint32_t>(vtable_index_result.value()),
-                                                   data.memory.object_repository,
-                                                   data.allocator);
+  auto string_obj_result =
+      data.memory_manager.AllocateObject(*string_vtable, static_cast<uint32_t>(vtable_index_result.value()), data);
 
   if (!string_obj_result.has_value()) {
     return std::unexpected(string_obj_result.error());
@@ -938,10 +953,8 @@ std::expected<ExecutionResult, std::runtime_error> StringToUtf8Bytes(PassedExecu
     return std::unexpected(vtable_index_result.error());
   }
 
-  auto byte_array_obj_result = runtime::AllocateObject(*byte_array_vtable,
-                                                       static_cast<uint32_t>(vtable_index_result.value()),
-                                                       data.memory.object_repository,
-                                                       data.allocator);
+  auto byte_array_obj_result =
+      data.memory_manager.AllocateObject(*byte_array_vtable, static_cast<uint32_t>(vtable_index_result.value()), data);
 
   if (!byte_array_obj_result.has_value()) {
     return std::unexpected(byte_array_obj_result.error());
@@ -1919,10 +1932,8 @@ std::expected<ExecutionResult, std::runtime_error> FileRead(PassedExecutionData&
     return std::unexpected(vtable_index_result.error());
   }
 
-  auto byte_array_obj_result = runtime::AllocateObject(*byte_array_vtable,
-                                                       static_cast<uint32_t>(vtable_index_result.value()),
-                                                       data.memory.object_repository,
-                                                       data.allocator);
+  auto byte_array_obj_result =
+      data.memory_manager.AllocateObject(*byte_array_vtable, static_cast<uint32_t>(vtable_index_result.value()), data);
 
   if (!byte_array_obj_result.has_value()) {
     return std::unexpected(byte_array_obj_result.error());
@@ -2001,10 +2012,8 @@ std::expected<ExecutionResult, std::runtime_error> FileReadLine(PassedExecutionD
     return std::unexpected(vtable_index_result.error());
   }
 
-  auto string_obj_result = runtime::AllocateObject(*string_vtable,
-                                                   static_cast<uint32_t>(vtable_index_result.value()),
-                                                   data.memory.object_repository,
-                                                   data.allocator);
+  auto string_obj_result =
+      data.memory_manager.AllocateObject(*string_vtable, static_cast<uint32_t>(vtable_index_result.value()), data);
 
   if (!string_obj_result.has_value()) {
     return std::unexpected(string_obj_result.error());

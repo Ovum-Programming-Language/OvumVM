@@ -5,7 +5,6 @@
 #include <cmath>
 #include <ctime>
 #include <filesystem>
-#include <iostream>
 #include <random>
 #include <ranges>
 #include <sstream>
@@ -21,8 +20,17 @@
 
 #ifdef _WIN32
 #include <windows.h>
+
+#include <psapi.h>
+#elif __APPLE__
+#include <dlfcn.h>
+#include <unistd.h>
+
+#include <mach/mach.h>
+#include <mach/task_info.h>
 #else
 #include <dlfcn.h>
+#include <sys/resource.h>
 #include <unistd.h>
 #endif
 
@@ -109,10 +117,8 @@ std::expected<ExecutionResult, std::runtime_error> PushString(PassedExecutionDat
     return std::unexpected(vtable_index_result.error());
   }
 
-  auto string_obj_result = runtime::AllocateObject(*string_vtable,
-                                                   static_cast<uint32_t>(vtable_index_result.value()),
-                                                   data.memory.object_repository,
-                                                   data.allocator);
+  auto string_obj_result =
+      data.memory_manager.AllocateObject(*string_vtable, static_cast<uint32_t>(vtable_index_result.value()), data);
 
   if (!string_obj_result.has_value()) {
     return std::unexpected(string_obj_result.error());
@@ -140,8 +146,8 @@ std::expected<ExecutionResult, std::runtime_error> PushNull(PassedExecutionData&
     return std::unexpected(vtable_index_result.error());
   }
 
-  auto null_obj_result = runtime::AllocateObject(
-      *null_vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository, data.allocator);
+  auto null_obj_result =
+      data.memory_manager.AllocateObject(*null_vtable, static_cast<uint32_t>(vtable_index_result.value()), data);
 
   if (!null_obj_result.has_value()) {
     return std::unexpected(null_obj_result.error());
@@ -1211,8 +1217,7 @@ std::expected<ExecutionResult, std::runtime_error> CallConstructor(PassedExecuti
     return std::unexpected(vtable.error());
   }
 
-  auto obj_ptr =
-      runtime::AllocateObject(*vtable.value(), vtable_idx.value(), data.memory.object_repository, data.allocator);
+  auto obj_ptr = data.memory_manager.AllocateObject(*vtable.value(), vtable_idx.value(), data);
 
   if (!obj_ptr) {
     return std::unexpected(obj_ptr.error());
@@ -1452,7 +1457,7 @@ std::expected<ExecutionResult, std::runtime_error> NullCoalesce(PassedExecutionD
 
   if (*tested_result_data != nullptr) {
     data.memory.machine_stack.pop();
-    data.memory.machine_stack.emplace(tested_result.value());
+    data.memory.machine_stack.emplace(*tested_result_data);
   }
 
   return ExecutionResult::kNormal;
@@ -1602,10 +1607,9 @@ std::expected<ExecutionResult, std::runtime_error> FormatDateTime(PassedExecutio
       return std::unexpected(vtable_index_result.error());
     }
 
-    auto string_obj_result = runtime::AllocateObject(*string_vtable,
-                                                     static_cast<uint32_t>(vtable_index_result.value()),
-                                                     data.memory.object_repository,
-                                                     data.allocator);
+    auto string_obj_result =
+        data.memory_manager.AllocateObject(*string_vtable, static_cast<uint32_t>(vtable_index_result.value()), data);
+
     if (!string_obj_result.has_value()) {
       return std::unexpected(string_obj_result.error());
     }
@@ -1659,8 +1663,9 @@ std::expected<ExecutionResult, std::runtime_error> ParseDateTime(PassedExecution
       return std::unexpected(vtable_index_result.error());
     }
 
-    auto int_obj_result = runtime::AllocateObject(
-        *int_vtable, static_cast<uint32_t>(vtable_index_result.value()), data.memory.object_repository, data.allocator);
+    auto int_obj_result =
+        data.memory_manager.AllocateObject(*int_vtable, static_cast<uint32_t>(vtable_index_result.value()), data);
+
     if (!int_obj_result.has_value()) {
       return std::unexpected(int_obj_result.error());
     }
@@ -1821,10 +1826,8 @@ std::expected<ExecutionResult, std::runtime_error> ListDir(PassedExecutionData& 
       return std::unexpected(vtable_index_result.error());
     }
 
-    auto string_array_obj_result = runtime::AllocateObject(*string_array_vtable,
-                                                           static_cast<uint32_t>(vtable_index_result.value()),
-                                                           data.memory.object_repository,
-                                                           data.allocator);
+    auto string_array_obj_result = data.memory_manager.AllocateObject(
+        *string_array_vtable, static_cast<uint32_t>(vtable_index_result.value()), data);
     if (!string_array_obj_result.has_value()) {
       return std::unexpected(string_array_obj_result.error());
     }
@@ -1847,10 +1850,9 @@ std::expected<ExecutionResult, std::runtime_error> ListDir(PassedExecutionData& 
         return std::unexpected(string_vtable_index_result.error());
       }
 
-      auto string_obj_result = runtime::AllocateObject(*string_vtable,
-                                                       static_cast<uint32_t>(string_vtable_index_result.value()),
-                                                       data.memory.object_repository,
-                                                       data.allocator);
+      auto string_obj_result = data.memory_manager.AllocateObject(
+          *string_vtable, static_cast<uint32_t>(string_vtable_index_result.value()), data);
+
       if (!string_obj_result.has_value()) {
         return std::unexpected(string_obj_result.error());
       }
@@ -2068,20 +2070,36 @@ std::expected<ExecutionResult, std::runtime_error> SeedRandom(PassedExecutionDat
 }
 
 std::expected<ExecutionResult, std::runtime_error> GetMemoryUsage(PassedExecutionData& data) {
-  // Simple memory usage approximation
   size_t memory_usage = 0;
 
-  // Stack size
-  memory_usage += data.memory.machine_stack.size() * sizeof(runtime::Variable);
-
-  auto stack_copy = data.memory.stack_frames;
-  // Local variables in all stack frames
-  while (!stack_copy.empty()) {
-    memory_usage += stack_copy.top().local_variables.size() * sizeof(runtime::Variable);
-    stack_copy.pop();
+#ifdef _WIN32
+  PROCESS_MEMORY_COUNTERS pmc;
+  if (GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc))) {
+    memory_usage = static_cast<size_t>(pmc.WorkingSetSize);
+  } else {
+    return std::unexpected(std::runtime_error("GetMemoryUsage: failed to get process memory info"));
+  }
+#elif __APPLE__
+  struct task_basic_info info {};
+  mach_msg_type_number_t size = sizeof(info);
+  kern_return_t kerr = task_info(mach_task_self(), TASK_BASIC_INFO, reinterpret_cast<task_info_t>(&info), &size);
+  if (kerr == KERN_SUCCESS) {
+    memory_usage = static_cast<size_t>(info.resident_size);
+  } else {
+    return std::unexpected(std::runtime_error("GetMemoryUsage: failed to get task memory info"));
+  }
+#else
+  // Linux: Use getrusage() system call
+  struct rusage usage {};
+  constexpr size_t kBytesInRusageUnit = 1024;
+  if (getrusage(RUSAGE_SELF, &usage) != 0) {
+    return std::unexpected(std::runtime_error("GetMemoryUsage: getrusage() failed"));
   }
 
-  // TODO counter for repositories
+  // ru_maxrss is the maximum resident set size in kilobytes
+  // Note: getrusage gives maximum usage, not current usage
+  memory_usage = static_cast<size_t>(usage.ru_maxrss) * kBytesInRusageUnit;
+#endif
 
   data.memory.machine_stack.emplace(static_cast<int64_t>(memory_usage));
   return ExecutionResult::kNormal;
@@ -2094,8 +2112,10 @@ std::expected<ExecutionResult, std::runtime_error> GetPeakMemoryUsage(PassedExec
 
 std::expected<ExecutionResult, std::runtime_error> ForceGarbageCollection(PassedExecutionData& data) {
   // Simple garbage collection: remove unreachable objects
-  // This is a placeholder implementation
-  // data.memory.object_repository.CollectGarbage();
+  auto result = data.memory_manager.CollectGarbage(data);
+  if (!result.has_value()) {
+    return std::unexpected(result.error());
+  }
   return ExecutionResult::kNormal;
 }
 

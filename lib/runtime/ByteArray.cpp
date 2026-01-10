@@ -102,6 +102,7 @@ void ByteArray::Insert(size_t index, const uint8_t* data, size_t count) {
   if (index > size_) {
     throw std::runtime_error("ByteArray: Insert index out of bounds");
   }
+
   if (data == nullptr && count > 0) {
     throw std::runtime_error("ByteArray: Insert data is null");
   }
@@ -125,6 +126,7 @@ void ByteArray::Remove(size_t index, size_t count) {
   if (index >= size_) {
     throw std::runtime_error("ByteArray: Remove index out of bounds");
   }
+
   if (index + count > size_) {
     throw std::runtime_error("ByteArray: Remove count exceeds available elements");
   }

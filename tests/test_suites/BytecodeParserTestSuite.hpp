@@ -10,7 +10,7 @@
 #include <gtest/gtest.h>
 
 #include "lib/bytecode_parser/BytecodeParser.hpp"
-#include "lib/bytecode_parser/scenarios/PlaceholderCommandFactory.hpp"
+#include "lib/bytecode_parser/scenarios/CommandFactory.hpp"
 #include "lib/execution_tree/Block.hpp"
 #include "lib/execution_tree/FunctionRepository.hpp"
 #include "lib/execution_tree/IFunctionExecutable.hpp"
@@ -58,7 +58,7 @@ struct BytecodeParserTestSuite : public testing::Test {
 
 private:
   std::unique_ptr<ovum::vm::executor::PlaceholderJitExecutorFactory> jit_factory_;
-  ovum::bytecode::parser::PlaceholderCommandFactory command_factory_;
+  ovum::bytecode::parser::CommandFactory command_factory_;
   ovum::vm::runtime::RuntimeMemory memory_;
 };
 

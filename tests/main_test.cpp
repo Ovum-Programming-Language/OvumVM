@@ -20,12 +20,14 @@ TEST_F(ProjectIntegrationTestSuite, NegitiveOutputTest1) {
   std::istringstream in;
   std::ostringstream err;
   StartVmConsoleUI(SplitString("test"), out, in, err);
-  ASSERT_EQ(err.str(),
-            "Not enough values were passed to argument --file.\n"
-            "ovum-vm\nShow this help message\n\nOPTIONS:\n"
-            "-f,  --file=<CompositeString>:  Path to the bytecode file\n"
-            "-j,  --jit-boundary=<unsigned long long>:  JIT compilation boundary [default = 100000]\n\n"
-            "-h,  --help:  Display this help and exit\n\n");
+  ASSERT_EQ(
+      err.str(),
+      "Not enough values were passed to argument --file.\n"
+      "ovum-vm\nShow this help message\n\nOPTIONS:\n"
+      "-f,  --file=<CompositeString>:  Path to the bytecode file\n"
+      "-j,  --jit-boundary=<unsigned long long>:  JIT compilation boundary [default = 100000]\n"
+      "-m,  --max-objects=<unsigned long long>:  Maximum number of objects to keep in memory [default = 10000]\n\n"
+      "-h,  --help:  Display this help and exit\n\n");
 }
 
 TEST_F(ProjectIntegrationTestSuite, HelpTest) {
@@ -33,11 +35,13 @@ TEST_F(ProjectIntegrationTestSuite, HelpTest) {
   std::istringstream in;
   std::ostringstream err;
   StartVmConsoleUI(SplitString("test --help"), out, in, err);
-  ASSERT_EQ(err.str(),
-            "ovum-vm\nShow this help message\n\nOPTIONS:\n"
-            "-f,  --file=<CompositeString>:  Path to the bytecode file\n"
-            "-j,  --jit-boundary=<unsigned long long>:  JIT compilation boundary [default = 100000]\n\n"
-            "-h,  --help:  Display this help and exit\n\n");
+  ASSERT_EQ(
+      err.str(),
+      "ovum-vm\nShow this help message\n\nOPTIONS:\n"
+      "-f,  --file=<CompositeString>:  Path to the bytecode file\n"
+      "-j,  --jit-boundary=<unsigned long long>:  JIT compilation boundary [default = 100000]\n"
+      "-m,  --max-objects=<unsigned long long>:  Maximum number of objects to keep in memory [default = 10000]\n\n"
+      "-h,  --help:  Display this help and exit\n\n");
 }
 
 TEST_F(ProjectIntegrationTestSuite, FibTest1) {
@@ -245,5 +249,36 @@ TEST_F(ProjectIntegrationTestSuite, InteropTest3) {
   int64_t time_from_code = code - kAdded;
   time_from_code *= kDivisor;
   time_from_code ^= kBinaryFilter;
-  ASSERT_TRUE(std::abs(time_from_code - current_nanotime) <= kMaxAllowedError);
+  ASSERT_LE(std::abs(time_from_code - current_nanotime), kMaxAllowedError);
+}
+
+TEST_F(ProjectIntegrationTestSuite, MemcheckTest) {
+  TestData test_data{
+      .test_name = "memcheck.oil",
+      .arguments = "",
+      .input = "",
+      .expected_output = "",
+      .expected_error = "",
+      .expected_return_code = 0,
+  };
+
+  std::filesystem::path test_file = kTestDataDir;
+  test_file /= "examples";
+  test_file /= "compiled";
+  test_file /= test_data.test_name;
+  std::string cmd = "ovum-vm -f \"";
+  cmd += test_file.string();
+  cmd += "\"";
+  cmd += " -m 10000";
+
+  if (!test_data.arguments.empty()) {
+    cmd += " -- ";
+    cmd += test_data.arguments;
+  }
+
+  std::istringstream in(test_data.input);
+  std::ostringstream out;
+  std::ostringstream err;
+  ASSERT_EQ(StartVmConsoleUI(SplitString(cmd), out, in, err), test_data.expected_return_code);
+  ASSERT_EQ(err.str(), test_data.expected_error);
 }

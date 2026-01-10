@@ -8,18 +8,26 @@ void ObjectRepository::Reserve(size_t count) {
   objects_.reserve(count);
 }
 
-std::expected<size_t, std::runtime_error> ObjectRepository::Add(ObjectDescriptor* descriptor) {
-  objects_.emplace_back(descriptor);
-  return objects_.size() - 1U;
-}
-
-std::expected<void, std::runtime_error> ObjectRepository::Remove(size_t index) {
-  if (index >= objects_.size()) {
-    return std::unexpected(std::runtime_error("ObjectDescriptor index out of range"));
+std::expected<void, std::runtime_error> ObjectRepository::Add(ObjectDescriptor* descriptor) {
+  if (!descriptor) {
+    return std::unexpected(std::runtime_error("ObjectRepository: Cannot add null descriptor"));
   }
 
-  objects_.erase(objects_.begin() + static_cast<ptrdiff_t>(index));
+  objects_.insert(descriptor);
+  return {};
+}
 
+std::expected<void, std::runtime_error> ObjectRepository::Remove(ObjectDescriptor* descriptor) {
+  if (!descriptor) {
+    return std::unexpected(std::runtime_error("ObjectRepository: Cannot remove null descriptor"));
+  }
+
+  auto it = objects_.find(descriptor);
+  if (it == objects_.end()) {
+    return std::unexpected(std::runtime_error("ObjectRepository: Descriptor not found"));
+  }
+
+  objects_.erase(it);
   return {};
 }
 
@@ -27,20 +35,10 @@ void ObjectRepository::Clear() {
   objects_.clear();
 }
 
-std::expected<ObjectDescriptor*, std::runtime_error> ObjectRepository::GetByIndex(size_t index) {
-  if (index >= objects_.size()) {
-    return std::unexpected(std::runtime_error("ObjectDescriptor index out of range"));
+void ObjectRepository::ForAll(const std::function<void(void*)>& func) const {
+  for (ObjectDescriptor* desc : objects_) {
+    func(reinterpret_cast<void*>(desc));
   }
-
-  return objects_[index];
-}
-
-std::expected<const ObjectDescriptor*, std::runtime_error> ObjectRepository::GetByIndex(size_t index) const {
-  if (index >= objects_.size()) {
-    return std::unexpected(std::runtime_error("ObjectDescriptor index out of range"));
-  }
-
-  return objects_[index];
 }
 
 size_t ObjectRepository::GetCount() const {

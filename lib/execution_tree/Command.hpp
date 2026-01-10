@@ -35,6 +35,12 @@ public:
       return std::unexpected(std::runtime_error(error_message));
     }
 
+    auto gc_res = execution_data.memory_manager.CollectGarbageIfRequired(execution_data);
+
+    if (!gc_res) {
+      return std::unexpected(gc_res.error());
+    }
+
     return result.value();
   }
 
