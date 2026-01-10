@@ -118,7 +118,8 @@ void GcTestSuite::RegisterNoOpDestructors() {
 
     using vector_type = std::vector<void*>;
     void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
-    auto* vec_data = reinterpret_cast<std::vector<void*>*>(reinterpret_cast<char*>(obj_ptr) + sizeof(ovum::vm::runtime::ObjectDescriptor));
+    auto* vec_data = reinterpret_cast<std::vector<void*>*>(reinterpret_cast<char*>(obj_ptr) +
+                                                           sizeof(ovum::vm::runtime::ObjectDescriptor));
     vec_data->~vector_type();
     return NoOpDestructor(data);
   };
