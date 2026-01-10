@@ -12,6 +12,8 @@ add_executable(
         bytecode_parser_tests.cpp
         bytecode_commands_tests.cpp
         builtin_functions_tests.cpp
+        gc_tests.cpp
+        test_suites/GcTestSuite.cpp
 )
 
 target_link_libraries(
