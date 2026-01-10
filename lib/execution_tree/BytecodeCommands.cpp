@@ -2080,7 +2080,7 @@ std::expected<ExecutionResult, std::runtime_error> GetMemoryUsage(PassedExecutio
     return std::unexpected(std::runtime_error("GetMemoryUsage: failed to get process memory info"));
   }
 #elif __APPLE__
-  struct task_basic_info info{};
+  struct task_basic_info info {};
   mach_msg_type_number_t size = sizeof(info);
   kern_return_t kerr = task_info(mach_task_self(), TASK_BASIC_INFO, reinterpret_cast<task_info_t>(&info), &size);
   if (kerr == KERN_SUCCESS) {
@@ -2090,7 +2090,7 @@ std::expected<ExecutionResult, std::runtime_error> GetMemoryUsage(PassedExecutio
   }
 #else
   // Linux: Use getrusage() system call
-  struct rusage usage{};
+  struct rusage usage {};
   constexpr size_t kBytesInRusageUnit = 1024;
   if (getrusage(RUSAGE_SELF, &usage) != 0) {
     return std::unexpected(std::runtime_error("GetMemoryUsage: getrusage() failed"));
