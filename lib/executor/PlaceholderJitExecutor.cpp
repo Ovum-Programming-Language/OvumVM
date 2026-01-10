@@ -7,7 +7,7 @@ bool PlaceholderJitExecutor::TryCompile() const {
 }
 
 std::expected<void, std::runtime_error> PlaceholderJitExecutor::Run(
-    std::stack<std::variant<int64_t, double, bool, char, uint8_t, void*>>& /* stack */) {
+    execution_tree::PassedExecutionData& /* data */) {
   return std::unexpected(std::runtime_error("PlaceholderJitExecutor::Run: not implemented"));
 }
 

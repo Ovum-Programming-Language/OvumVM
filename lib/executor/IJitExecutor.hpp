@@ -7,6 +7,8 @@
 #include <stdexcept>
 #include <variant>
 
+#include "lib/execution_tree/PassedExecutionData.hpp"
+
 namespace ovum::vm::executor {
 
 class IJitExecutor { // NOLINT(cppcoreguidelines-special-member-functions)
@@ -16,7 +18,7 @@ public:
   [[nodiscard]] virtual bool TryCompile() const = 0;
 
   [[nodiscard]] virtual std::expected<void, std::runtime_error> Run(
-      std::stack<std::variant<int64_t, double, bool, char, uint8_t, void*>>& stack) = 0;
+      execution_tree::PassedExecutionData& data) = 0;
 };
 
 } // namespace ovum::vm::executor

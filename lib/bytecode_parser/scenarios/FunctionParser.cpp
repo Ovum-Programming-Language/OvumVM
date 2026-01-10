@@ -88,8 +88,12 @@ std::expected<bool, BytecodeParserError> FunctionParser::Handle(ParsingSessionPt
   }
 
   std::unique_ptr<vm::execution_tree::Block> body = std::make_unique<vm::execution_tree::Block>();
-  auto jit_body_vec = ctx->CopyUntilBlockEnd();
-  std::shared_ptr<std::vector<TokenPtr>> jit_body = std::make_shared<std::vector<TokenPtr>>(jit_body_vec);
+
+  std::shared_ptr<std::vector<TokenPtr>> jit_body;
+  if (!no_jit) { 
+    auto jit_body_vec = ctx->CopyUntilBlockEnd();
+    jit_body = std::make_shared<std::vector<TokenPtr>>(jit_body_vec);
+  }
 
   ctx->SetCurrentBlock(body.get());
 

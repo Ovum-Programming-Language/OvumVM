@@ -26,7 +26,7 @@ public:
   std::expected<ExecutionResult, std::runtime_error> Execute(PassedExecutionData& execution_data) override {
     if (function_.GetTotalActionCount() > jit_action_boundary_) {
       if (executor_->TryCompile()) {
-        const std::expected<void, std::runtime_error> jit_result = executor_->Run(execution_data.memory.machine_stack);
+        const std::expected<void, std::runtime_error> jit_result = executor_->Run(execution_data);
 
         if (jit_result.has_value()) {
           return ExecutionResult::kNormal;

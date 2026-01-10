@@ -197,6 +197,7 @@ std::vector<TokenPtr> ParsingSession::CopyUntilBlockEnd() {
     }
 
     result.push_back(tokens_[pos]);
+    ++pos;
   }
 
   return result;
