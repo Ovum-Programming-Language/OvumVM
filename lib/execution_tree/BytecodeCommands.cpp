@@ -1457,7 +1457,7 @@ std::expected<ExecutionResult, std::runtime_error> NullCoalesce(PassedExecutionD
 
   if (*tested_result_data != nullptr) {
     data.memory.machine_stack.pop();
-    data.memory.machine_stack.emplace(tested_result.value());
+    data.memory.machine_stack.emplace(*tested_result_data);
   }
 
   return ExecutionResult::kNormal;
