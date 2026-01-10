@@ -3,6 +3,7 @@
 
 #include <gtest/gtest.h>
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <unordered_set>
@@ -29,6 +30,7 @@ protected:
   GcTestSuite();
 
   void SetUp() override;
+  void TearDown() override;
 
   ovum::vm::execution_tree::PassedExecutionData MakeFreshData(uint64_t gc_threshold = kDefaultGCThreshold);
 

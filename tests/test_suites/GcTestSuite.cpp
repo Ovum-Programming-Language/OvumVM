@@ -2,10 +2,7 @@
 #include "lib/execution_tree/Block.hpp"
 #include "lib/execution_tree/Command.hpp"
 #include "lib/execution_tree/Function.hpp"
-#include "lib/execution_tree/PureFunction.hpp"
 #include "lib/executor/builtin_factory.hpp"
-
-#include <cassert>
 
 GcTestSuite::GcTestSuite() :
     vtr_(), fr_(), mm_(std::make_unique<ovum::vm::runtime::MarkAndSweepGC>(), kDefaultGCThreshold), rm_() {
@@ -23,15 +20,11 @@ ovum::vm::execution_tree::PassedExecutionData GcTestSuite::MakeFreshData(uint64_
   return data;
 }
 
-ovum::vm::execution_tree::ExecutionResult NoOpDestructor(ovum::vm::execution_tree::PassedExecutionData& /*data*/) {
+ovum::vm::execution_tree::ExecutionResult NoOpDestructor(ovum::vm::execution_tree::PassedExecutionData&) {
   return ovum::vm::execution_tree::ExecutionResult::kNormal;
 }
 
 void GcTestSuite::SetUp() {
-  vtr_ = ovum::vm::runtime::VirtualTableRepository();
-
-  fr_ = ovum::vm::execution_tree::FunctionRepository();
-
   vtr_ = ovum::vm::runtime::VirtualTableRepository();
 
   fr_ = ovum::vm::execution_tree::FunctionRepository();
@@ -51,11 +44,22 @@ void GcTestSuite::SetUp() {
   RegisterNoOpDestructors();
 
   auto gc = std::make_unique<ovum::vm::runtime::MarkAndSweepGC>();
-  mm_ = ovum::vm::runtime::MemoryManager(std::move(gc), 10);
+  mm_ = ovum::vm::runtime::MemoryManager(std::move(gc), kDefaultGCThreshold);
+}
+
+void GcTestSuite::TearDown() {
+  ovum::vm::execution_tree::PassedExecutionData data{.memory = rm_,
+                                                     .virtual_table_repository = vtr_,
+                                                     .function_repository = fr_,
+                                                     .memory_manager = mm_,
+                                                     .input_stream = std::cin,
+                                                     .output_stream = std::cout,
+                                                     .error_stream = std::cerr};
+  auto res = data.memory_manager.Clear(data);
+  ASSERT_TRUE(res.has_value()) << "GC failed: " << res.error().what();
 }
 
 void GcTestSuite::RegisterTestVtables() {
-  // Simple
   {
     ovum::vm::runtime::VirtualTable vt("Simple", sizeof(ovum::vm::runtime::ObjectDescriptor));
     vt.AddFunction("_destructor_<M>", "_Simple_destructor_<M>");
@@ -63,7 +67,6 @@ void GcTestSuite::RegisterTestVtables() {
     ASSERT_TRUE(res.has_value()) << "Failed Simple: " << res.error().what();
   }
 
-  // WithRef
   {
     ovum::vm::runtime::VirtualTable vt("WithRef", sizeof(ovum::vm::runtime::ObjectDescriptor) + sizeof(void*));
     vt.AddFunction("_destructor_<M>", "_WithRef_destructor_<M>");
@@ -73,7 +76,6 @@ void GcTestSuite::RegisterTestVtables() {
     ASSERT_TRUE(res.has_value());
   }
 
-  // Array
   {
     auto scanner = std::make_unique<ovum::vm::runtime::ArrayReferenceScanner>();
     ovum::vm::runtime::VirtualTable vt(
@@ -90,7 +92,6 @@ void GcTestSuite::RegisterNoOpDestructors() {
   for (const auto& type : types) {
     std::string func_name = "_" + type + "_destructor_<M>";
 
-    // Создаём простое тело — блок с одной командой (no-op)
     auto body = std::make_unique<ovum::vm::execution_tree::Block>();
 
     auto no_op_cmd = [](ovum::vm::execution_tree::PassedExecutionData& d)
