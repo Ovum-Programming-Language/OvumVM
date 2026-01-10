@@ -3,21 +3,9 @@
 #include "tests/test_suites/GcTestSuite.hpp"
 
 #include <memory>
-#include <stdexcept>
-#include <unordered_set>
 #include <vector>
 
-#include "lib/execution_tree/ExecutionResult.hpp"
-#include "lib/execution_tree/FunctionRepository.hpp"
 #include "lib/execution_tree/PassedExecutionData.hpp"
-#include "lib/runtime/MemoryManager.hpp"
-#include "lib/runtime/ObjectDescriptor.hpp"
-#include "lib/runtime/ObjectRepository.hpp"
-#include "lib/runtime/VirtualTable.hpp"
-#include "lib/runtime/VirtualTableRepository.hpp"
-#include "lib/runtime/gc/MarkAndSweepGC.hpp"
-#include "lib/runtime/gc/reference_scanners/ArrayReferenceScanner.hpp"
-#include "lib/runtime/gc/reference_scanners/DefaultReferenceScanner.hpp"
 
 TEST_F(GcTestSuite, UnreachableObjectCollected) {
   auto data = MakeFreshData();
@@ -100,34 +88,34 @@ TEST_F(GcTestSuite, TransitiveReachabilityThroughArray) {
 TEST_F(GcTestSuite, CycleWithoutRootsCollected) {
   auto data = MakeFreshData();
 
-  void* objA = AllocateTestObject("WithRef", data);
-  void* objB = AllocateTestObject("WithRef", data);
+  void* obj_a = AllocateTestObject("WithRef", data);
+  void* obj_b = AllocateTestObject("WithRef", data);
 
-  SetRef(objA, objB);
-  SetRef(objB, objA);
+  SetRef(obj_a, obj_b);
+  SetRef(obj_b, obj_a);
 
   CollectGarbage(data);
 
-  EXPECT_FALSE(RepoContains(mm_.GetRepository(), objA));
-  EXPECT_FALSE(RepoContains(mm_.GetRepository(), objB));
+  EXPECT_FALSE(RepoContains(mm_.GetRepository(), obj_a));
+  EXPECT_FALSE(RepoContains(mm_.GetRepository(), obj_b));
   EXPECT_EQ(SnapshotRepo(mm_.GetRepository()).size(), 0u);
 }
 
 TEST_F(GcTestSuite, CycleWithRootPreserved) {
   auto data = MakeFreshData();
 
-  void* objA = AllocateTestObject("WithRef", data);
-  void* objB = AllocateTestObject("WithRef", data);
+  void* obj_a = AllocateTestObject("WithRef", data);
+  void* obj_b = AllocateTestObject("WithRef", data);
 
-  SetRef(objA, objB);
-  SetRef(objB, objA);
+  SetRef(obj_a, obj_b);
+  SetRef(obj_b, obj_a);
 
-  data.memory.global_variables.emplace_back(objA);
+  data.memory.global_variables.emplace_back(obj_a);
 
   CollectGarbage(data);
 
-  EXPECT_TRUE(RepoContains(mm_.GetRepository(), objA));
-  EXPECT_TRUE(RepoContains(mm_.GetRepository(), objB));
+  EXPECT_TRUE(RepoContains(mm_.GetRepository(), obj_a));
+  EXPECT_TRUE(RepoContains(mm_.GetRepository(), obj_b));
   EXPECT_EQ(SnapshotRepo(mm_.GetRepository()).size(), 2u);
 }
 
