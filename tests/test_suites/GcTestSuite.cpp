@@ -7,7 +7,8 @@
 
 #include <cassert>
 
-GcTestSuite::GcTestSuite() : vtr_(), fr_(), mm_(std::make_unique<ovum::vm::runtime::MarkAndSweepGC>(), kDefaultGCThreshold), rm_() {
+GcTestSuite::GcTestSuite() :
+    vtr_(), fr_(), mm_(std::make_unique<ovum::vm::runtime::MarkAndSweepGC>(), kDefaultGCThreshold), rm_() {
 }
 
 ovum::vm::execution_tree::PassedExecutionData GcTestSuite::MakeFreshData(uint64_t gc_threshold) {
