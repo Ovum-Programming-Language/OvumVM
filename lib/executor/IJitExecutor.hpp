@@ -17,8 +17,7 @@ public:
 
   [[nodiscard]] virtual bool TryCompile() const = 0;
 
-  [[nodiscard]] virtual std::expected<void, std::runtime_error> Run(
-      execution_tree::PassedExecutionData& data) = 0;
+  [[nodiscard]] virtual std::expected<void, std::runtime_error> Run(execution_tree::PassedExecutionData& data) = 0;
 };
 
 } // namespace ovum::vm::executor

@@ -13,7 +13,7 @@ namespace ovum::vm::executor {
 class PlaceholderJitExecutorFactory : public IJitExecutorFactory {
 public:
   [[nodiscard]] std::unique_ptr<IJitExecutor> Create(const std::string&,
-    std::shared_ptr<std::vector<TokenPtr>>) const override;
+                                                     std::shared_ptr<std::vector<TokenPtr>>) const override;
 };
 
 } // namespace ovum::vm::executor

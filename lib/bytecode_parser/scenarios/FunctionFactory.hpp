@@ -30,13 +30,14 @@ public:
   FunctionFactory(std::optional<std::reference_wrapper<vm::executor::IJitExecutorFactory>> jit_factory,
                   size_t jit_boundary);
 
-  std::unique_ptr<vm::execution_tree::IFunctionExecutable> Create(const vm::runtime::FunctionId& id,
-                                                                  size_t arity,
-                                                                  std::unique_ptr<vm::execution_tree::Block> body,
-                                                                  bool pure = false,
-                                                                  std::vector<std::string> pure_argument_types = {},
-                                                                  bool no_jit = false,
-                                                                  std::shared_ptr<std::vector<TokenPtr>> jit_body = nullptr);
+  std::unique_ptr<vm::execution_tree::IFunctionExecutable> Create(
+      const vm::runtime::FunctionId& id,
+      size_t arity,
+      std::unique_ptr<vm::execution_tree::Block> body,
+      bool pure = false,
+      std::vector<std::string> pure_argument_types = {},
+      bool no_jit = false,
+      std::shared_ptr<std::vector<TokenPtr>> jit_body = nullptr);
 
 private:
   vm::execution_tree::Function MakeRegular(const vm::runtime::FunctionId& id,
@@ -48,9 +49,7 @@ private:
 
   template<vm::execution_tree::ExecutableFunction Base>
   std::expected<vm::execution_tree::JitCompilingFunction<Base>, std::runtime_error> WrapJit(
-    Base&& base,
-    std::shared_ptr<std::vector<TokenPtr>> jit_body
-  );
+      Base&& base, std::shared_ptr<std::vector<TokenPtr>> jit_body);
 
   std::optional<std::reference_wrapper<vm::executor::IJitExecutorFactory>> jit_factory_;
   size_t jit_boundary_;

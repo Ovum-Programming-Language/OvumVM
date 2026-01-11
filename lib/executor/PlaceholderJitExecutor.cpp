@@ -6,8 +6,7 @@ bool PlaceholderJitExecutor::TryCompile() const {
   return false;
 }
 
-std::expected<void, std::runtime_error> PlaceholderJitExecutor::Run(
-    execution_tree::PassedExecutionData& /* data */) {
+std::expected<void, std::runtime_error> PlaceholderJitExecutor::Run(execution_tree::PassedExecutionData& /* data */) {
   return std::unexpected(std::runtime_error("PlaceholderJitExecutor::Run: not implemented"));
 }
 

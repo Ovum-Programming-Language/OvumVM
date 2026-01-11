@@ -20,8 +20,7 @@ vm::execution_tree::PureFunction<Base> FunctionFactory::WrapPure(Base&& base,
 
 template<vm::execution_tree::ExecutableFunction Base>
 std::expected<vm::execution_tree::JitCompilingFunction<Base>, std::runtime_error> FunctionFactory::WrapJit(
-    Base&& base,
-    std::shared_ptr<std::vector<TokenPtr>> jit_body) {
+    Base&& base, std::shared_ptr<std::vector<TokenPtr>> jit_body) {
   if (!jit_factory_.has_value()) {
     return std::unexpected(std::runtime_error("Jit factory not set"));
   }

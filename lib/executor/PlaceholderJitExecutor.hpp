@@ -13,8 +13,7 @@ public:
 
   [[nodiscard]] bool TryCompile() const override;
 
-  [[nodiscard]] std::expected<void, std::runtime_error> Run(
-      execution_tree::PassedExecutionData& data) override;
+  [[nodiscard]] std::expected<void, std::runtime_error> Run(execution_tree::PassedExecutionData& data) override;
 };
 
 } // namespace ovum::vm::executor
