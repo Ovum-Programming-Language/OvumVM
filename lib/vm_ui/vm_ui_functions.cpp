@@ -16,15 +16,16 @@
 #include "lib/executor/Executor.hpp"
 #include "lib/executor/IJitExecutorFactory.hpp"
 #include "lib/executor/builtin_factory.hpp"
-#include "lib/runtime/ObjectDescriptor.hpp"
 #include "lib/runtime/RuntimeMemory.hpp"
 #include "lib/runtime/VirtualTableRepository.hpp"
+#include "lib/runtime/gc/MarkAndSweepGC.hpp"
 
 #ifdef JIT_PROVIDED
 #include <jit/JitExecutorFactory.hpp>
 #endif
 
 constexpr size_t kDefaultJitBoundary = 100000;
+constexpr size_t kDefaultMaxObjects = 10000;
 
 std::string ReadFileContent(const std::string& file_path, std::ostream& err) {
   std::ifstream file(file_path);
@@ -63,6 +64,8 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
   ArgumentParser::ArgParser arg_parser("ovum-vm", PassArgumentTypes());
   arg_parser.AddCompositeArgument('f', "file", "Path to the bytecode file").AddIsGood(is_file).AddValidate(is_file);
   arg_parser.AddUnsignedLongLongArgument('j', "jit-boundary", "JIT compilation boundary").Default(kDefaultJitBoundary);
+  arg_parser.AddUnsignedLongLongArgument('m', "max-objects", "Maximum number of objects to keep in memory")
+      .Default(kDefaultMaxObjects);
   arg_parser.AddHelp('h', "help", description);
 
   bool parse_result = arg_parser.Parse(parser_args, {.out_stream = err, .print_messages = true});
@@ -80,6 +83,7 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
   file_path = arg_parser.GetCompositeValue("file");
 
   size_t jit_boundary = arg_parser.GetUnsignedLongLongValue("jit-boundary");
+  size_t max_objects = arg_parser.GetUnsignedLongLongValue("max-objects");
   std::string sample = ReadFileContent(file_path, err);
 
   if (sample.empty()) {
@@ -91,10 +95,11 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
   ovum::vm::execution_tree::FunctionRepository func_repo;
   ovum::vm::runtime::VirtualTableRepository vtable_repo;
   ovum::vm::runtime::RuntimeMemory memory;
+  ovum::vm::runtime::MemoryManager memory_manager(std::make_unique<ovum::vm::runtime::MarkAndSweepGC>(), max_objects);
   ovum::vm::execution_tree::PassedExecutionData execution_data{.memory = memory,
                                                                .virtual_table_repository = vtable_repo,
                                                                .function_repository = func_repo,
-                                                               .allocator = std::allocator<char>(),
+                                                               .memory_manager = memory_manager,
                                                                .input_stream = in,
                                                                .output_stream = out,
                                                                .error_stream = err};
@@ -154,55 +159,10 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
     return_code = 4;
   }
 
-  for (size_t i = 0; i < memory.object_repository.GetCount(); ++i) {
-    auto object_result = memory.object_repository.GetByIndex(i);
-
-    if (!object_result.has_value()) {
-      err << "Failed to get object: " << object_result.error().what() << "\n";
-      return_code = 4;
-      continue;
-    }
-
-    ovum::vm::runtime::ObjectDescriptor* object = object_result.value();
-    uint32_t vtable_index = object->vtable_index;
-    auto vtable_result = vtable_repo.GetByIndex(vtable_index);
-
-    if (!vtable_result.has_value()) {
-      err << "Failed to get vtable for index " << vtable_index << ": " << vtable_result.error().what() << "\n";
-      return_code = 4;
-      continue;
-    }
-
-    auto destructor_id_result = vtable_result.value()->GetRealFunctionId("_destructor_<M>");
-
-    if (!destructor_id_result.has_value()) {
-      err << "Failed to get destructor for index " << vtable_index << ": " << destructor_id_result.error().what()
-          << "\n";
-      return_code = 4;
-      continue;
-    }
-
-    auto destructor_function = execution_data.function_repository.GetById(destructor_id_result.value());
-
-    if (!destructor_function.has_value()) {
-      err << "Failed to get destructor function for index " << vtable_index << ": "
-          << destructor_function.error().what() << "\n";
-      return_code = 4;
-      continue;
-    }
-
-    execution_data.memory.machine_stack.emplace(object);
-    auto destructor_exec_result = destructor_function.value()->Execute(execution_data);
-
-    if (!destructor_exec_result.has_value()) {
-      err << "Failed to execute destructor for index " << vtable_index << ": " << destructor_exec_result.error().what()
-          << "\n";
-      return_code = 4;
-      continue;
-    }
-
-    size_t object_size = vtable_result.value()->GetSize();
-    execution_data.allocator.deallocate(reinterpret_cast<char*>(object), object_size);
+  auto clear_result = memory_manager.Clear(execution_data);
+  if (!clear_result.has_value()) {
+    err << "Warning: Failed to clean up objects during shutdown: " << clear_result.error().what() << "\n";
+    return_code = 4;
   }
 
   return return_code;

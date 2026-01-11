@@ -20,6 +20,7 @@
 #include "lib/runtime/ObjectDescriptor.hpp"
 #include "lib/runtime/VirtualTable.hpp"
 #include "lib/runtime/VirtualTableRepository.hpp"
+#include "lib/runtime/gc/reference_scanners/ArrayReferenceScanner.hpp"
 
 namespace ovum::vm::runtime {
 
@@ -137,7 +138,6 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
   // String: wrapper around std::string
   {
     VirtualTable string_vtable("String", sizeof(ObjectDescriptor) + sizeof(std::string));
-    string_vtable.AddField("Object", sizeof(ObjectDescriptor));
     string_vtable.AddFunction("_destructor_<M>", "_String_destructor_<M>");
     string_vtable.AddFunction("_Equals_<C>_Object", "_String_Equals_<C>_Object");
     string_vtable.AddFunction("_IsLess_<C>_Object", "_String_IsLess_<C>_Object");
@@ -157,7 +157,6 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
   // File: wrapper around std::fstream
   {
     VirtualTable file_vtable("File", sizeof(ObjectDescriptor) + sizeof(std::fstream));
-    file_vtable.AddField("Object", sizeof(ObjectDescriptor));
     file_vtable.AddFunction("_destructor_<M>", "_File_destructor_<M>");
     file_vtable.AddFunction("_Open_<M>_String_String", "_File_Open_<M>_String_String");
     file_vtable.AddFunction("_Close_<M>", "_File_Close_<M>");
@@ -179,7 +178,6 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
   // IntArray: wrapper around std::vector<int64_t>
   {
     VirtualTable int_array_vtable("IntArray", sizeof(ObjectDescriptor) + sizeof(std::vector<int64_t>));
-    int_array_vtable.AddField("Object", sizeof(ObjectDescriptor));
     int_array_vtable.AddFunction("_destructor_<M>", "_IntArray_destructor_<M>");
     int_array_vtable.AddFunction("_Equals_<C>_Object", "_IntArray_Equals_<C>_Object");
     int_array_vtable.AddFunction("_IsLess_<C>_Object", "_IntArray_IsLess_<C>_Object");
@@ -195,7 +193,6 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
   // FloatArray: wrapper around std::vector<double>
   {
     VirtualTable float_array_vtable("FloatArray", sizeof(ObjectDescriptor) + sizeof(std::vector<double>));
-    float_array_vtable.AddField("Object", sizeof(ObjectDescriptor));
     float_array_vtable.AddFunction("_destructor_<M>", "_FloatArray_destructor_<M>");
     float_array_vtable.AddFunction("_Equals_<C>_Object", "_FloatArray_Equals_<C>_Object");
     float_array_vtable.AddFunction("_IsLess_<C>_Object", "_FloatArray_IsLess_<C>_Object");
@@ -211,7 +208,6 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
   // CharArray: wrapper around std::vector<char>
   {
     VirtualTable char_array_vtable("CharArray", sizeof(ObjectDescriptor) + sizeof(std::vector<char>));
-    char_array_vtable.AddField("Object", sizeof(ObjectDescriptor));
     char_array_vtable.AddFunction("_destructor_<M>", "_CharArray_destructor_<M>");
     char_array_vtable.AddFunction("_Equals_<C>_Object", "_CharArray_Equals_<C>_Object");
     char_array_vtable.AddFunction("_IsLess_<C>_Object", "_CharArray_IsLess_<C>_Object");
@@ -228,7 +224,6 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
   // Special handling for byte view casting
   {
     VirtualTable byte_array_vtable("ByteArray", sizeof(ObjectDescriptor) + sizeof(ovum::vm::runtime::ByteArray));
-    byte_array_vtable.AddField("Object", sizeof(ObjectDescriptor));
     byte_array_vtable.AddFunction("_destructor_<M>", "_ByteArray_destructor_<M>");
     byte_array_vtable.AddFunction("_Equals_<C>_Object", "_ByteArray_Equals_<C>_Object");
     byte_array_vtable.AddFunction("_IsLess_<C>_Object", "_ByteArray_IsLess_<C>_Object");
@@ -244,7 +239,6 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
   // BoolArray: wrapper around std::vector<bool>
   {
     VirtualTable bool_array_vtable("BoolArray", sizeof(ObjectDescriptor) + sizeof(std::vector<bool>));
-    bool_array_vtable.AddField("Object", sizeof(ObjectDescriptor));
     bool_array_vtable.AddFunction("_destructor_<M>", "_BoolArray_destructor_<M>");
     bool_array_vtable.AddFunction("_Equals_<C>_Object", "_BoolArray_Equals_<C>_Object");
     bool_array_vtable.AddFunction("_IsLess_<C>_Object", "_BoolArray_IsLess_<C>_Object");
@@ -259,8 +253,9 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
 
   // ObjectArray: wrapper around std::vector<void*>
   {
-    VirtualTable object_array_vtable("ObjectArray", sizeof(ObjectDescriptor) + sizeof(std::vector<void*>));
-    object_array_vtable.AddField("Object", sizeof(ObjectDescriptor));
+    VirtualTable object_array_vtable("ObjectArray",
+                                     sizeof(ObjectDescriptor) + sizeof(std::vector<void*>),
+                                     std::make_unique<ArrayReferenceScanner>());
     object_array_vtable.AddFunction("_destructor_<M>", "_ObjectArray_destructor_<M>");
     object_array_vtable.AddFunction("_Equals_<C>_Object", "_ObjectArray_Equals_<C>_Object");
     object_array_vtable.AddFunction("_IsLess_<C>_Object", "_ObjectArray_IsLess_<C>_Object");
@@ -275,8 +270,9 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
 
   // StringArray: more typed ObjectArray
   {
-    VirtualTable string_array_vtable("StringArray", sizeof(ObjectDescriptor) + sizeof(std::vector<void*>));
-    string_array_vtable.AddField("Object", sizeof(ObjectDescriptor));
+    VirtualTable string_array_vtable("StringArray",
+                                     sizeof(ObjectDescriptor) + sizeof(std::vector<void*>),
+                                     std::make_unique<ArrayReferenceScanner>());
     string_array_vtable.AddFunction("_destructor_<M>", "_StringArray_destructor_<M>");
     string_array_vtable.AddFunction("_Equals_<C>_Object", "_StringArray_Equals_<C>_Object");
     string_array_vtable.AddFunction("_IsLess_<C>_Object", "_StringArray_IsLess_<C>_Object");
@@ -307,8 +303,9 @@ std::expected<void, std::runtime_error> RegisterBuiltinVirtualTables(VirtualTabl
 
   // PointerArray: unsafe array of pointers
   {
-    VirtualTable pointer_array_vtable("PointerArray", sizeof(ObjectDescriptor) + sizeof(std::vector<void*>));
-    pointer_array_vtable.AddField("Object", sizeof(ObjectDescriptor));
+    VirtualTable pointer_array_vtable("PointerArray",
+                                      sizeof(ObjectDescriptor) + sizeof(std::vector<void*>),
+                                      std::make_unique<ArrayReferenceScanner>());
     pointer_array_vtable.AddFunction("_destructor_<M>", "_PointerArray_destructor_<M>");
     pointer_array_vtable.AddFunction("_Equals_<C>_Object", "_PointerArray_Equals_<C>_Object");
     pointer_array_vtable.AddFunction("_IsLess_<C>_Object", "_PointerArray_IsLess_<C>_Object");

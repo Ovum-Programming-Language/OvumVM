@@ -1,6 +1,8 @@
 #include "ParsingSession.hpp"
 
 #include <tokens/EofToken.hpp>
+#include <tokens/LiteralToken.hpp>
+#include <tokens/values/StringValue.hpp>
 
 namespace ovum::bytecode::parser {
 
@@ -118,7 +120,8 @@ std::expected<std::string, BytecodeParserError> ParsingSession::ConsumeStringLit
                                                std::to_string(token->GetPosition().GetColumn())));
   }
 
-  std::string value = Current()->GetLexeme();
+  std::string value =
+      dynamic_cast<StringValue*>(dynamic_cast<ovum::LiteralToken*>(Current().get())->GetValue())->ToString();
 
   value = value.substr(1, value.length() - 2);
 

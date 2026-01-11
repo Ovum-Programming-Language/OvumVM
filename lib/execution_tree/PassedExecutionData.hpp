@@ -5,6 +5,7 @@
 #include <memory>
 #include <ostream>
 
+#include "lib/runtime/MemoryManager.hpp"
 #include "lib/runtime/RuntimeMemory.hpp"
 #include "lib/runtime/VirtualTableRepository.hpp"
 
@@ -16,7 +17,7 @@ struct PassedExecutionData {
   runtime::RuntimeMemory& memory;
   const runtime::VirtualTableRepository& virtual_table_repository;
   const FunctionRepository& function_repository;
-  std::allocator<char> allocator;
+  runtime::MemoryManager& memory_manager;
   std::istream& input_stream;
   std::ostream& output_stream;
   std::ostream& error_stream;

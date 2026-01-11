@@ -3,6 +3,7 @@
 #include <utility>
 
 #include "VariableAccessor.hpp"
+#include "lib/runtime/gc/reference_scanners/DefaultReferenceScanner.hpp"
 
 namespace ovum::vm::runtime {
 
@@ -15,7 +16,11 @@ const std::unordered_map<std::string, std::shared_ptr<IVariableAccessor>> Virtua
     {"Object", std::make_shared<VariableAccessor<void*>>()},
 };
 
-VirtualTable::VirtualTable(std::string name, size_t size) : name_(std::move(name)), size_(size) {
+VirtualTable::VirtualTable(std::string name, size_t size, std::unique_ptr<IReferenceScanner> scanner) :
+    name_(std::move(name)), size_(size), reference_scanner_(std::move(scanner)) {
+  if (!reference_scanner_) {
+    reference_scanner_ = std::make_unique<DefaultReferenceScanner>();
+  }
 }
 
 std::string VirtualTable::GetName() const {
@@ -78,6 +83,14 @@ void VirtualTable::AddInterface(const std::string& interface_name) {
 
 bool VirtualTable::IsType(const std::string& interface_name) const {
   return interfaces_.contains(interface_name) || interface_name == name_;
+}
+
+size_t VirtualTable::GetFieldCount() const {
+  return fields_.size();
+}
+
+void VirtualTable::ScanReferences(void* obj, const ReferenceVisitor& visitor) const {
+  reference_scanner_->Scan(obj, fields_, visitor);
 }
 
 } // namespace ovum::vm::runtime

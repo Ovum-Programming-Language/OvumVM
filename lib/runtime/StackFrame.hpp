@@ -14,4 +14,5 @@ struct StackFrame {
 };
 
 } // namespace ovum::vm::runtime
+
 #endif // RUNTIME_STACKFRAME_HPP

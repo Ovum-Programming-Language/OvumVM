@@ -67,7 +67,7 @@ TEST_F(BytecodeParserTestSuite, InitStatic_WithNestedWhile) {
 TEST_F(BytecodeParserTestSuite, InitStatic_AllCommandTypes) {
   auto parser = CreateParserWithJit();
   auto tokens = TokenizeString(
-      R"(init-static { PushString "hello" PushChar "a" PushInt 42 PushFloat 3.14 PushBool true NewArray arrName Call funcName Return })");
+      R"(init-static { PushString "hello" PushChar 42 PushInt 42 PushFloat 3.14 PushBool true Call funcName Return })");
   ovum::vm::execution_tree::FunctionRepository func_repo;
   ovum::vm::runtime::VirtualTableRepository vtable_repo;
 
@@ -739,7 +739,7 @@ TEST_F(BytecodeParserTestSuite, Command_String_PushString) {
 
 TEST_F(BytecodeParserTestSuite, Command_String_PushChar) {
   auto parser = CreateParserWithJit();
-  auto tokens = TokenizeString(R"(init-static { PushChar "a" })");
+  auto tokens = TokenizeString(R"(init-static { PushChar 42 })");
   ovum::vm::execution_tree::FunctionRepository func_repo;
   ovum::vm::runtime::VirtualTableRepository vtable_repo;
 
@@ -803,15 +803,6 @@ TEST_F(BytecodeParserTestSuite, Command_Boolean_PushBool_True) {
 TEST_F(BytecodeParserTestSuite, Command_Boolean_PushBool_False) {
   auto parser = CreateParserWithJit();
   auto tokens = TokenizeString("init-static { PushBool false }");
-  ovum::vm::execution_tree::FunctionRepository func_repo;
-  ovum::vm::runtime::VirtualTableRepository vtable_repo;
-
-  auto parsing_result = ParseSuccessfully(parser, tokens, func_repo, vtable_repo);
-}
-
-TEST_F(BytecodeParserTestSuite, Command_Identifier_NewArray) {
-  auto parser = CreateParserWithJit();
-  auto tokens = TokenizeString("init-static { NewArray arrName }");
   ovum::vm::execution_tree::FunctionRepository func_repo;
   ovum::vm::runtime::VirtualTableRepository vtable_repo;
 
