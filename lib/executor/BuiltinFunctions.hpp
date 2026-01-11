@@ -28,6 +28,8 @@ namespace ovum::vm::execution_tree {
 // Int methods
 std::expected<ExecutionResult, std::runtime_error> IntConstructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> IntCopyConstructor(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> IntCopyAssignment(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> IntCopyAssignmentFromInt(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> IntDestructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> IntEquals(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> IntIsLess(PassedExecutionData& data);
@@ -37,6 +39,8 @@ std::expected<ExecutionResult, std::runtime_error> IntGetHash(PassedExecutionDat
 // Float methods
 std::expected<ExecutionResult, std::runtime_error> FloatConstructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> FloatCopyConstructor(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> FloatCopyAssignment(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> FloatCopyAssignmentFromFloat(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> FloatDestructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> FloatEquals(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> FloatIsLess(PassedExecutionData& data);
@@ -46,6 +50,8 @@ std::expected<ExecutionResult, std::runtime_error> FloatGetHash(PassedExecutionD
 // Char methods
 std::expected<ExecutionResult, std::runtime_error> CharConstructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> CharCopyConstructor(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> CharCopyAssignment(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> CharCopyAssignmentFromChar(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> CharDestructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> CharEquals(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> CharIsLess(PassedExecutionData& data);
@@ -55,6 +61,8 @@ std::expected<ExecutionResult, std::runtime_error> CharGetHash(PassedExecutionDa
 // Byte methods
 std::expected<ExecutionResult, std::runtime_error> ByteConstructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> ByteCopyConstructor(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> ByteCopyAssignment(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> ByteCopyAssignmentFromByte(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> ByteDestructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> ByteEquals(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> ByteIsLess(PassedExecutionData& data);
@@ -64,6 +72,8 @@ std::expected<ExecutionResult, std::runtime_error> ByteGetHash(PassedExecutionDa
 // Bool methods
 std::expected<ExecutionResult, std::runtime_error> BoolConstructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> BoolCopyConstructor(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> BoolCopyAssignment(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> BoolCopyAssignmentFromBool(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> BoolDestructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> BoolEquals(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> BoolIsLess(PassedExecutionData& data);
@@ -76,6 +86,7 @@ std::expected<ExecutionResult, std::runtime_error> NullableDestructor(PassedExec
 
 // String methods
 std::expected<ExecutionResult, std::runtime_error> StringCopyConstructor(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> StringCopyAssignment(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> StringDestructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> StringEquals(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> StringIsLess(PassedExecutionData& data);
@@ -87,6 +98,7 @@ std::expected<ExecutionResult, std::runtime_error> StringToUtf8Bytes(PassedExecu
 // Array methods
 std::expected<ExecutionResult, std::runtime_error> IntArrayConstructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> IntArrayCopyConstructor(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> IntArrayCopyAssignment(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> IntArrayDestructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> IntArrayEquals(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> IntArrayIsLess(PassedExecutionData& data);
@@ -104,6 +116,7 @@ std::expected<ExecutionResult, std::runtime_error> IntArrayGetAt(PassedExecution
 
 std::expected<ExecutionResult, std::runtime_error> FloatArrayConstructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> FloatArrayCopyConstructor(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> FloatArrayCopyAssignment(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> FloatArrayDestructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> FloatArrayEquals(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> FloatArrayIsLess(PassedExecutionData& data);
@@ -121,6 +134,7 @@ std::expected<ExecutionResult, std::runtime_error> FloatArrayGetAt(PassedExecuti
 
 std::expected<ExecutionResult, std::runtime_error> CharArrayConstructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> CharArrayCopyConstructor(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> CharArrayCopyAssignment(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> CharArrayDestructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> CharArrayEquals(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> CharArrayIsLess(PassedExecutionData& data);
@@ -138,6 +152,7 @@ std::expected<ExecutionResult, std::runtime_error> CharArrayGetAt(PassedExecutio
 
 std::expected<ExecutionResult, std::runtime_error> ByteArrayConstructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> ByteArrayCopyConstructor(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> ByteArrayCopyAssignment(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> ByteArrayDestructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> ByteArrayEquals(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> ByteArrayIsLess(PassedExecutionData& data);
@@ -158,6 +173,7 @@ std::expected<ExecutionResult, std::runtime_error> ByteArrayFromObject(PassedExe
 
 std::expected<ExecutionResult, std::runtime_error> BoolArrayConstructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> BoolArrayCopyConstructor(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> BoolArrayCopyAssignment(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> BoolArrayDestructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> BoolArrayEquals(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> BoolArrayIsLess(PassedExecutionData& data);
@@ -175,6 +191,7 @@ std::expected<ExecutionResult, std::runtime_error> BoolArrayGetAt(PassedExecutio
 
 std::expected<ExecutionResult, std::runtime_error> ObjectArrayConstructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> ObjectArrayCopyConstructor(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> ObjectArrayCopyAssignment(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> ObjectArrayDestructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> ObjectArrayEquals(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> ObjectArrayIsLess(PassedExecutionData& data);
@@ -192,6 +209,7 @@ std::expected<ExecutionResult, std::runtime_error> ObjectArrayGetAt(PassedExecut
 
 std::expected<ExecutionResult, std::runtime_error> StringArrayConstructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> StringArrayCopyConstructor(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> StringArrayCopyAssignment(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> StringArrayDestructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> StringArrayEquals(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> StringArrayIsLess(PassedExecutionData& data);
@@ -210,6 +228,7 @@ std::expected<ExecutionResult, std::runtime_error> StringArrayGetAt(PassedExecut
 // Pointer methods
 std::expected<ExecutionResult, std::runtime_error> PointerConstructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> PointerCopyConstructor(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> PointerCopyAssignment(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> PointerDestructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> PointerEquals(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> PointerIsLess(PassedExecutionData& data);
@@ -217,6 +236,7 @@ std::expected<ExecutionResult, std::runtime_error> PointerGetHash(PassedExecutio
 
 std::expected<ExecutionResult, std::runtime_error> PointerArrayConstructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> PointerArrayCopyConstructor(PassedExecutionData& data);
+std::expected<ExecutionResult, std::runtime_error> PointerArrayCopyAssignment(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> PointerArrayDestructor(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> PointerArrayEquals(PassedExecutionData& data);
 std::expected<ExecutionResult, std::runtime_error> PointerArrayIsLess(PassedExecutionData& data);

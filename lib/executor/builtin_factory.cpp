@@ -386,6 +386,22 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
     }
   }
 
+  {
+    auto function = CreateMethodFunction("_Int_copy_<M>_Int", 2, IntCopyAssignment);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_Int_copy_<M>_int", 2, IntCopyAssignmentFromInt);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
   // Float methods
   {
     auto function = CreateMethodFunction("_Float_float", 2, FloatConstructor);
@@ -437,6 +453,22 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
 
   {
     auto function = CreateMethodFunction("_Float_GetHash_<C>", 1, FloatGetHash);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_Float_copy_<M>_Float", 2, FloatCopyAssignment);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_Float_copy_<M>_float", 2, FloatCopyAssignmentFromFloat);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -500,6 +532,22 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
     }
   }
 
+  {
+    auto function = CreateMethodFunction("_Char_copy_<M>_Char", 2, CharCopyAssignment);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_Char_copy_<M>_char", 2, CharCopyAssignmentFromChar);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
   // Byte methods
   {
     auto function = CreateMethodFunction("_Byte_byte", 2, ByteConstructor);
@@ -557,6 +605,22 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
     }
   }
 
+  {
+    auto function = CreateMethodFunction("_Byte_copy_<M>_Byte", 2, ByteCopyAssignment);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_Byte_copy_<M>_byte", 2, ByteCopyAssignmentFromByte);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
   // Bool methods
   {
     auto function = CreateMethodFunction("_Bool_bool", 2, BoolConstructor);
@@ -608,6 +672,22 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
 
   {
     auto function = CreateMethodFunction("_Bool_GetHash_<C>", 1, BoolGetHash);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_Bool_copy_<M>_Bool", 2, BoolCopyAssignment);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_Bool_copy_<M>_bool", 2, BoolCopyAssignmentFromBool);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -690,6 +770,14 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
 
   {
     auto function = CreateMethodFunction("_String_ToUtf8Bytes_<C>", 1, StringToUtf8Bytes);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_String_copy_<M>_String", 2, StringCopyAssignment);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -825,6 +913,14 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
     }
   }
 
+  {
+    auto function = CreateMethodFunction("_IntArray_copy_<M>_IntArray", 2, IntArrayCopyAssignment);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
   // FloatArray methods
   {
     auto function = CreateMethodFunction("_FloatArray_int_float", 3, FloatArrayConstructor);
@@ -948,6 +1044,14 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
 
   {
     auto function = CreateMethodFunction("_FloatArray_GetAt_<C>_int", 2, FloatArrayGetAt);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_FloatArray_copy_<M>_FloatArray", 2, FloatArrayCopyAssignment);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -1083,6 +1187,14 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
     }
   }
 
+  {
+    auto function = CreateMethodFunction("_CharArray_copy_<M>_CharArray", 2, CharArrayCopyAssignment);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
   // ByteArray methods
   {
     auto function = CreateMethodFunction("_ByteArray_int_byte", 3, ByteArrayConstructor);
@@ -1206,6 +1318,14 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
 
   {
     auto function = CreateMethodFunction("_ByteArray_GetAt_<C>_int", 2, ByteArrayGetAt);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_ByteArray_copy_<M>_ByteArray", 2, ByteArrayCopyAssignment);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -1350,6 +1470,14 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
     }
   }
 
+  {
+    auto function = CreateMethodFunction("_BoolArray_copy_<M>_BoolArray", 2, BoolArrayCopyAssignment);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
   // ObjectArray methods
   {
     auto function = CreateMethodFunction("_ObjectArray_int_Object", 3, ObjectArrayConstructor);
@@ -1473,6 +1601,14 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
 
   {
     auto function = CreateMethodFunction("_ObjectArray_GetAt_<C>_int", 2, ObjectArrayGetAt);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_ObjectArray_copy_<M>_ObjectArray", 2, ObjectArrayCopyAssignment);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
@@ -1608,6 +1744,14 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
     }
   }
 
+  {
+    auto function = CreateMethodFunction("_StringArray_copy_<M>_StringArray", 2, StringArrayCopyAssignment);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
   // PointerArray methods
   {
     auto function = CreateMethodFunction("_PointerArray_int_Pointer", 3, PointerArrayConstructor);
@@ -1699,6 +1843,14 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
   }
 
   {
+    auto function = CreateMethodFunction("_Pointer_copy_<M>_Pointer", 2, PointerCopyAssignment);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
     auto function = CreateMethodFunction("_PointerArray_Length_<C>", 1, PointerArrayLength);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
@@ -1780,6 +1932,14 @@ std::expected<void, std::runtime_error> RegisterBuiltinFunctions(FunctionReposit
 
   {
     auto function = CreateMethodFunction("_PointerArray_GetAt_<C>_int", 2, PointerArrayGetAt);
+    auto result = repository.Add(std::move(function));
+    if (!result.has_value()) {
+      return std::unexpected(result.error());
+    }
+  }
+
+  {
+    auto function = CreateMethodFunction("_PointerArray_copy_<M>_PointerArray", 2, PointerArrayCopyAssignment);
     auto result = repository.Add(std::move(function));
     if (!result.has_value()) {
       return std::unexpected(result.error());
