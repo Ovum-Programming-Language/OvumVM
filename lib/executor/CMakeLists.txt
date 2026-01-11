@@ -7,4 +7,8 @@ add_library(executor STATIC
 )
 
 target_include_directories(executor PUBLIC ${PROJECT_SOURCE_DIR})
-target_link_libraries(executor PUBLIC runtime execution_tree tokens jit)
+target_link_libraries(executor PUBLIC runtime execution_tree tokens)
+
+if (JIT_PROVIDED)
+    target_link_libraries(executor PUBLIC jit)
+endif ()
