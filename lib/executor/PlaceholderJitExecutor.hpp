@@ -11,7 +11,7 @@ class PlaceholderJitExecutor : public IJitExecutor {
 public:
   PlaceholderJitExecutor() = default;
 
-  [[nodiscard]] bool TryCompile() const override;
+  [[nodiscard]] bool TryCompile() override;
 
   [[nodiscard]] std::expected<void, std::runtime_error> Run(execution_tree::PassedExecutionData& data) override;
 };

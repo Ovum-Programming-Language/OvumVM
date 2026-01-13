@@ -15,7 +15,7 @@ class IJitExecutor { // NOLINT(cppcoreguidelines-special-member-functions)
 public:
   virtual ~IJitExecutor() = default;
 
-  [[nodiscard]] virtual bool TryCompile() const = 0;
+  [[nodiscard]] virtual bool TryCompile() = 0;
 
   [[nodiscard]] virtual std::expected<void, std::runtime_error> Run(execution_tree::PassedExecutionData& data) = 0;
 };

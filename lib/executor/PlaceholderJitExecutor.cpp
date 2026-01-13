@@ -2,7 +2,7 @@
 
 namespace ovum::vm::executor {
 
-bool PlaceholderJitExecutor::TryCompile() const {
+bool PlaceholderJitExecutor::TryCompile() {
   return false;
 }
 
