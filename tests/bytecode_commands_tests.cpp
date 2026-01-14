@@ -1053,6 +1053,7 @@ TEST_F(BuiltinTestSuite, TimeCommands) {
   constexpr int64_t kSleepMs = 1;
   constexpr int64_t kEpochSeconds = 0;
   constexpr std::string_view kYearFormat = "%Y";
+  constexpr std::string_view kFormatString = "%Y-%m-%d %H:%M:%S.%f";
   constexpr std::string_view kDateFormat = "%Y-%m-%d";
   constexpr std::string_view kEpochDate = "1970-01-01";
   constexpr int64_t kPositiveThreshold = 0;
@@ -1085,9 +1086,9 @@ TEST_F(BuiltinTestSuite, TimeCommands) {
   auto nano_val = PopInt();
   EXPECT_GT(nano_val, kPositiveThreshold);
 
-  auto format_str = MakeString(std::string{kYearFormat});
-  PushInt(kEpochSeconds);
+  auto format_str = MakeString(std::string{kFormatString});
   PushObject(format_str);
+  PushInt(second);
   auto format_cmd = MakeSimple("FormatDateTime");
   ASSERT_TRUE(format_cmd);
   EXPECT_TRUE(format_cmd->Execute(data_).has_value());
