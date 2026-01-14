@@ -5,6 +5,7 @@
 #include <cmath>
 #include <ctime>
 #include <filesystem>
+#include <limits>
 #include <random>
 #include <ranges>
 #include <sstream>
@@ -1006,7 +1007,10 @@ std::expected<ExecutionResult, std::runtime_error> FloatToString(PassedExecution
     return std::unexpected(argument.error());
   }
 
-  return PushString(data, std::to_string(argument.value()));
+  std::ostringstream oss;
+  oss << std::setprecision(std::numeric_limits<double>::max_digits10 - 2) << argument.value();
+
+  return PushString(data, oss.str());
 }
 
 std::expected<ExecutionResult, std::runtime_error> IntToFloat(PassedExecutionData& data) {
