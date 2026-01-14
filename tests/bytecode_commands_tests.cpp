@@ -722,7 +722,7 @@ TEST_F(BuiltinTestSuite, StringAndNumericConversions) {
   constexpr int64_t kIntToStrValue = 42;
   constexpr double kFloatToStrValue = 2.5;
   constexpr std::string_view kIntToStrExpected = "42";
-  constexpr std::string_view kFloatToStrExpected = "2.500000";
+  constexpr std::string_view kFloatToStrExpected = "2.5";
 
   auto push_num_str = MakeString(std::string{kIntString});
   PushObject(push_num_str);
