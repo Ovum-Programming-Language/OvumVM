@@ -26,6 +26,11 @@ public:
   std::expected<ExecutionResult, std::runtime_error> Execute(PassedExecutionData& execution_data) override {
     if (function_.GetTotalActionCount() > jit_action_boundary_) {
       if (executor_->TryCompile()) {
+        if (execution_data.memory.machine_stack.size() < function_.GetArity()) {
+          return std::unexpected<std::runtime_error>(std::runtime_error(
+              "Not enough arguments on the stack to call JIT-compiled function " + function_.GetId()));
+        }
+
         runtime::StackFrame local_frame{};
         local_frame.function_name = function_.GetId();
         local_frame.local_variables.reserve(function_.GetArity());
@@ -38,11 +43,16 @@ public:
         execution_data.memory.stack_frames.push(std::move(local_frame));
 
         const std::expected<void, std::runtime_error> jit_result = executor_->Run(execution_data);
+        const runtime::StackFrame& local_frame_ref = execution_data.memory.stack_frames.top();
 
         execution_data.memory.stack_frames.pop();
 
         if (jit_result.has_value()) {
           return ExecutionResult::kNormal;
+        }
+
+        for (size_t i = 0; i < function_.GetArity(); ++i) {
+          execution_data.memory.machine_stack.push(local_frame_ref.local_variables[function_.GetArity() - i - 1]);
         }
       }
     }
