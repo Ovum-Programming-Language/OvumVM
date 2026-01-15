@@ -26,22 +26,21 @@ public:
   std::expected<ExecutionResult, std::runtime_error> Execute(PassedExecutionData& execution_data) override {
     if (function_.GetTotalActionCount() > jit_action_boundary_) {
       if (executor_->TryCompile()) {
-        
         runtime::StackFrame local_frame{};
         local_frame.function_name = function_.GetId();
         local_frame.local_variables.reserve(function_.GetArity());
-      
+
         for (size_t i = 0; i < function_.GetArity(); ++i) {
           local_frame.local_variables.emplace_back(execution_data.memory.machine_stack.top());
           execution_data.memory.machine_stack.pop();
         }
-      
+
         execution_data.memory.stack_frames.push(std::move(local_frame));
 
         const std::expected<void, std::runtime_error> jit_result = executor_->Run(execution_data);
 
         execution_data.memory.stack_frames.pop();
-        
+
         if (jit_result.has_value()) {
           return ExecutionResult::kNormal;
         }
