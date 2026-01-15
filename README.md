@@ -114,6 +114,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed contribution guidelines.
 - **[Ovum Language](https://github.com/Ovum-Programming-Language/OvumLanguage)**: The main Ovum programming language repository
 - **[Ovum Documentation](https://ovum-programming-language.github.io/OvumDocs/)**: Complete language and VM documentation
 - **[Ovum JIT X64](https://github.com/Ovum-Programming-Language/OvumJitX64)**: JIT compiler for x86_64 architecture
+- **[OvumExamples](https://github.com/Ovum-Programming-Language/OvumExamples)**: Examples for the Ovum programming language and Ovum Intermediate Language
 
 ## Language Features Supported
 
