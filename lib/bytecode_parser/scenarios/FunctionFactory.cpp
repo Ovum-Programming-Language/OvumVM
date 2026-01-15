@@ -20,13 +20,13 @@ vm::execution_tree::PureFunction<Base> FunctionFactory::WrapPure(Base&& base,
 
 template<vm::execution_tree::ExecutableFunction Base>
 std::expected<vm::execution_tree::JitCompilingFunction<Base>, std::runtime_error> FunctionFactory::WrapJit(
-    Base&& base) {
+    Base&& base, std::shared_ptr<std::vector<TokenPtr>> jit_body) {
   if (!jit_factory_.has_value()) {
     return std::unexpected(std::runtime_error("Jit factory not set"));
   }
 
   return {vm::execution_tree::JitCompilingFunction<Base>(
-      jit_factory_->get().Create(base.GetId()), std::forward<Base>(base), jit_boundary_)};
+      jit_factory_->get().Create(base.GetId(), std::move(jit_body)), std::forward<Base>(base), jit_boundary_)};
 }
 
 std::unique_ptr<vm::execution_tree::IFunctionExecutable> FunctionFactory::Create(
@@ -35,7 +35,8 @@ std::unique_ptr<vm::execution_tree::IFunctionExecutable> FunctionFactory::Create
     std::unique_ptr<vm::execution_tree::Block> body,
     bool pure,
     std::vector<std::string> pure_argument_types,
-    bool no_jit) {
+    bool no_jit,
+    std::shared_ptr<std::vector<TokenPtr>> jit_body) {
   RegularFunction regular = MakeRegular(id, arity, std::move(body));
 
   if (!pure || pure_argument_types.empty()) {
@@ -43,7 +44,7 @@ std::unique_ptr<vm::execution_tree::IFunctionExecutable> FunctionFactory::Create
       return std::make_unique<RegularFunction>(std::move(regular));
     }
 
-    std::expected<JitFunction, std::runtime_error> jit_func = WrapJit(std::move(regular));
+    std::expected<JitFunction, std::runtime_error> jit_func = WrapJit(std::move(regular), std::move(jit_body));
 
     if (!jit_func) {
       return nullptr;
@@ -56,7 +57,7 @@ std::unique_ptr<vm::execution_tree::IFunctionExecutable> FunctionFactory::Create
     return std::make_unique<PureFunction>(WrapPure(std::move(regular), std::move(pure_argument_types)));
   }
 
-  std::expected<JitFunction, std::runtime_error> jit_func = WrapJit(std::move(regular));
+  std::expected<JitFunction, std::runtime_error> jit_func = WrapJit(std::move(regular), std::move(jit_body));
 
   if (!jit_func) {
     return nullptr;

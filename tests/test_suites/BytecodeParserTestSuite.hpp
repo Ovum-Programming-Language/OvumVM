@@ -14,9 +14,10 @@
 #include "lib/execution_tree/Block.hpp"
 #include "lib/execution_tree/FunctionRepository.hpp"
 #include "lib/execution_tree/IFunctionExecutable.hpp"
-#include "lib/executor/PlaceholderJitExecutorFactory.hpp"
 #include "lib/runtime/RuntimeMemory.hpp"
 #include "lib/runtime/VirtualTableRepository.hpp"
+
+#include "lib/executor/PlaceholderJitExecutorFactory.hpp"
 
 struct BytecodeParserTestSuite : public testing::Test {
   static constexpr size_t kJitBoundary = 10;

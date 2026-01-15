@@ -3,16 +3,17 @@
 
 #include "IJitExecutor.hpp"
 
+#include "lib/execution_tree/PassedExecutionData.hpp"
+
 namespace ovum::vm::executor {
 
 class PlaceholderJitExecutor : public IJitExecutor {
 public:
   PlaceholderJitExecutor() = default;
 
-  [[nodiscard]] bool TryCompile() const override;
+  [[nodiscard]] bool TryCompile() override;
 
-  [[nodiscard]] std::expected<void, std::runtime_error> Run(
-      std::stack<std::variant<int64_t, double, bool, char, uint8_t, void*>>& stack) override;
+  [[nodiscard]] std::expected<void, std::runtime_error> Run(execution_tree::PassedExecutionData& data) override;
 };
 
 } // namespace ovum::vm::executor

@@ -56,21 +56,26 @@ int32_t StartVmConsoleUI(const std::vector<std::string>& args, std::ostream& out
   }
 
   auto is_file = [](std::string& arg) { return std::filesystem::exists(arg); };
+  std::string description = "Ovum Virtual Machine that executes Ovum Intermediate Language.";
+#ifdef JIT_PROVIDED
+  description += " JIT compiler is available.";
+#endif
+
   ArgumentParser::ArgParser arg_parser("ovum-vm", PassArgumentTypes());
   arg_parser.AddCompositeArgument('f', "file", "Path to the bytecode file").AddIsGood(is_file).AddValidate(is_file);
   arg_parser.AddUnsignedLongLongArgument('j', "jit-boundary", "JIT compilation boundary").Default(kDefaultJitBoundary);
   arg_parser.AddUnsignedLongLongArgument('m', "max-objects", "Maximum number of objects to keep in memory")
       .Default(kDefaultMaxObjects);
-  arg_parser.AddHelp('h', "help", "Show this help message");
+  arg_parser.AddHelp('h', "help", description);
 
   bool parse_result = arg_parser.Parse(parser_args, {.out_stream = err, .print_messages = true});
   if (!parse_result) {
-    err << arg_parser.HelpDescription() << "\n";
+    err << arg_parser.HelpDescription();
     return 1;
   }
 
   if (arg_parser.Help()) {
-    err << arg_parser.HelpDescription() << "\n";
+    out << arg_parser.HelpDescription();
     return 0;
   }
 

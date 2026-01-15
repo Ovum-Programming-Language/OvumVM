@@ -46,6 +46,8 @@ public:
   std::unique_ptr<vm::execution_tree::Block> GetInitStaticBlock();
   void SetInitStaticBlock(std::unique_ptr<vm::execution_tree::Block> block);
 
+  std::vector<TokenPtr> CopyUntilBlockEnd();
+
 private:
   const std::vector<TokenPtr>& tokens_;
   size_t pos_ = 0;

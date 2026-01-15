@@ -23,6 +23,7 @@ The VM consists of several core components:
 - **System Interface**: Provides access to system functions and FFI
 
 > **Note**: Due to the architecture-dependent nature of JIT compilation, JIT implementations are located in separate repositories for each target architecture.
+> **Note**: The JIT compiler is currently only available for x86_64 architecture.
 
 ## Quick Start
 
@@ -112,7 +113,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed contribution guidelines.
 
 - **[Ovum Language](https://github.com/Ovum-Programming-Language/OvumLanguage)**: The main Ovum programming language repository
 - **[Ovum Documentation](https://ovum-programming-language.github.io/OvumDocs/)**: Complete language and VM documentation
-- **JIT Implementations**: Architecture-specific JIT compilers (separate repositories)
+- **[Ovum JIT X64](https://github.com/Ovum-Programming-Language/OvumJitX64)**: JIT compiler for x86_64 architecture
+- **[OvumExamples](https://github.com/Ovum-Programming-Language/OvumExamples)**: Examples for the Ovum programming language and Ovum Intermediate Language
 
 ## Language Features Supported
 

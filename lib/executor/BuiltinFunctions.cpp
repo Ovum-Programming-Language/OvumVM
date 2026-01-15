@@ -99,6 +99,42 @@ std::expected<ExecutionResult, std::runtime_error> FundamentalTypeCopyConstructo
   return ExecutionResult::kNormal;
 }
 
+// Template helper for fundamental type copy assignment from same type
+// Arguments: object (this) is first, source is second
+template<typename T>
+std::expected<ExecutionResult, std::runtime_error> FundamentalTypeCopyAssignment(PassedExecutionData& data) {
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("CopyAssignment: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  void* source_obj = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
+  const T* source_data = runtime::GetDataPointer<const T>(source_obj);
+  T* data_ptr = runtime::GetDataPointer<T>(obj_ptr);
+  *data_ptr = *source_data;
+
+  return ExecutionResult::kNormal;
+}
+
+// Template helper for fundamental type copy assignment from fundamental type
+// Arguments: object (this) is first, value is second
+template<typename T>
+std::expected<ExecutionResult, std::runtime_error> FundamentalTypeCopyAssignmentFromFundamental(
+    PassedExecutionData& data) {
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<T>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("CopyAssignmentFromFundamental: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  T value = std::get<T>(data.memory.stack_frames.top().local_variables[1]);
+  T* data_ptr = runtime::GetDataPointer<T>(obj_ptr);
+  *data_ptr = value;
+
+  return ExecutionResult::kNormal;
+}
+
 // Template helper for fundamental type destructors (trivial, no cleanup needed)
 // Arguments: object is first
 template<typename T>
@@ -281,6 +317,24 @@ std::expected<ExecutionResult, std::runtime_error> ArrayCopyConstructor(PassedEx
   auto* vec_data = runtime::GetDataPointer<std::vector<T>>(obj_ptr);
   new (vec_data) std::vector<T>(*source_vec);
   data.memory.machine_stack.emplace(obj_ptr);
+
+  return ExecutionResult::kNormal;
+}
+
+// Template helper for array copy assignment
+// Arguments: object (this) is first, source is second
+template<typename T>
+std::expected<ExecutionResult, std::runtime_error> ArrayCopyAssignment(PassedExecutionData& data) {
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("ArrayCopyAssignment: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  void* source_obj = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
+  const auto* source_vec = runtime::GetDataPointer<const std::vector<T>>(source_obj);
+  auto* vec_data = runtime::GetDataPointer<std::vector<T>>(obj_ptr);
+  *vec_data = *source_vec;
 
   return ExecutionResult::kNormal;
 }
@@ -713,6 +767,14 @@ std::expected<ExecutionResult, std::runtime_error> IntCopyConstructor(PassedExec
   return FundamentalTypeCopyConstructor<int64_t>(data);
 }
 
+std::expected<ExecutionResult, std::runtime_error> IntCopyAssignment(PassedExecutionData& data) {
+  return FundamentalTypeCopyAssignment<int64_t>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> IntCopyAssignmentFromInt(PassedExecutionData& data) {
+  return FundamentalTypeCopyAssignmentFromFundamental<int64_t>(data);
+}
+
 std::expected<ExecutionResult, std::runtime_error> IntDestructor(PassedExecutionData& data) {
   return FundamentalTypeDestructor<int64_t>(data);
 }
@@ -752,6 +814,14 @@ std::expected<ExecutionResult, std::runtime_error> FloatCopyConstructor(PassedEx
   return FundamentalTypeCopyConstructor<double>(data);
 }
 
+std::expected<ExecutionResult, std::runtime_error> FloatCopyAssignment(PassedExecutionData& data) {
+  return FundamentalTypeCopyAssignment<double>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> FloatCopyAssignmentFromFloat(PassedExecutionData& data) {
+  return FundamentalTypeCopyAssignmentFromFundamental<double>(data);
+}
+
 std::expected<ExecutionResult, std::runtime_error> FloatDestructor(PassedExecutionData& data) {
   return FundamentalTypeDestructor<double>(data);
 }
@@ -780,6 +850,14 @@ std::expected<ExecutionResult, std::runtime_error> CharConstructor(PassedExecuti
 
 std::expected<ExecutionResult, std::runtime_error> CharCopyConstructor(PassedExecutionData& data) {
   return FundamentalTypeCopyConstructor<char>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> CharCopyAssignment(PassedExecutionData& data) {
+  return FundamentalTypeCopyAssignment<char>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> CharCopyAssignmentFromChar(PassedExecutionData& data) {
+  return FundamentalTypeCopyAssignmentFromFundamental<char>(data);
 }
 
 std::expected<ExecutionResult, std::runtime_error> CharDestructor(PassedExecutionData& data) {
@@ -813,6 +891,14 @@ std::expected<ExecutionResult, std::runtime_error> ByteCopyConstructor(PassedExe
   return FundamentalTypeCopyConstructor<uint8_t>(data);
 }
 
+std::expected<ExecutionResult, std::runtime_error> ByteCopyAssignment(PassedExecutionData& data) {
+  return FundamentalTypeCopyAssignment<uint8_t>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> ByteCopyAssignmentFromByte(PassedExecutionData& data) {
+  return FundamentalTypeCopyAssignmentFromFundamental<uint8_t>(data);
+}
+
 std::expected<ExecutionResult, std::runtime_error> ByteDestructor(PassedExecutionData& data) {
   return FundamentalTypeDestructor<uint8_t>(data);
 }
@@ -841,6 +927,14 @@ std::expected<ExecutionResult, std::runtime_error> BoolConstructor(PassedExecuti
 
 std::expected<ExecutionResult, std::runtime_error> BoolCopyConstructor(PassedExecutionData& data) {
   return FundamentalTypeCopyConstructor<bool>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> BoolCopyAssignment(PassedExecutionData& data) {
+  return FundamentalTypeCopyAssignment<bool>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> BoolCopyAssignmentFromBool(PassedExecutionData& data) {
+  return FundamentalTypeCopyAssignmentFromFundamental<bool>(data);
 }
 
 std::expected<ExecutionResult, std::runtime_error> BoolDestructor(PassedExecutionData& data) {
@@ -984,6 +1078,21 @@ std::expected<ExecutionResult, std::runtime_error> StringCopyConstructor(PassedE
   auto* string_data = runtime::GetDataPointer<std::string>(obj_ptr);
   new (string_data) std::string(*source_string);
   data.memory.machine_stack.emplace(obj_ptr);
+
+  return ExecutionResult::kNormal;
+}
+
+std::expected<ExecutionResult, std::runtime_error> StringCopyAssignment(PassedExecutionData& data) {
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("String::CopyAssignment: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  void* source_obj = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
+  const auto* source_string = runtime::GetDataPointer<const std::string>(source_obj);
+  auto* string_data = runtime::GetDataPointer<std::string>(obj_ptr);
+  *string_data = *source_string;
 
   return ExecutionResult::kNormal;
 }
@@ -1594,6 +1703,10 @@ std::expected<ExecutionResult, std::runtime_error> IntArrayCopyConstructor(Passe
   return ArrayCopyConstructor<int64_t>(data);
 }
 
+std::expected<ExecutionResult, std::runtime_error> IntArrayCopyAssignment(PassedExecutionData& data) {
+  return ArrayCopyAssignment<int64_t>(data);
+}
+
 std::expected<ExecutionResult, std::runtime_error> IntArrayDestructor(PassedExecutionData& data) {
   return ArrayDestructor<int64_t>(data);
 }
@@ -1615,6 +1728,10 @@ std::expected<ExecutionResult, std::runtime_error> FloatArrayCopyConstructor(Pas
   return ArrayCopyConstructor<double>(data);
 }
 
+std::expected<ExecutionResult, std::runtime_error> FloatArrayCopyAssignment(PassedExecutionData& data) {
+  return ArrayCopyAssignment<double>(data);
+}
+
 std::expected<ExecutionResult, std::runtime_error> FloatArrayDestructor(PassedExecutionData& data) {
   return ArrayDestructor<double>(data);
 }
@@ -1634,6 +1751,10 @@ std::expected<ExecutionResult, std::runtime_error> CharArrayConstructor(PassedEx
 
 std::expected<ExecutionResult, std::runtime_error> CharArrayCopyConstructor(PassedExecutionData& data) {
   return ArrayCopyConstructor<char>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> CharArrayCopyAssignment(PassedExecutionData& data) {
+  return ArrayCopyAssignment<char>(data);
 }
 
 std::expected<ExecutionResult, std::runtime_error> CharArrayDestructor(PassedExecutionData& data) {
@@ -1681,6 +1802,21 @@ std::expected<ExecutionResult, std::runtime_error> ByteArrayCopyConstructor(Pass
   auto* byte_array_data = runtime::GetDataPointer<runtime::ByteArray>(obj_ptr);
   new (byte_array_data) runtime::ByteArray(*source_byte_array);
   data.memory.machine_stack.emplace(obj_ptr);
+
+  return ExecutionResult::kNormal;
+}
+
+std::expected<ExecutionResult, std::runtime_error> ByteArrayCopyAssignment(PassedExecutionData& data) {
+  if (!std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[0]) ||
+      !std::holds_alternative<void*>(data.memory.stack_frames.top().local_variables[1])) {
+    return std::unexpected(std::runtime_error("ByteArrayCopyAssignment: invalid argument types"));
+  }
+
+  void* obj_ptr = std::get<void*>(data.memory.stack_frames.top().local_variables[0]);
+  void* source_obj = std::get<void*>(data.memory.stack_frames.top().local_variables[1]);
+  const auto* source_byte_array = runtime::GetDataPointer<const runtime::ByteArray>(source_obj);
+  auto* byte_array_data = runtime::GetDataPointer<runtime::ByteArray>(obj_ptr);
+  *byte_array_data = *source_byte_array;
 
   return ExecutionResult::kNormal;
 }
@@ -1787,6 +1923,10 @@ std::expected<ExecutionResult, std::runtime_error> BoolArrayCopyConstructor(Pass
   return ArrayCopyConstructor<bool>(data);
 }
 
+std::expected<ExecutionResult, std::runtime_error> BoolArrayCopyAssignment(PassedExecutionData& data) {
+  return ArrayCopyAssignment<bool>(data);
+}
+
 std::expected<ExecutionResult, std::runtime_error> BoolArrayDestructor(PassedExecutionData& data) {
   return ArrayDestructor<bool>(data);
 }
@@ -1822,6 +1962,10 @@ std::expected<ExecutionResult, std::runtime_error> ObjectArrayCopyConstructor(Pa
   return ArrayCopyConstructor<void*>(data);
 }
 
+std::expected<ExecutionResult, std::runtime_error> ObjectArrayCopyAssignment(PassedExecutionData& data) {
+  return ArrayCopyAssignment<void*>(data);
+}
+
 std::expected<ExecutionResult, std::runtime_error> ObjectArrayDestructor(PassedExecutionData& data) {
   return ArrayDestructor<void*>(data);
 }
@@ -1841,6 +1985,10 @@ std::expected<ExecutionResult, std::runtime_error> StringArrayConstructor(Passed
 
 std::expected<ExecutionResult, std::runtime_error> StringArrayCopyConstructor(PassedExecutionData& data) {
   return ObjectArrayCopyConstructor(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> StringArrayCopyAssignment(PassedExecutionData& data) {
+  return ObjectArrayCopyAssignment(data);
 }
 
 std::expected<ExecutionResult, std::runtime_error> StringArrayDestructor(PassedExecutionData& data) {
@@ -1864,6 +2012,10 @@ std::expected<ExecutionResult, std::runtime_error> PointerArrayCopyConstructor(P
   return ObjectArrayCopyConstructor(data);
 }
 
+std::expected<ExecutionResult, std::runtime_error> PointerArrayCopyAssignment(PassedExecutionData& data) {
+  return ObjectArrayCopyAssignment(data);
+}
+
 std::expected<ExecutionResult, std::runtime_error> PointerArrayDestructor(PassedExecutionData& data) {
   return ObjectArrayDestructor(data);
 }
@@ -1883,6 +2035,10 @@ std::expected<ExecutionResult, std::runtime_error> PointerConstructor(PassedExec
 
 std::expected<ExecutionResult, std::runtime_error> PointerCopyConstructor(PassedExecutionData& data) {
   return FundamentalTypeCopyConstructor<void*>(data);
+}
+
+std::expected<ExecutionResult, std::runtime_error> PointerCopyAssignment(PassedExecutionData& data) {
+  return FundamentalTypeCopyAssignment<void*>(data);
 }
 
 std::expected<ExecutionResult, std::runtime_error> PointerDestructor(PassedExecutionData& data) {

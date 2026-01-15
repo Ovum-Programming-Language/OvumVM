@@ -12,4 +12,8 @@ target_link_libraries(vm_ui PUBLIC
         argparser
 )
 
+if (JIT_PROVIDED)
+    target_link_libraries(vm_ui PUBLIC jit)
+endif ()
+
 target_include_directories(vm_ui PUBLIC ${PROJECT_SOURCE_DIR})

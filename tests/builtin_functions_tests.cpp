@@ -499,3 +499,352 @@ TEST_F(BuiltinTestSuite, FileMethods) {
 
   EXPECT_TRUE(ExecuteFunction(*this, "_File_Close_<M>", file_obj).has_value());
 }
+
+TEST_F(BuiltinTestSuite, CopyAssignmentMethods) {
+  // Test Int copy assignment from Int
+  {
+    constexpr int64_t kInitialValue = 10;
+    constexpr int64_t kAssignedValue = 20;
+    void* int_obj1 = AllocateObjectByName(*this, "Int");
+    void* int_obj2 = AllocateObjectByName(*this, "Int");
+    ASSERT_NE(int_obj1, nullptr);
+    ASSERT_NE(int_obj2, nullptr);
+    *ovum::vm::runtime::GetDataPointer<int64_t>(int_obj1) = kInitialValue;
+    *ovum::vm::runtime::GetDataPointer<int64_t>(int_obj2) = kAssignedValue;
+
+    ASSERT_TRUE(ExecuteFunction(*this, "_Int_copy_<M>_Int", int_obj1, int_obj2).has_value());
+    EXPECT_EQ(*ovum::vm::runtime::GetDataPointer<int64_t>(int_obj1), kAssignedValue);
+  }
+
+  // Test Int copy assignment from int (fundamental)
+  {
+    constexpr int64_t kInitialValue = 5;
+    constexpr int64_t kAssignedValue = 15;
+    void* int_obj = AllocateObjectByName(*this, "Int");
+    ASSERT_NE(int_obj, nullptr);
+    *ovum::vm::runtime::GetDataPointer<int64_t>(int_obj) = kInitialValue;
+
+    ASSERT_TRUE(ExecuteFunction(*this, "_Int_copy_<M>_int", int_obj, kAssignedValue).has_value());
+    EXPECT_EQ(*ovum::vm::runtime::GetDataPointer<int64_t>(int_obj), kAssignedValue);
+  }
+
+  // Test Float copy assignment from Float
+  {
+    constexpr double kInitialValue = 1.5;
+    constexpr double kAssignedValue = 2.75;
+    void* float_obj1 = AllocateObjectByName(*this, "Float");
+    void* float_obj2 = AllocateObjectByName(*this, "Float");
+    ASSERT_NE(float_obj1, nullptr);
+    ASSERT_NE(float_obj2, nullptr);
+    *ovum::vm::runtime::GetDataPointer<double>(float_obj1) = kInitialValue;
+    *ovum::vm::runtime::GetDataPointer<double>(float_obj2) = kAssignedValue;
+
+    ASSERT_TRUE(ExecuteFunction(*this, "_Float_copy_<M>_Float", float_obj1, float_obj2).has_value());
+    EXPECT_DOUBLE_EQ(*ovum::vm::runtime::GetDataPointer<double>(float_obj1), kAssignedValue);
+  }
+
+  // Test Float copy assignment from float (fundamental)
+  {
+    constexpr double kInitialValue = 0.5;
+    constexpr double kAssignedValue = 3.14;
+    void* float_obj = AllocateObjectByName(*this, "Float");
+    ASSERT_NE(float_obj, nullptr);
+    *ovum::vm::runtime::GetDataPointer<double>(float_obj) = kInitialValue;
+
+    ASSERT_TRUE(ExecuteFunction(*this, "_Float_copy_<M>_float", float_obj, kAssignedValue).has_value());
+    EXPECT_DOUBLE_EQ(*ovum::vm::runtime::GetDataPointer<double>(float_obj), kAssignedValue);
+  }
+
+  // Test Char copy assignment from Char
+  {
+    constexpr char kInitialValue = 'a';
+    constexpr char kAssignedValue = 'z';
+    void* char_obj1 = AllocateObjectByName(*this, "Char");
+    void* char_obj2 = AllocateObjectByName(*this, "Char");
+    ASSERT_NE(char_obj1, nullptr);
+    ASSERT_NE(char_obj2, nullptr);
+    *ovum::vm::runtime::GetDataPointer<char>(char_obj1) = kInitialValue;
+    *ovum::vm::runtime::GetDataPointer<char>(char_obj2) = kAssignedValue;
+
+    ASSERT_TRUE(ExecuteFunction(*this, "_Char_copy_<M>_Char", char_obj1, char_obj2).has_value());
+    EXPECT_EQ(*ovum::vm::runtime::GetDataPointer<char>(char_obj1), kAssignedValue);
+  }
+
+  // Test Char copy assignment from char (fundamental)
+  {
+    constexpr char kInitialValue = 'x';
+    constexpr char kAssignedValue = 'y';
+    void* char_obj = AllocateObjectByName(*this, "Char");
+    ASSERT_NE(char_obj, nullptr);
+    *ovum::vm::runtime::GetDataPointer<char>(char_obj) = kInitialValue;
+
+    ASSERT_TRUE(ExecuteFunction(*this, "_Char_copy_<M>_char", char_obj, kAssignedValue).has_value());
+    EXPECT_EQ(*ovum::vm::runtime::GetDataPointer<char>(char_obj), kAssignedValue);
+  }
+
+  // Test Byte copy assignment from Byte
+  {
+    constexpr uint8_t kInitialValue = 0x10;
+    constexpr uint8_t kAssignedValue = 0xFF;
+    void* byte_obj1 = AllocateObjectByName(*this, "Byte");
+    void* byte_obj2 = AllocateObjectByName(*this, "Byte");
+    ASSERT_NE(byte_obj1, nullptr);
+    ASSERT_NE(byte_obj2, nullptr);
+    *ovum::vm::runtime::GetDataPointer<uint8_t>(byte_obj1) = kInitialValue;
+    *ovum::vm::runtime::GetDataPointer<uint8_t>(byte_obj2) = kAssignedValue;
+
+    ASSERT_TRUE(ExecuteFunction(*this, "_Byte_copy_<M>_Byte", byte_obj1, byte_obj2).has_value());
+    EXPECT_EQ(*ovum::vm::runtime::GetDataPointer<uint8_t>(byte_obj1), kAssignedValue);
+  }
+
+  // Test Byte copy assignment from byte (fundamental)
+  {
+    constexpr uint8_t kInitialValue = 0x00;
+    constexpr uint8_t kAssignedValue = 0xAB;
+    void* byte_obj = AllocateObjectByName(*this, "Byte");
+    ASSERT_NE(byte_obj, nullptr);
+    *ovum::vm::runtime::GetDataPointer<uint8_t>(byte_obj) = kInitialValue;
+
+    ASSERT_TRUE(ExecuteFunction(*this, "_Byte_copy_<M>_byte", byte_obj, kAssignedValue).has_value());
+    EXPECT_EQ(*ovum::vm::runtime::GetDataPointer<uint8_t>(byte_obj), kAssignedValue);
+  }
+
+  // Test Bool copy assignment from Bool
+  {
+    constexpr bool kInitialValue = false;
+    constexpr bool kAssignedValue = true;
+    void* bool_obj1 = AllocateObjectByName(*this, "Bool");
+    void* bool_obj2 = AllocateObjectByName(*this, "Bool");
+    ASSERT_NE(bool_obj1, nullptr);
+    ASSERT_NE(bool_obj2, nullptr);
+    *ovum::vm::runtime::GetDataPointer<bool>(bool_obj1) = kInitialValue;
+    *ovum::vm::runtime::GetDataPointer<bool>(bool_obj2) = kAssignedValue;
+
+    ASSERT_TRUE(ExecuteFunction(*this, "_Bool_copy_<M>_Bool", bool_obj1, bool_obj2).has_value());
+    EXPECT_EQ(*ovum::vm::runtime::GetDataPointer<bool>(bool_obj1), kAssignedValue);
+  }
+
+  // Test Bool copy assignment from bool (fundamental)
+  {
+    constexpr bool kInitialValue = true;
+    constexpr bool kAssignedValue = false;
+    void* bool_obj = AllocateObjectByName(*this, "Bool");
+    ASSERT_NE(bool_obj, nullptr);
+    *ovum::vm::runtime::GetDataPointer<bool>(bool_obj) = kInitialValue;
+
+    ASSERT_TRUE(ExecuteFunction(*this, "_Bool_copy_<M>_bool", bool_obj, kAssignedValue).has_value());
+    EXPECT_EQ(*ovum::vm::runtime::GetDataPointer<bool>(bool_obj), kAssignedValue);
+  }
+
+  // Test String copy assignment from String
+  {
+    constexpr std::string_view kInitialText = "initial";
+    constexpr std::string_view kAssignedText = "assigned";
+    void* string_obj1 = AllocateObjectByName(*this, "String");
+    void* string_obj2 = AllocateObjectByName(*this, "String");
+    ASSERT_NE(string_obj1, nullptr);
+    ASSERT_NE(string_obj2, nullptr);
+    new (ovum::vm::runtime::GetDataPointer<std::string>(string_obj1)) std::string(kInitialText);
+    new (ovum::vm::runtime::GetDataPointer<std::string>(string_obj2)) std::string(kAssignedText);
+
+    ASSERT_TRUE(ExecuteFunction(*this, "_String_copy_<M>_String", string_obj1, string_obj2).has_value());
+    EXPECT_EQ(*ovum::vm::runtime::GetDataPointer<std::string>(string_obj1), kAssignedText);
+  }
+
+  // Test IntArray copy assignment
+  {
+    constexpr int64_t kSize = 3;
+    constexpr int64_t kDefault1 = 1;
+    constexpr int64_t kDefault2 = 2;
+    void* array1 = AllocateObjectByName(*this, "IntArray");
+    void* array2 = AllocateObjectByName(*this, "IntArray");
+    ASSERT_NE(array1, nullptr);
+    ASSERT_NE(array2, nullptr);
+    ASSERT_TRUE(ExecuteFunction(*this, "_IntArray_int_int", array1, kSize, kDefault1).has_value());
+    ExpectStackTopPointer(*this, array1);
+    ASSERT_TRUE(ExecuteFunction(*this, "_IntArray_int_int", array2, kSize, kDefault2).has_value());
+    ExpectStackTopPointer(*this, array2);
+
+    ASSERT_TRUE(ExecuteFunction(*this, "_IntArray_copy_<M>_IntArray", array1, array2).has_value());
+    auto* vec1 = ovum::vm::runtime::GetDataPointer<std::vector<int64_t>>(array1);
+    auto* vec2 = ovum::vm::runtime::GetDataPointer<std::vector<int64_t>>(array2);
+    EXPECT_EQ(*vec1, *vec2);
+  }
+
+  // Test FloatArray copy assignment
+  {
+    constexpr int64_t kSize = 2;
+    constexpr double kDefault1 = 1.1;
+    constexpr double kDefault2 = 2.2;
+    void* array1 = AllocateObjectByName(*this, "FloatArray");
+    void* array2 = AllocateObjectByName(*this, "FloatArray");
+    ASSERT_NE(array1, nullptr);
+    ASSERT_NE(array2, nullptr);
+    ASSERT_TRUE(ExecuteFunction(*this, "_FloatArray_int_float", array1, kSize, kDefault1).has_value());
+    ExpectStackTopPointer(*this, array1);
+    ASSERT_TRUE(ExecuteFunction(*this, "_FloatArray_int_float", array2, kSize, kDefault2).has_value());
+    ExpectStackTopPointer(*this, array2);
+
+    ASSERT_TRUE(ExecuteFunction(*this, "_FloatArray_copy_<M>_FloatArray", array1, array2).has_value());
+    auto* vec1 = ovum::vm::runtime::GetDataPointer<std::vector<double>>(array1);
+    auto* vec2 = ovum::vm::runtime::GetDataPointer<std::vector<double>>(array2);
+    EXPECT_EQ(*vec1, *vec2);
+  }
+
+  // Test CharArray copy assignment
+  {
+    constexpr int64_t kSize = 2;
+    constexpr char kDefault1 = 'a';
+    constexpr char kDefault2 = 'b';
+    void* array1 = AllocateObjectByName(*this, "CharArray");
+    void* array2 = AllocateObjectByName(*this, "CharArray");
+    ASSERT_NE(array1, nullptr);
+    ASSERT_NE(array2, nullptr);
+    ASSERT_TRUE(ExecuteFunction(*this, "_CharArray_int_char", array1, kSize, kDefault1).has_value());
+    ExpectStackTopPointer(*this, array1);
+    ASSERT_TRUE(ExecuteFunction(*this, "_CharArray_int_char", array2, kSize, kDefault2).has_value());
+    ExpectStackTopPointer(*this, array2);
+
+    ASSERT_TRUE(ExecuteFunction(*this, "_CharArray_copy_<M>_CharArray", array1, array2).has_value());
+    auto* vec1 = ovum::vm::runtime::GetDataPointer<std::vector<char>>(array1);
+    auto* vec2 = ovum::vm::runtime::GetDataPointer<std::vector<char>>(array2);
+    EXPECT_EQ(*vec1, *vec2);
+  }
+
+  // Test ByteArray copy assignment
+  {
+    constexpr int64_t kSize = 3;
+    constexpr uint8_t kDefault1 = 0x01;
+    constexpr uint8_t kDefault2 = 0x02;
+    void* array1 = AllocateObjectByName(*this, "ByteArray");
+    void* array2 = AllocateObjectByName(*this, "ByteArray");
+    ASSERT_NE(array1, nullptr);
+    ASSERT_NE(array2, nullptr);
+    ASSERT_TRUE(ExecuteFunction(*this, "_ByteArray_int_byte", array1, kSize, kDefault1).has_value());
+    ExpectStackTopPointer(*this, array1);
+    ASSERT_TRUE(ExecuteFunction(*this, "_ByteArray_int_byte", array2, kSize, kDefault2).has_value());
+    ExpectStackTopPointer(*this, array2);
+
+    ASSERT_TRUE(ExecuteFunction(*this, "_ByteArray_copy_<M>_ByteArray", array1, array2).has_value());
+    auto* ba1 = ovum::vm::runtime::GetDataPointer<ovum::vm::runtime::ByteArray>(array1);
+    auto* ba2 = ovum::vm::runtime::GetDataPointer<ovum::vm::runtime::ByteArray>(array2);
+    EXPECT_EQ(*ba1, *ba2);
+  }
+
+  // Test BoolArray copy assignment
+  {
+    constexpr int64_t kSize = 2;
+    constexpr bool kDefault1 = false;
+    constexpr bool kDefault2 = true;
+    void* array1 = AllocateObjectByName(*this, "BoolArray");
+    void* array2 = AllocateObjectByName(*this, "BoolArray");
+    ASSERT_NE(array1, nullptr);
+    ASSERT_NE(array2, nullptr);
+    ASSERT_TRUE(ExecuteFunction(*this, "_BoolArray_int_bool", array1, kSize, kDefault1).has_value());
+    ExpectStackTopPointer(*this, array1);
+    ASSERT_TRUE(ExecuteFunction(*this, "_BoolArray_int_bool", array2, kSize, kDefault2).has_value());
+    ExpectStackTopPointer(*this, array2);
+
+    ASSERT_TRUE(ExecuteFunction(*this, "_BoolArray_copy_<M>_BoolArray", array1, array2).has_value());
+    auto* vec1 = ovum::vm::runtime::GetDataPointer<std::vector<bool>>(array1);
+    auto* vec2 = ovum::vm::runtime::GetDataPointer<std::vector<bool>>(array2);
+    EXPECT_EQ(*vec1, *vec2);
+  }
+
+  // Test ObjectArray copy assignment
+  {
+    constexpr int64_t kSize = 1;
+    void* str1 = AllocateObjectByName(*this, "String");
+    void* str2 = AllocateObjectByName(*this, "String");
+    ASSERT_NE(str1, nullptr);
+    ASSERT_NE(str2, nullptr);
+    new (ovum::vm::runtime::GetDataPointer<std::string>(str1)) std::string("first");
+    new (ovum::vm::runtime::GetDataPointer<std::string>(str2)) std::string("second");
+
+    void* array1 = AllocateObjectByName(*this, "ObjectArray");
+    void* array2 = AllocateObjectByName(*this, "ObjectArray");
+    ASSERT_NE(array1, nullptr);
+    ASSERT_NE(array2, nullptr);
+    ASSERT_TRUE(ExecuteFunction(*this, "_ObjectArray_int_Object", array1, kSize, str1).has_value());
+    ExpectStackTopPointer(*this, array1);
+    ASSERT_TRUE(ExecuteFunction(*this, "_ObjectArray_int_Object", array2, kSize, str2).has_value());
+    ExpectStackTopPointer(*this, array2);
+
+    ASSERT_TRUE(ExecuteFunction(*this, "_ObjectArray_copy_<M>_ObjectArray", array1, array2).has_value());
+    auto* vec1 = ovum::vm::runtime::GetDataPointer<std::vector<void*>>(array1);
+    auto* vec2 = ovum::vm::runtime::GetDataPointer<std::vector<void*>>(array2);
+    EXPECT_EQ(*vec1, *vec2);
+  }
+
+  // Test StringArray copy assignment
+  {
+    constexpr int64_t kSize = 1;
+    void* str1 = AllocateObjectByName(*this, "String");
+    void* str2 = AllocateObjectByName(*this, "String");
+    ASSERT_NE(str1, nullptr);
+    ASSERT_NE(str2, nullptr);
+    new (ovum::vm::runtime::GetDataPointer<std::string>(str1)) std::string("first");
+    new (ovum::vm::runtime::GetDataPointer<std::string>(str2)) std::string("second");
+
+    void* array1 = AllocateObjectByName(*this, "StringArray");
+    void* array2 = AllocateObjectByName(*this, "StringArray");
+    ASSERT_NE(array1, nullptr);
+    ASSERT_NE(array2, nullptr);
+    ASSERT_TRUE(ExecuteFunction(*this, "_StringArray_int_String", array1, kSize, str1).has_value());
+    ExpectStackTopPointer(*this, array1);
+    ASSERT_TRUE(ExecuteFunction(*this, "_StringArray_int_String", array2, kSize, str2).has_value());
+    ExpectStackTopPointer(*this, array2);
+
+    ASSERT_TRUE(ExecuteFunction(*this, "_StringArray_copy_<M>_StringArray", array1, array2).has_value());
+    auto* vec1 = ovum::vm::runtime::GetDataPointer<std::vector<void*>>(array1);
+    auto* vec2 = ovum::vm::runtime::GetDataPointer<std::vector<void*>>(array2);
+    EXPECT_EQ(*vec1, *vec2);
+  }
+
+  // Test Pointer copy assignment
+  {
+    constexpr int64_t kInitialValue = 10;
+    constexpr int64_t kAssignedValue = 20;
+    void* pointee1 = AllocateObjectByName(*this, "Int");
+    void* pointee2 = AllocateObjectByName(*this, "Int");
+    ASSERT_NE(pointee1, nullptr);
+    ASSERT_NE(pointee2, nullptr);
+    *ovum::vm::runtime::GetDataPointer<int64_t>(pointee1) = kInitialValue;
+    *ovum::vm::runtime::GetDataPointer<int64_t>(pointee2) = kAssignedValue;
+
+    void* pointer1 = AllocateObjectByName(*this, "Pointer");
+    void* pointer2 = AllocateObjectByName(*this, "Pointer");
+    ASSERT_NE(pointer1, nullptr);
+    ASSERT_NE(pointer2, nullptr);
+    ASSERT_TRUE(ExecuteFunction(*this, "_Pointer_pointer", pointer1, pointee1).has_value());
+    ExpectStackTopPointer(*this, pointer1);
+    ASSERT_TRUE(ExecuteFunction(*this, "_Pointer_pointer", pointer2, pointee2).has_value());
+    ExpectStackTopPointer(*this, pointer2);
+
+    ASSERT_TRUE(ExecuteFunction(*this, "_Pointer_copy_<M>_Pointer", pointer1, pointer2).has_value());
+    EXPECT_EQ(*ovum::vm::runtime::GetDataPointer<void*>(pointer1), pointee2);
+  }
+
+  // Test PointerArray copy assignment
+  {
+    constexpr int64_t kSize = 1;
+    void* pointee1 = AllocateObjectByName(*this, "Int");
+    void* pointee2 = AllocateObjectByName(*this, "Int");
+    ASSERT_NE(pointee1, nullptr);
+    ASSERT_NE(pointee2, nullptr);
+
+    void* array1 = AllocateObjectByName(*this, "PointerArray");
+    void* array2 = AllocateObjectByName(*this, "PointerArray");
+    ASSERT_NE(array1, nullptr);
+    ASSERT_NE(array2, nullptr);
+    ASSERT_TRUE(ExecuteFunction(*this, "_PointerArray_int_Pointer", array1, kSize, pointee1).has_value());
+    ExpectStackTopPointer(*this, array1);
+    ASSERT_TRUE(ExecuteFunction(*this, "_PointerArray_int_Pointer", array2, kSize, pointee2).has_value());
+    ExpectStackTopPointer(*this, array2);
+
+    ASSERT_TRUE(ExecuteFunction(*this, "_PointerArray_copy_<M>_PointerArray", array1, array2).has_value());
+    auto* vec1 = ovum::vm::runtime::GetDataPointer<std::vector<void*>>(array1);
+    auto* vec2 = ovum::vm::runtime::GetDataPointer<std::vector<void*>>(array2);
+    EXPECT_EQ(*vec1, *vec2);
+  }
+}

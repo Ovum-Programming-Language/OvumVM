@@ -1,5 +1,24 @@
 enable_testing()
 
+
+
+If (JIT_PROVIDED)
+add_executable(
+        ${PROJECT_NAME}_tests
+        main_test.cpp
+        test_functions.cpp
+        test_suites/ProjectIntegrationTestSuite.cpp
+        test_suites/X64JitTestSuite.cpp
+        test_suites/BytecodeLexerTestSuite.cpp
+        test_suites/BytecodeParserTestSuite.cpp
+        test_suites/BuiltinTestSuite.cpp
+        bytecode_lexer_tests.cpp
+        bytecode_parser_tests.cpp
+        bytecode_commands_tests.cpp
+        builtin_functions_tests.cpp
+        jit_tests.cpp
+)
+else()
 add_executable(
         ${PROJECT_NAME}_tests
         main_test.cpp
@@ -15,6 +34,7 @@ add_executable(
         gc_tests.cpp
         test_suites/GcTestSuite.cpp
 )
+endif()
 
 target_link_libraries(
         ${PROJECT_NAME}_tests

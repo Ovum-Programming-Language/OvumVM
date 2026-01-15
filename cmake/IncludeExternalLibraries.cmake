@@ -31,3 +31,18 @@ FetchContent_Declare(
 )
 
 FetchContent_MakeAvailable(argparser)
+
+
+# Ovum JIT X64 (only for x86_64 architecture)
+if(OVUM_JIT_X64_AVAILABLE)
+    FetchContent_Declare(
+            ovumjitx64
+            GIT_REPOSITORY https://github.com/Ovum-Programming-Language/OvumJitX64.git
+            GIT_TAG main
+    )
+
+    FetchContent_MakeAvailable(ovumjitx64)
+    message(STATUS "OvumJitX64: Enabled for x86_64 architecture")
+else()
+    message(STATUS "OvumJitX64: Skipped (not x86_64 architecture)")
+endif()

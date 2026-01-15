@@ -5,6 +5,7 @@
 #include <cmath>
 #include <ctime>
 #include <filesystem>
+#include <limits>
 #include <random>
 #include <ranges>
 #include <sstream>
@@ -1006,7 +1007,10 @@ std::expected<ExecutionResult, std::runtime_error> FloatToString(PassedExecution
     return std::unexpected(argument.error());
   }
 
-  return PushString(data, std::to_string(argument.value()));
+  std::ostringstream oss;
+  oss << std::setprecision(std::numeric_limits<double>::max_digits10 - 2) << argument.value();
+
+  return PushString(data, oss.str());
 }
 
 std::expected<ExecutionResult, std::runtime_error> IntToFloat(PassedExecutionData& data) {
@@ -1201,6 +1205,8 @@ std::expected<ExecutionResult, std::runtime_error> CallConstructor(PassedExecuti
   if (first_underscore != std::string::npos && second_underscore != std::string::npos &&
       second_underscore > first_underscore + 1) {
     class_name = constructor_name.substr(first_underscore + 1, second_underscore - first_underscore - 1);
+  } else if (first_underscore != std::string::npos) {
+    class_name = constructor_name.substr(first_underscore + 1);
   } else {
     class_name = constructor_name;
   }
@@ -1575,15 +1581,15 @@ std::expected<ExecutionResult, std::runtime_error> NanoTime(PassedExecutionData&
 }
 
 std::expected<ExecutionResult, std::runtime_error> FormatDateTime(PassedExecutionData& data) {
-  auto arguments = TryExtractTwoArguments<void*, int64_t>(data, "FormatDateTime");
+  auto arguments = TryExtractTwoArguments<int64_t, void*>(data, "FormatDateTime");
 
   if (!arguments) {
     return std::unexpected(arguments.error());
   }
 
-  auto timestamp_var = arguments.value().second;
+  auto timestamp_var = arguments.value().first;
 
-  void* string_obj1 = arguments.value().first;
+  void* string_obj1 = arguments.value().second;
   auto* format_str_ptr = runtime::GetDataPointer<std::string>(string_obj1);
 
   try {
