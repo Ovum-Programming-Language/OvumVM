@@ -39,7 +39,7 @@ std::expected<bool, BytecodeParserError> WhileParser::Handle(std::shared_ptr<Par
     } else if (!res.value()) {
       ctx->SetCurrentBlock(parent_block);
       return std::unexpected(
-          BytecodeParserError("Command expected at line" + std::to_string(ctx->Current()->GetPosition().GetLine())));
+          BytecodeParserError("Command expected at line " + std::to_string(ctx->Current()->GetPosition().GetLine())));
     }
   }
 
@@ -77,7 +77,7 @@ std::expected<bool, BytecodeParserError> WhileParser::Handle(std::shared_ptr<Par
     } else if (!res.value()) {
       ctx->SetCurrentBlock(parent_block);
       return std::unexpected(
-          BytecodeParserError("Command expected at line" + std::to_string(ctx->Current()->GetPosition().GetLine())));
+          BytecodeParserError("Command expected at line " + std::to_string(ctx->Current()->GetPosition().GetLine())));
     }
   }
 
