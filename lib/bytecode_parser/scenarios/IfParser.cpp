@@ -40,7 +40,7 @@ std::expected<bool, BytecodeParserError> IfParser::Handle(std::shared_ptr<Parsin
       return res;
     } else if (!res.value()) {
       return std::unexpected(
-          BytecodeParserError("Command expected at line" + std::to_string(ctx->Current()->GetPosition().GetLine())));
+          BytecodeParserError("Command expected at line " + std::to_string(ctx->Current()->GetPosition().GetLine())));
     }
   }
 
@@ -73,7 +73,7 @@ std::expected<bool, BytecodeParserError> IfParser::Handle(std::shared_ptr<Parsin
       return res;
     } else if (!res.value()) {
       return std::unexpected(
-          BytecodeParserError("Command expected at line" + std::to_string(ctx->Current()->GetPosition().GetLine())));
+          BytecodeParserError("Command expected at line " + std::to_string(ctx->Current()->GetPosition().GetLine())));
     }
   }
 
@@ -107,7 +107,7 @@ std::expected<bool, BytecodeParserError> IfParser::Handle(std::shared_ptr<Parsin
         if (!res) {
           return res;
         } else if (!res.value()) {
-          return std::unexpected(BytecodeParserError("Command expected at line" +
+          return std::unexpected(BytecodeParserError("Command expected at line " +
                                                      std::to_string(ctx->Current()->GetPosition().GetLine())));
         }
       }
@@ -140,7 +140,7 @@ std::expected<bool, BytecodeParserError> IfParser::Handle(std::shared_ptr<Parsin
         if (!res) {
           return res;
         } else if (!res.value()) {
-          return std::unexpected(BytecodeParserError("Command expected at line" +
+          return std::unexpected(BytecodeParserError("Command expected at line " +
                                                      std::to_string(ctx->Current()->GetPosition().GetLine())));
         }
       }

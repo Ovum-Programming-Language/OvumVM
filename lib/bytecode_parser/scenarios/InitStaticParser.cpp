@@ -38,7 +38,7 @@ std::expected<bool, BytecodeParserError> InitStaticParser::Handle(ParsingSession
       return res;
     } else if (!res.value()) {
       return std::unexpected(
-          BytecodeParserError("Command expected at line" + std::to_string(ctx->Current()->GetPosition().GetLine())));
+          BytecodeParserError("Command expected at line " + std::to_string(ctx->Current()->GetPosition().GetLine())));
     }
   }
 
